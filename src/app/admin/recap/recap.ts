@@ -1,7 +1,11 @@
 import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
-
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Aprojetv1 } from '../../services/aprojetv1';
+import { HttpClientModule } from '@angular/common/http';
+import { ProjetFormDTO } from '../../model/projetFormdto';
+import { Observable, take } from 'rxjs';
+import Swal from 'sweetalert2';
 // --- Types existants inchangés ---
 type SubmissionStatus = 'BROUILLON' | 'SOUMIS' | 'EN_REVUE' | 'ACCEPTE' | 'REFUSE';
 
@@ -43,11 +47,15 @@ interface Submission {
 @Component({
   selector: 'app-submission-recap',
   standalone: true,
-  imports: [CommonModule, RouterLink, DatePipe],
-  templateUrl: './recap.html'
+  imports: [CommonModule, RouterLink, DatePipe, HttpClientModule],
+  templateUrl: './recap.html',
+  providers: [Aprojetv1]
 })
 export class SubmissionRecap implements OnInit, OnDestroy {
-
+  id!: number;
+  projets!: ProjetFormDTO;
+  private router = inject(Router);
+  constructor(private route: ActivatedRoute) { }
   // ---------- Démo : données statiques si rien dans le localStorage ----------
   private staticDemo: Submission = {
     step1: {
@@ -80,11 +88,11 @@ export class SubmissionRecap implements OnInit, OnDestroy {
       'Cartographie fine, plan d’ingénierie écologique, travaux de stabilisation, replantation, suivi qualité eau, ' +
       'sensibilisation et formation des comités.',
     activities: [
-      { label: 'Cartographie & diagnostic', months: [1,2] },
-      { label: 'Ingénierie écologique (fascines/enrochements)', months: [3,4,5] },
-      { label: 'Replantation espèces indigènes', months: [6,7,8] },
-      { label: 'Suivi hydrologique & biodiversité', months: [2,6,9,12] },
-      { label: 'Sensibilisation communautaire', months: [1,4,7,10] },
+      { label: 'Cartographie & diagnostic', months: [1, 2] },
+      { label: 'Ingénierie écologique (fascines/enrochements)', months: [3, 4, 5] },
+      { label: 'Replantation espèces indigènes', months: [6, 7, 8] },
+      { label: 'Suivi hydrologique & biodiversité', months: [2, 6, 9, 12] },
+      { label: 'Sensibilisation communautaire', months: [1, 4, 7, 10] },
     ],
     risks: [
       { description: 'Crues exceptionnelles', mitigation: 'Fenêtre de travaux adaptée + protections temporaires' },
@@ -108,6 +116,8 @@ export class SubmissionRecap implements OnInit, OnDestroy {
     status: 'BROUILLON',
     updatedAt: Date.now()
   };
+  private aprojetv1 = inject(Aprojetv1);
+
 
   // --------- Charger le dossier depuis le localStorage (fallback multi-clés) ----------
   private load(): Submission | null {
@@ -155,7 +165,12 @@ export class SubmissionRecap implements OnInit, OnDestroy {
   closeModal() { this.modalOpen.set(false); this.modal.set(null); }
 
   private escHandler = (e: KeyboardEvent) => { if (e.key === 'Escape') this.closeModal(); };
-  ngOnInit() { document.addEventListener('keydown', this.escHandler); }
+  ngOnInit() {
+    document.addEventListener('keydown', this.escHandler);
+    this.id = Number(this.route.snapshot.paramMap.get('id'));
+    //console.log('ID du projet :', this.id);
+    this.getRecap(this.id);
+  }
   ngOnDestroy() { document.removeEventListener('keydown', this.escHandler); }
 
   // --------- Nouveau : Stepper d’AFFICHAGE (ne change pas la logique) ----------
@@ -186,5 +201,64 @@ export class SubmissionRecap implements OnInit, OnDestroy {
     // Sinon on suppose que tu déposes les annexes dans /assets/uploads/
     return `/assets/uploads/${v}`;
   }
+  getRecap(id: number) {
+    if (id != 0) {
+      this.aprojetv1.getProjetById(id).subscribe({
+        next: (response) => {
+          console.log('Récapitulatif récupéré avec succès:', response);
+          this.projets = response;
+          this.loadSuccessSwal('Récapitulatif chargé avec succès');
+        },
+        error: (error) => {
+          console.error('Erreur lors de la récupération du récapitulatif:', error);
+        }
+      });
+    } else {
+      this.aprojetv1.getProjetByUser().pipe(take(1)).subscribe((data) => {
+        this.projets = data;
+        console.log(this.projets);
+      }, err => {
+        console.error(err);
+      })
+    }
 
+  }
+
+  showFile(pathFile: File) {
+    this.aprojetv1.showFile(pathFile).subscribe(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = pathFile.name || 'file';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+  }
+
+  loadSuccessSwal(message: any) {
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'center',
+      showConfirmButton: false,
+      timer: 7000,
+      timerProgressBar: false,
+      iconColor: '#00e8b6',
+      color: '#06417d'
+    })
+
+    Toast.fire({
+      icon: 'success',
+      title: message
+    })
+
+  }
+  redirectionUserOradmin() {
+    this.id = Number(this.route.snapshot.paramMap.get('id'));
+    if (this.id != 0) {
+      this.router.navigate(['/admin']);
+    } else {
+      this.router.navigate(['/dashboard']);
+    }
+  }
 }

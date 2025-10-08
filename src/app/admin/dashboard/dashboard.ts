@@ -1,8 +1,12 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, NgClass, JsonPipe } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
 import { Router } from '@angular/router';
+import { Aprojetv1 } from '../../services/aprojetv1';
+import { HttpClientModule } from '@angular/common/http';
+import { environDev } from '../../../environments/environment.development';
+import { ProjetFormDTO } from '../../model/projetFormdto';
 
 type ProjectStatus = 'BROUILLON' | 'SOUMIS' | 'EN_REVUE' | 'ACCEPTE' | 'REJETE';
 type BudgetCategory = 'ACTIVITES_TERRAIN' | 'INVESTISSEMENTS' | 'FONCTIONNEMENT';
@@ -15,13 +19,32 @@ const ADMIN_DATA_KEY = 'fpbg_admin_records';
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DatePipe, NgClass],
-  templateUrl: './dashboard.html'
+  imports: [CommonModule, ReactiveFormsModule, DatePipe, NgClass, JsonPipe, HttpClientModule],
+  templateUrl: './dashboard.html',
+  providers: [Aprojetv1]
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
+  private aprojetv1 = inject(Aprojetv1);
+  allProjets: ProjetFormDTO[] = [];
 
+  ngOnInit() {
+    // Appel à la méthode pour récupérer les projets
+    this.getAllProjet();
+  }
+  getAllProjet() {
+    this.aprojetv1.getAllProjetsNoPage().subscribe({
+      next: (response) => {
+        console.log('Projets récupérés avec succès:', response);
+        this.allProjets = response
+        console.log('Corps:', this.allProjets);
+      },
+      error: (error) => {
+        console.error('Erreur lors de la récupération des projets:', error);
+      }
+    });
+  }
   // ===== Store local =====
   private readStore(): any[] {
     const raw = localStorage.getItem(ADMIN_DATA_KEY);
@@ -56,7 +79,7 @@ export class Dashboard {
   );
 
   // Labels mois
-  monthsLabels = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  monthsLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
   // Actions UI
   refresh() { this.records.set(this.readStore()); }
@@ -75,24 +98,24 @@ export class Dashboard {
     this.records.set(list);
   }
   markInReview(r: any) { if (r?.id) this.updateStatus(r.id, 'EN_REVUE'); }
-  validate(r: any)     { if (r?.id) this.updateStatus(r.id, 'ACCEPTE'); }
-  reject(r: any)       { if (r?.id) this.updateStatus(r.id, 'REJETE'); }
+  validate(r: any) { if (r?.id) this.updateStatus(r.id, 'ACCEPTE'); }
+  reject(r: any) { if (r?.id) this.updateStatus(r.id, 'REJETE'); }
 
   // ===== Navigation =====
-  goToRecap(id: string) {
+  goToRecap(id: number) {
     if (!id) return;
     this.router.navigate(['/admin/recap', id]);
   }
 
   // ===== Divers =====
   docs: DocumentType[] = [
-    'LETTRE_MOTIVATION','STATUTS_REGLEMENT','FICHE_CIRCUIT','RIB','AGREMENT','CV',
-    'BUDGET_DETAILLE','CHRONOGRAMME','CARTOGRAPHIE','LETTRE_SOUTIEN'
+    'LETTRE_MOTIVATION', 'STATUTS_REGLEMENT', 'FICHE_CIRCUIT', 'RIB', 'AGREMENT', 'CV',
+    'BUDGET_DETAILLE', 'CHRONOGRAMME', 'CARTOGRAPHIE', 'LETTRE_SOUTIEN'
   ];
 
   logout() {
     this.auth.logout();
-    this.router.navigateByUrl('/login'); // adapte si nécessaire
+    this.router.navigateByUrl('/admin/login'); // adapte si nécessaire
   }
 
   scrollTo(id: string) {

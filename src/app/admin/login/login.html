@@ -15,17 +15,17 @@
 
     <!-- Formulaire -->
     <form (ngSubmit)="submit()" [formGroup]="form" class="mt-6 space-y-4">
-      <!-- Email -->
+      <!-- Nom d'utilisateur -->
       <div>
-        <label class="block text-sm mb-1">Adresse e-mail</label>
+        <label class="block text-sm mb-1">Nom d'utilisateur</label>
         <input
-          type="email"
-          formControlName="email"
-          placeholder="votre.email@exemple.com"
+          type="text"
+          formControlName="username"
+          placeholder="votre nom d'utilisateur"
           class="w-full rounded-lg bg-[#1f4a63] border border-white/10 text-white placeholder-white/60 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
         />
-        <p class="mt-1 text-xs text-red-400" *ngIf="form.controls.email.touched && form.controls.email.invalid">
-          Email invalide
+        <p class="mt-1 text-xs text-red-400" *ngIf="form.controls.username.touched && form.controls.username.invalid">
+          Nom d'utilisateur invalide
         </p>
       </div>
 

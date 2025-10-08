@@ -8,15 +8,15 @@
         Statut :
         <span class="font-medium">{{ status() || '—' }}</span>
         <span class="dot">•</span>
-        Dernière mise à jour :
+        <!-- Dernière mise à jour :
         <span class="font-medium">
-          {{ submission()?.updatedAt ? (submission()?.updatedAt | date:'short') : '—' }}
-        </span>
+          {{ projets.dateLimPro| date:'short' }}
+        </span> -->
       </p>
     </div>
     <div class="actions">
-      <a class="btn btn-outline" routerLink="/form">Modifier</a>
-      <a class="btn btn-outline" routerLink="/dashboard">Retour au dashboard</a>
+    
+      <a class="btn btn-outline" (click)="redirectionUserOradmin()">Retour au dashboard</a>
     </div>
   </header>
 
@@ -45,14 +45,14 @@
     <article *ngIf="stepIndex()===0" class="card">
       <h2 class="card-title">1. Demandeur / Soumissionnaire</h2>
       <div class="grid2">
-        <p><span class="muted">Organisation :</span> <b>{{ submission()?.step1?.orgName || '—' }}</b></p>
-        <p><span class="muted">Type :</span> <b>{{ submission()?.step1?.orgType || '—' }}</b></p>
-        <p class="span2"><span class="muted">Personne de contact :</span> <b>{{ submission()?.step1?.contactPerson || '—' }}</b></p>
-        <p><span class="muted">Couverture :</span> <b>{{ submission()?.step1?.geoCoverage || '—' }}</b></p>
-        <p><span class="muted">Domaines :</span> <b>{{ submission()?.step1?.domains || '—' }}</b></p>
-        <p class="span2"><span class="muted">Adresse :</span> <b>{{ submission()?.step1?.address || '—' }}</b></p>
-        <p><span class="muted">Email :</span> <b>{{ submission()?.step1?.contactEmail || '—' }}</b></p>
-        <p><span class="muted">Téléphone :</span> <b>{{ submission()?.step1?.contactPhone || '—' }}</b></p>
+        <p><span class="muted">Organisation :</span> <b>{{ projets.idOrganisme?.username }}</b></p>
+        <p><span class="muted">Type :</span> <b>{{ projets.idOrganisme?.typeOrganisation?.nom }}</b></p>
+        <p class="span2"><span class="muted">Personne de contact :</span> <b>{{ projets.idOrganisme?.usernamePersonneContacter }}</b></p>
+        <!-- <p><span class="muted">Couverture :</span> <b>{{ projets.idOrganisme?.geoCoverage || '—' }}</b></p> -->
+        <!-- <p><span class="muted">Domaines :</span> <b>{{ projets.idOrganisme?.domains || '—' }}</b></p> -->
+        <p class="span2"><span class="muted">Adresse :</span> <b>{{ projets.idOrganisme?.postalAddress }}</b></p>
+        <p><span class="muted">Email :</span> <b>{{ projets.idOrganisme?.email }}</b></p>
+        <p><span class="muted">Téléphone :</span> <b>{{ projets.idOrganisme?.numTel }}</b></p>
       </div>
     </article>
 
@@ -60,22 +60,22 @@
     <article *ngIf="stepIndex()===1" class="card">
       <h2 class="card-title">2. Proposition de projet</h2>
 
-      <p class="mb8"><span class="muted">Titre :</span> <b>{{ submission()?.step2?.title || '—' }}</b></p>
+      <p class="mb8"><span class="muted">Titre : </span> <b>{{ projets.title || '—' }}</b></p>
 
       <div class="block">
         <div class="block-head">
           <p class="muted">Lieu &amp; groupe cible</p>
-          <button class="link" (click)="openModal('Lieu & groupe cible', submission()?.step2?.locationAndTarget)">Voir en plein écran</button>
+          <button class="link" (click)="openModal('Lieu & groupe cible', projets.lexGcp)">Voir en plein écran</button>
         </div>
-        <p class="pre">{{ short(submission()?.step2?.locationAndTarget) }}</p>
+        <p class="pre">{{ short(projets.lexGcp) }}</p>
       </div>
 
       <div class="block">
         <div class="block-head">
           <p class="muted">Contexte &amp; justification</p>
-          <button class="link" (click)="openModal('Contexte & justification', submission()?.step2?.contextJustification)">Voir en plein écran</button>
+          <button class="link" (click)="openModal('Contexte & justification', projets.conjP)">Voir en plein écran</button>
         </div>
-        <p class="pre">{{ short(submission()?.step2?.contextJustification) }}</p>
+        <p class="pre">{{ short(projets.conjP) }}</p>
       </div>
     </article>
 
@@ -86,20 +86,20 @@
       <div class="block">
         <div class="block-head">
           <p class="muted">Objectifs</p>
-          <button class="link" (click)="openModal('Objectifs', submission()?.step3?.objectives)">Voir en plein écran</button>
+          <button class="link" (click)="openModal('Objectifs', projets.objP)">Voir en plein écran</button>
         </div>
-        <p class="pre">{{ short(submission()?.step3?.objectives) }}</p>
+        <p class="pre">{{ short(projets.objP) }}</p>
       </div>
 
       <div class="block">
         <div class="block-head">
           <p class="muted">Résultats attendus</p>
-          <button class="link" (click)="openModal('Résultats attendus', submission()?.step3?.expectedResults)">Voir en plein écran</button>
+          <button class="link" (click)="openModal('Résultats attendus', projets.rAtt)">Voir en plein écran</button>
         </div>
-        <p class="pre">{{ short(submission()?.step3?.expectedResults) }}</p>
+        <p class="pre">{{ short(projets.rAtt) }}</p>
       </div>
 
-      <p class="mt8"><span class="muted">Durée :</span> <b>{{ submission()?.step3?.durationMonths || '—' }} mois</b></p>
+      <p class="mt8"><span class="muted">Durée :</span> <b>{{ projets.dPRep }} mois</b></p>
     </article>
 
     <!-- Étape 4 -->
@@ -129,8 +129,8 @@
 
       <div *ngIf="submission()?.risks?.length; else norisk" class="stack">
         <div *ngFor="let r of submission()?.risks" class="row">
-          <p><span class="muted">Risque :</span> {{ r.description }}</p>
-          <p class="mt4"><span class="muted">Atténuation :</span> {{ r.mitigation }}</p>
+          <p><span class="muted">Risque :</span> {{ projets.poRistEnvSoPo }}</p>
+          <p class="mt4"><span class="muted">Atténuation :</span> {{ projets.poRistEnvSoPo }}</p>
         </div>
       </div>
       <ng-template #norisk>—</ng-template>
@@ -176,12 +176,12 @@
     <!-- Étape 7 -->
     <article *ngIf="stepIndex()===6" class="card">
       <h2 class="card-title">7. État &amp; financement</h2>
-      <p><span class="muted">Stade :</span> <b>{{ submission()?.stateStep?.projectStage || '—' }}</b></p>
+      <p><span class="muted">Stade : </span> <b>{{ projets.stade }}</b></p>
       <p class="mt4"><span class="muted">Financement :</span>
         <b>{{ submission()?.stateStep?.hasFunding ? 'Oui' : 'Non' }}</b>
       </p>
       <div class="mt8" *ngIf="submission()?.stateStep?.fundingDetails">
-        <button class="link" (click)="openModal('Détails financement', submission()?.stateStep?.fundingDetails)">Voir les détails</button>
+        <button class="link" (click)="openModal('Détails financement', projets.stade)">Voir les détails</button>
       </div>
     </article>
 
@@ -220,10 +220,8 @@
 
           <div class="annexe-actions">
             <!-- Ouvrir dans un nouvel onglet -->
-            <a class="btn btn-ghost"
-               [href]="fileHref(submission()!.attachments![key])"
-               target="_blank" rel="noopener">
-              Ouvrir
+            <a class="btn btn-ghost" (click)="showFile(projets.lP!)">
+              Telechargement
             </a>
           </div>
         </li>

@@ -1,13 +1,13 @@
-/*mport { Component, inject } from '@angular/core';
+/*import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import {ActivatedRoute, Router, RouterLink, RouterLinkActive} from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-user-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+    imports: [CommonModule, ReactiveFormsModule, RouterLink, RouterLinkActive],
   templateUrl: './login.html'
 })
 export class Login {
@@ -53,7 +53,7 @@ export class Login {
     // Si ton service expose `login(email, password)` :
     // this.auth.login({ username: email, password }).subscribe({ ... });
     // Je garde une version générique ici :
-
+/*
     this.auth.login({ username: email, password }).subscribe({
       next: () => {
         this.loading = false;
@@ -71,5 +71,22 @@ export class Login {
       }
     });
 
+   loadSuccessSwal(message: any) {
+    const Toast = Swal.mixin({
+      toast: true,
+      position: 'center',
+      showConfirmButton: false,
+      timer: 12000,
+      timerProgressBar: false,
+      iconColor: '#00e8b6',
+      color: '#06417d'
+    })
+
+    Toast.fire({
+      icon: 'success',
+      title: message
+    })
+
+  }
 }
 */

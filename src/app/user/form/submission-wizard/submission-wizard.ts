@@ -31,7 +31,7 @@ const ALLOWED_MIME = [
 ];
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
-// ---------- Validators ----------
+// ====== Validators utilitaires ======
 function wordLimit(max: number) {
   return (c: AbstractControl): ValidationErrors | null => {
     const t = ('' + (c.value ?? '')).trim();
@@ -149,8 +149,9 @@ export class SubmissionWizard {
     replicability: this.fb.control<string>('', [wordLimit(250)]),
   });
 
-  // 8) Annexes
+  // ====== Step 9 : Annexes ======
   attachments = this.fb.group({
+    FORMULAIRE: new FormControl<File | null>(null, []),
     LETTRE_MOTIVATION: new FormControl<File | null>(null, [fileConstraints()]),
     STATUTS_REGLEMENT: new FormControl<File | null>(null, [fileConstraints()]),
     FICHE_CIRCUIT:      new FormControl<File | null>(null, [fileConstraints()]),
@@ -163,16 +164,13 @@ export class SubmissionWizard {
     LETTRE_SOUTIEN:     new FormControl<File | null>(null, [fileConstraints()])
   });
 
-
-
-
-
-  // ---- Form global (pour validations transverses)
+  // ====== Form global ======
   form = this.fb.group({
     stepProp: this.stepProp,
     stepObj: this.stepObj,
     activitiesSummary: this.activitiesSummary,
     activities: this.activities,
+
     risks: this.risks,
     budgetLines: this.budgetLines,
     stateStep: this.stateStep,
