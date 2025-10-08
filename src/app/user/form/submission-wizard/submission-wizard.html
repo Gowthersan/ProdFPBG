@@ -1,412 +1,431 @@
-<!-- En-tête style "document" -->
-<section class="mb-6 rounded-xl border bg-white overflow-hidden">
-  <div class="h-1.5 w-full bg-green-600"></div>
-  <div class="px-5 py-4 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <img src="assets/logo.png" alt="FPBG" class="h-10 w-auto">
-      <span class="inline-flex items-center rounded-full bg-green-100 text-green-700 px-3 py-1 text-xs font-medium">
-        Modèle de Note Conceptuelle — FPBG
-      </span>
-    </div>
-    <div class="text-xs text-slate-500">Maximum 5 pages (hors annexes)</div>
-  </div>
-  <div class="px-5 pb-5">
-    <h1 class="text-center text-xl sm:text-2xl font-semibold">APPEL À PROJET OBLIGATIONS BLEUES FPBG</h1>
-  </div>
-</section>
+<!-- submission-wizard.html (corrigé) -->
+<div class="min-h-screen bg-slate-50 p-4 md:p-6">
+  <div class="mx-auto max-w-7xl bg-white rounded-2xl shadow border border-slate-200 grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] gap-6 p-4 md:p-6">
 
-<!-- Layout 3 colonnes -->
-<div class="w-full grid gap-4 lg:gap-6
-     grid-cols-1
-     lg:grid-cols-[minmax(240px,27%)_1fr_minmax(280px,28%)]
-     xl:grid-cols-[minmax(260px,26%)_1fr_minmax(340px,28%)]">
+    <!-- Étapes -->
+    <aside class="lg:border-r lg:pr-6">
+      <h3 class="text-xs font-semibold tracking-wide text-slate-500">PROGRESSION</h3>
+      <div class="mt-2 h-2 rounded bg-slate-100">
+        <div class="h-2 rounded bg-emerald-500 transition-all" [style.width.%]="progress()"></div>
+      </div>
 
-  <!-- ===== Sidebar étapes ===== -->
-  <aside class="self-start sticky top-4 h-max rounded-xl border p-5 bg-white">
-    <div class="text-xs text-gray-600 mb-3">progression</div>
-    <div class="w-full bg-gray-100 rounded-full h-2 mb-4">
-      <div class="h-2 rounded-full bg-green-600" [style.width.%]="progress()"></div>
-    </div>
-
-    <ol class="space-y-1 text-sm">
-      <li *ngFor="let t of steps; let i = index; trackBy: trackByIndex">
-        <button type="button"
-                class="w-full text-left px-3 py-2 rounded-lg transition"
-                [ngClass]="i === current() ? 'bg-green-600 text-white' : 'hover:bg-green-50'"
-                (click)="goTo(i)">
-          {{ i+1 }}. {{ t }}
+      <nav class="mt-4 space-y-1">
+        <button *ngFor="let s of steps; let i = index; trackBy: trackByIndex"
+                (click)="goTo(i)"
+                class="w-full text-left px-3 py-2 rounded-md border flex items-center gap-2"
+                [class.bg-emerald-600]="current()===i"
+                [class.text-white]="current()===i"
+                [class.border-emerald-600]="current()===i">
+          <span class="text-sm">{{ i+1 }}. {{ s }}</span>
         </button>
-      </li>
-    </ol>
+      </nav>
 
-    <div class="mt-4 flex gap-2">
-      <button class="px-3 py-2 rounded-md border hover:bg-slate-50" (click)="prev()" [disabled]="current()===0">retour</button>
-      <button class="px-3 py-2 rounded-md bg-green-600 text-white hover:bg-green-700"
-              (click)="next()" [disabled]="current() === steps.length-1 || !canGoNext()">
-        suivant
-      </button>
-    </div>
-  </aside>
+      <div class="mt-6 flex gap-3">
+        <button class="px-4 py-2 rounded-md border" (click)="prev()" [disabled]="current()===0">Retour</button>
+        <button class="px-4 py-2 rounded-md bg-emerald-600 text-white disabled:opacity-50"
+                (click)="next()" [disabled]="current()===(steps.length-1) || !canGoNext()">Suivant</button>
+      </div>
+    </aside>
 
-  <!-- ===== Colonne formulaire ===== -->
-  <section class="space-y-6">
+    <!-- Formulaire -->
+    <section class="min-h-[480px]">
+      <!-- 1. Proposition -->
+      <div *ngIf="current()===0" [formGroup]="prop" class="space-y-5">
+        <h2 class="text-xl font-bold">Proposition de Projet</h2>
 
-    <!-- 1) Proposition de projet -->
-    <div *ngIf="current()===0" class="rounded-xl border bg-white p-5 md:p-6">
-      <h2 class="text-lg font-semibold mb-3">Proposition de Projet</h2>
-      <form [formGroup]="stepProp" class="grid gap-5">
-        <div class="grid gap-1">
-          <label class="text-sm font-medium text-gray-700">Titre du projet</label>
-          <input class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm
-                      placeholder:text-gray-400 outline-none focus:border-green-600 focus:ring-4 focus:ring-green-100"
-                 formControlName="title" maxlength="120" placeholder="Ex : Restauration des berges de la rivière X">
-          <div class="text-xs text-gray-500 text-right">{{ (stepProp.get('title')?.value || '').length }}/120</div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Titre du projet</label>
+          <input type="text" class="w-full rounded-md border px-3 py-2" formControlName="title">
         </div>
 
-        <!-- Domaines (checklist) -->
-        <div class="grid gap-2">
-          <label class="text-sm font-medium text-gray-700">Domaines d’intervention (sélectionnez un ou plusieurs)</label>
-          <div class="grid sm:grid-cols-2 gap-2">
-            <label *ngFor="let d of domainesOptions; trackBy: trackByIndex"
-                   class="inline-flex items-center gap-2 rounded-lg border px-3 py-2">
-              <input
-                type="checkbox"
-                [checked]="hasDomaine(d)"
-                (change)="onDomaineToggle(d, $event)"
-              />
-
+        <div>
+          <p class="text-xs text-slate-500 mb-1">Exemple : Restauration des mangroves de XXX ha…</p>
+          <label class="block text-sm font-medium mb-2">Domaines d’intervention (sélectionnez un ou plusieurs)</label>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <label *ngFor="let d of domaines" class="flex items-center gap-2 rounded-md border px-3 py-2">
+              <input type="checkbox" (change)="toggleDomain(d, $event)">
               <span class="text-sm">{{ d }}</span>
             </label>
           </div>
         </div>
 
-        <div class="grid gap-1">
-          <label class="text-sm font-medium text-gray-700">Lieu d'exécution & groupe cible (≤ 200 mots)</label>
-          <textarea rows="3"
-                    class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm
-                           placeholder:text-gray-400 outline-none focus:border-green-600 focus:ring-4 focus:ring-green-100"
-                    formControlName="locationAndTarget"></textarea>
-          <div class="text-xs text-red-600" *ngIf="stepProp.get('locationAndTarget')?.errors?.['wordLimit']">
-            Max 200 mots (actuel : {{ stepProp.get('locationAndTarget')?.errors?.['wordLimit']?.actual }})
-          </div>
-        </div>
-
-        <div class="grid gap-1">
-          <label class="text-sm font-medium text-gray-700">Contexte & justification (≤ 500 mots)</label>
-          <textarea rows="6"
-                    class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm
-                           placeholder:text-gray-400 outline-none focus:border-green-600 focus:ring-4 focus:ring-green-100"
-                    formControlName="contextJustification"></textarea>
-          <div class="text-xs text-red-600" *ngIf="stepProp.get('contextJustification')?.errors?.['wordLimit']">
-            Max 500 mots (actuel : {{ stepProp.get('contextJustification')?.errors?.['wordLimit']?.actual }})
-          </div>
-        </div>
-      </form>
-    </div>
-
-    <!-- 2) Objectifs & résultats -->
-    <div *ngIf="current()===1" class="rounded-xl border bg-white p-5 md:p-6">
-      <h2 class="text-lg font-semibold mb-4">Objectifs du projet & Résultats</h2>
-      <form [formGroup]="stepObj" class="grid gap-5">
-        <div class="grid gap-1">
-          <label class="text-sm font-medium text-gray-700">Objectifs (≤ 200 mots)</label>
-          <textarea rows="4" class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                    formControlName="objectives" placeholder="Formulez des objectifs SMART…"></textarea>
-          <div class="text-xs text-red-600" *ngIf="stepObj.get('objectives')?.errors?.['wordLimit']">
-            Max 200 mots (actuel : {{ stepObj.get('objectives')?.errors?.['wordLimit']?.actual }})
-          </div>
-        </div>
-
-        <div class="grid gap-1">
-          <label class="text-sm font-medium text-gray-700">Résultats attendus (≤ 100 mots)</label>
-          <textarea rows="3" class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                    formControlName="expectedResults" placeholder="Changements mesurables attendus…"></textarea>
-          <div class="text-xs text-red-600" *ngIf="stepObj.get('expectedResults')?.errors?.['wordLimit']">
-            Max 100 mots (actuel : {{ stepObj.get('expectedResults')?.errors?.['wordLimit']?.actual }})
-          </div>
-        </div>
-
-        <div class="grid gap-1 max-w-xs">
-          <label class="text-sm font-medium text-gray-700">Durée (mois)</label>
-          <input type="number" min="1" max="48"
-                 class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                 formControlName="durationMonths" placeholder="12">
-        </div>
-      </form>
-    </div>
-
-    <!-- 3) Activités & calendrier -->
-    <section class="card">
-      <h2 class="card__title">Activités principales & calendrier d’exécution</h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="lbl">Date de début du projet *</label>
-          <input class="inp" type="date" formControlName="dateDebut">
+          <label class="block text-sm font-medium mb-1">Lieu d’exécution & groupe cible (≤ 200 mots)</label>
+          <textarea rows="4" class="w-full rounded-md border px-3 py-2" formControlName="locationAndTarget"></textarea>
+          <p *ngIf="prop.get('locationAndTarget')?.errors?.['wordLimit']" class="text-xs text-red-600 mt-1">
+            Limite dépassée ({{prop.get('locationAndTarget')?.errors?.['wordLimit'].actual}} / {{prop.get('locationAndTarget')?.errors?.['wordLimit'].max}} mots)
+          </p>
         </div>
+
         <div>
-          <label class="lbl">Date de fin du projet *</label>
-          <input class="inp" type="date" formControlName="dateFin">
+          <label class="block text-sm font-medium mb-1">Contexte & justification (≤ 500 mots)</label>
+          <textarea rows="6" class="w-full rounded-md border px-3 py-2" formControlName="contextJustification"></textarea>
+          <p *ngIf="prop.get('contextJustification')?.errors?.['wordLimit']" class="text-xs text-red-600 mt-1">
+            Limite dépassée ({{prop.get('contextJustification')?.errors?.['wordLimit'].actual}} / {{prop.get('contextJustification')?.errors?.['wordLimit'].max}} mots)
+          </p>
         </div>
       </div>
 
-      <div class="mt-4">
-        <label class="lbl">activités principales (200 mots)</label>
-        <textarea class="inp" rows="5" formControlName="principales"
-                  placeholder="Décrivez les grandes lignes des activités..."></textarea>
-      </div>
+      <!-- 2. Objectifs & résultats -->
+      <div *ngIf="current()===1" [formGroup]="obj" class="space-y-5">
+        <h2 class="text-xl font-bold">Objectifs du projet & Résultats</h2>
 
-      <div class="mt-6">
-        <div class="flex items-center justify-between mb-2">
-          <label class="lbl">Calendrier détaillé des activités</label>
-          <button type="button" class="btn btn--add" (click)="addActiviteRow()">＋ Ajouter</button>
+        <div>
+          <label class="block text-sm font-medium mb-1">Objectifs (≤ 200 mots)</label>
+          <textarea rows="5" class="w-full rounded-md border px-3 py-2" formControlName="objectives" placeholder="Formulez des objectifs SMART..."></textarea>
+          <p *ngIf="obj.get('objectives')?.errors?.['wordLimit']" class="text-xs text-red-600 mt-1">
+            Limite dépassée ({{obj.get('objectives')?.errors?.['wordLimit'].actual}} / {{obj.get('objectives')?.errors?.['wordLimit'].max}}).
+          </p>
         </div>
 
-        <div *ngFor="let row of calendrier().controls; let i = index" [formGroup]="row" class="cal-row">
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-            <div class="md:col-span-7">
-              <input class="inp" placeholder="Ex : Sensibilisation communautaire" formControlName="label">
+        <div>
+          <label class="block text-sm font-medium mb-1">Résultats attendus (≤ 100 mots)</label>
+          <textarea rows="4" class="w-full rounded-md border px-3 py-2" formControlName="expectedResults" placeholder="Changements mesurables attendus..."></textarea>
+          <p *ngIf="obj.get('expectedResults')?.errors?.['wordLimit']" class="text-xs text-red-600 mt-1">
+            Limite dépassée ({{obj.get('expectedResults')?.errors?.['wordLimit'].actual}} / {{obj.get('expectedResults')?.errors?.['wordLimit'].max}}).
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Durée (mois)</label>
+          <input type="number" min="1" class="w-40 rounded-md border px-3 py-2" formControlName="durationMonths">
+        </div>
+      </div>
+
+      <!-- 3. Activités & calendrier -->
+      <div *ngIf="current()===2" class="space-y-5">
+        <h2 class="text-xl font-bold">Activités principales & calendrier d’exécution</h2>
+
+        <div [formGroup]="activitiesHeader" class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Date de début du projet *</label>
+            <input type="date" class="w-full rounded-md border px-3 py-2" formControlName="startDate">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Date de fin du projet *</label>
+            <input type="date" class="w-full rounded-md border px-3 py-2" formControlName="endDate">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium mb-1">Activités principales (≤ 200 mots)</label>
+            <textarea rows="4" class="w-full rounded-md border px-3 py-2" formControlName="summary"
+                      placeholder="Décrivez les grandes lignes des activités..."></textarea>
+            <p *ngIf="activitiesHeader.get('summary')?.errors?.['wordLimit']" class="text-xs text-red-600 mt-1">
+              Limite dépassée ({{activitiesHeader.get('summary')?.errors?.['wordLimit'].actual}} / {{activitiesHeader.get('summary')?.errors?.['wordLimit'].max}}).
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">Calendrier détaillé des activités</h3>
+          <button type="button" class="px-3 py-1.5 rounded-md bg-emerald-600 text-white" (click)="addActivity()">+ Ajouter</button>
+        </div>
+
+        <div class="space-y-3">
+          <div *ngFor="let a of activities.controls; let i = index; trackBy: trackByIndex"
+               [formGroup]="a"
+               class="rounded-lg border p-3 grid md:grid-cols-[1fr_200px_200px_40px] gap-3 items-end">
+            <div>
+              <label class="block text-xs font-medium mb-1">Libellé</label>
+              <input type="text" class="w-full rounded-md border px-3 py-2" formControlName="label" placeholder="Ex : Sensibilisation communautaire">
             </div>
-            <div class="md:col-span-2">
-              <input class="inp" type="date" formControlName="debut">
+            <div>
+              <label class="block text-xs font-medium mb-1">Date début *</label>
+              <input type="date" class="w-full rounded-md border px-3 py-2" formControlName="start">
             </div>
-            <div class="md:col-span-2">
-              <input class="inp" type="date" formControlName="fin">
+            <div>
+              <label class="block text-xs font-medium mb-1">Date fin *</label>
+              <input type="date" class="w-full rounded-md border px-3 py-2" formControlName="end">
             </div>
-            <div class="md:col-span-1 flex justify-end">
-              <button type="button" class="btn btn--danger" (click)="removeActiviteRow(i)">🗑</button>
+            <div class="flex justify-end">
+              <button type="button" class="px-2 py-2 rounded-md border text-red-600" (click)="removeActivity(i)">🗑</button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- 4. Risques -->
+      <div *ngIf="current()===3" class="space-y-5">
+        <h2 class="text-xl font-bold">Risques & mesures d’atténuation</h2>
+
+        <div class="flex justify-end">
+          <button type="button" class="px-3 py-1.5 rounded-md bg-emerald-600 text-white" (click)="addRisk()">Ajouter un risque</button>
+        </div>
+
+        <div class="space-y-3">
+          <div *ngFor="let r of risks.controls; let i = index; trackBy: trackByIndex"
+               [formGroup]="r"
+               class="rounded-lg border p-3 grid md:grid-cols-[1fr_1fr_44px] gap-3 items-end">
+            <div>
+              <label class="block text-xs font-medium mb-1">Description</label>
+              <input type="text" class="w-full rounded-md border px-3 py-2" formControlName="description" placeholder="Ex : Crues exceptionnelles, blocage">
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1">Mesures d’atténuation</label>
+              <input type="text" class="w-full rounded-md border px-3 py-2" formControlName="mitigation" placeholder="Ex : Phasage, dispositifs anti-crue, ...">
+            </div>
+            <div class="flex justify-end">
+              <button type="button" class="px-2 py-2 rounded-md border text-red-600" (click)="removeRisk(i)">🗑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Budget -->
+      <div *ngIf="current()===4" [formGroup]="budget" class="space-y-5">
+        <h2 class="text-xl font-bold">Budget estimatif</h2>
+
+        <div class="rounded-lg border p-3 bg-sky-50 text-sm">Fourchette autorisée: <b>5 000 000 – 50 000 000 FCFA</b></div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Activités de terrain (FCFA)</label>
+          <input type="number" min="0" class="w-full rounded-md border px-3 py-2" formControlName="terrain">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Investissements (FCFA)</label>
+          <input type="number" min="0" class="w-full rounded-md border px-3 py-2" formControlName="invest">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Fonctionnement (FCFA)</label>
+          <input type="number" min="0" class="w-full rounded-md border px-3 py-2" formControlName="overhead">
+          <p *ngIf="overheadTooHigh()" class="text-xs text-red-600 mt-1">Les frais de fonctionnement dépassent 10% du total.</p>
+        </div>
+
+        <div class="rounded-lg border p-3 bg-emerald-50 flex items-center justify-between">
+          <div class="font-semibold">Total du projet</div>
+          <div class="text-lg font-bold">{{ totalBudget() | number:'1.0-0' }} FCFA</div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Part cofinanceur (si applicable, en FCFA)</label>
+          <input type="number" min="0" class="w-full rounded-md border px-3 py-2" formControlName="cofin">
+          <p class="text-xs text-slate-500 mt-1">Non obligatoire mais encouragée</p>
+        </div>
+      </div>
+
+      <!-- 6. État & financement -->
+      <div *ngIf="current()===5" [formGroup]="projectState" class="space-y-5">
+        <h2 class="text-xl font-bold">État d’avancement du projet</h2>
+
+        <div class="space-y-2">
+          <label class="flex items-center gap-3 rounded-lg border px-3 py-2">
+            <input type="radio" formControlName="stage" [value]="'CONCEPTION'"> Conception
+          </label>
+          <label class="flex items-center gap-3 rounded-lg border px-3 py-2">
+            <input type="radio" formControlName="stage" [value]="'DEMARRAGE'"> Démarrage
+          </label>
+          <label class="flex items-center gap-3 rounded-lg border px-3 py-2">
+            <input type="radio" formControlName="stage" [value]="'AVANCE'"> Avancé
+          </label>
+          <label class="flex items-center gap-3 rounded-lg border px-3 py-2">
+            <input type="radio" formControlName="stage" [value]="'PHASE_FINALE'"> Phase finale
+          </label>
+        </div>
+
+        <div class="mt-4">
+          <p class="font-medium mb-2">Avez-vous déjà demandé / obtenu un financement pour ce projet ?</p>
+          <div class="flex items-center gap-6">
+            <label class="flex items-center gap-2">
+              <input type="radio" formControlName="hasFunding" [value]="false"> Non
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="radio" formControlName="hasFunding" [value]="true"> Oui
+            </label>
+          </div>
+
+          <textarea *ngIf="projectState.get('hasFunding')?.value" rows="4" class="mt-3 w-full rounded-md border px-3 py-2"
+                    formControlName="fundingDetails" placeholder="Précisez les détails..."></textarea>
+        </div>
+      </div>
+
+      <!-- 7. Durabilité & réplication -->
+      <div *ngIf="current()===6" [formGroup]="sustainability" class="space-y-5">
+        <h2 class="text-xl font-bold">Durabilité et potentiel de réplication</h2>
+
+        <label class="block text-sm font-medium mb-1">Décrivez la durabilité et le potentiel de réplication (≤ 250 mots)</label>
+        <textarea rows="6" class="w-full rounded-md border px-3 py-2" formControlName="text"
+                  placeholder="Quels impacts positifs du projet se pérenniseront ? Le projet est-il réplicable ailleurs au Gabon ?"></textarea>
+        <p *ngIf="sustainability.get('text')?.errors?.['wordLimit']" class="text-xs text-red-600 mt-1">
+          Limite dépassée ({{sustainability.get('text')?.errors?.['wordLimit'].actual}} / {{sustainability.get('text')?.errors?.['wordLimit'].max}}).
+        </p>
+
+        <div class="rounded-lg border p-3 bg-emerald-50">
+          <h4 class="font-semibold mb-1">Points à considérer :</h4>
+          <ul class="list-disc ml-5 space-y-0.5">
+            <li>Impacts environnementaux durables</li>
+            <li>Renforcement des capacités locales</li>
+            <li>Modèle économique viable</li>
+            <li>Appropriation communautaire</li>
+            <li>Transférabilité à d’autres zones</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 8. Annexes -->
+      <div *ngIf="current()===7" [formGroup]="attachments" class="space-y-5">
+        <h2 class="text-xl font-bold">Annexes</h2>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Lettre de motivation</label>
+            <input type="file" [accept]="allowedAccept" (change)="onFile($event, 'LETTRE_MOTIVATION')" class="block w-full text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Statuts & règlement</label>
+            <input type="file" [accept]="allowedAccept" (change)="onFile($event, 'STATUTS_REGLEMENT')" class="block w-full text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Fiche circuit (PME/PMI/Startup)</label>
+            <input type="file" [accept]="allowedAccept" (change)="onFile($event, 'FICHE_CIRCUIT')" class="block w-full text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">CÔTE</label>
+            <input type="file" [accept]="allowedAccept" (change)="onFile($event, 'COTE')" class="block w-full text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Agrément / Récépissé</label>
+            <input type="file" [accept]="allowedAccept" (change)="onFile($event, 'AGREMENT')" class="block w-full text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">CV (porteur & responsables)</label>
+            <input type="file" [accept]="allowedAccept" (change)="onFile($event, 'CV')" class="block w-full text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Budget détaillé</label>
+            <input type="file" [accept]="allowedAccept" (change)="onFile($event, 'BUDGET_DETAILLE')" class="block w-full text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Chronogramme</label>
+            <input type="file" [accept]="allowedAccept" (change)="onFile($event, 'CHRONOGRAMME')" class="block w-full text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Cartographie (optionnel)</label>
+            <input type="file" [accept]="allowedAccept" (change)="onFile($event, 'CARTOGRAPHIE')" class="block w-full text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Lettre de soutien (optionnel)</label>
+            <input type="file" [accept]="allowedAccept" (change)="onFile($event, 'LETTRE_SOUTIEN')" class="block w-full text-sm">
+          </div>
+        </div>
+      </div>
+
+      <!-- 9. Récapitulatif -->
+      <div *ngIf="current()===8" class="space-y-5">
+        <h2 class="text-xl font-bold">Récapitulatif</h2>
+
+        <div class="space-y-3">
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Titre :</div>
+            <div class="text-sm">{{ form.value.prop?.title || '—' }}</div>
+          </div>
+
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Lieu & groupe cible :</div>
+            <div class="text-sm whitespace-pre-wrap">{{ form.value.prop?.locationAndTarget || '—' }}</div>
+          </div>
+
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Contexte :</div>
+            <div class="text-sm whitespace-pre-wrap">{{ form.value.prop?.contextJustification || '—' }}</div>
+          </div>
+
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Objectifs :</div>
+            <div class="text-sm whitespace-pre-wrap">{{ form.value.obj?.objectives || '—' }}</div>
+          </div>
+
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Résultats attendus :</div>
+            <div class="text-sm whitespace-pre-wrap">{{ form.value.obj?.expectedResults || '—' }}</div>
+          </div>
+
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Durée :</div>
+            <div class="text-sm">{{ form.value.obj?.durationMonths || 0 }} mois</div>
+          </div>
+
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Résumé activités :</div>
+            <div class="text-sm whitespace-pre-wrap">{{ form.value.activitiesHeader?.summary || '—' }}</div>
+            <div class="mt-2 font-semibold">Activités :</div>
+            <ul class="list-disc ml-5 text-sm">
+              <li *ngFor="let a of activities.controls; trackBy: trackByIndex">
+                {{ a.value['label'] }} — du {{ a.value['start'] }} au {{ a.value['end'] }}
+              </li>
+            </ul>
+          </div>
+
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Budget :</div>
+            <ul class="list-disc ml-5 text-sm">
+              <li>Activités de terrain — {{ budget.get('terrain')?.value || 0 | number:'1.0-0' }} FCFA</li>
+              <li>Investissements — {{ budget.get('invest')?.value || 0 | number:'1.0-0' }} FCFA</li>
+              <li>Fonctionnement — {{ budget.get('overhead')?.value || 0 | number:'1.0-0' }} FCFA</li>
+              <li class="font-semibold mt-1">Total — {{ totalBudget() | number:'1.0-0' }} FCFA</li>
+              <li *ngIf="budget.get('cofin')?.value">Cofinanceur — {{ budget.get('cofin')?.value | number:'1.0-0' }} FCFA</li>
+            </ul>
+          </div>
+
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">État :</div>
+            <div class="text-sm">
+              {{ projectState.get('stage')?.value === 'CONCEPTION' ? 'CONCEPTION'
+              : projectState.get('stage')?.value === 'DEMARRAGE' ? 'DÉMARRAGE'
+                : projectState.get('stage')?.value === 'AVANCE' ? 'AVANCÉ'
+                  : 'PHASE FINALE' }}
+            </div>
+            <div class="font-semibold mt-2">Financement :</div>
+            <div class="text-sm">
+              {{ projectState.get('hasFunding')?.value ? ('Oui — ' + (projectState.get('fundingDetails')?.value || '')) : 'Non' }}
+            </div>
+          </div>
+
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Durabilité / Réplication :</div>
+            <div class="text-sm whitespace-pre-wrap">{{ sustainability.get('text')?.value || '—' }}</div>
+          </div>
+
+          <div class="rounded-lg border p-3">
+            <div class="font-semibold">Annexes :</div>
+            <ul class="list-disc ml-5 text-sm">
+              <li *ngFor="let k of (attachments.controls | keyvalue)">
+                {{ k.key }} —
+                <ng-container *ngIf="attachments.get(k.key)?.value as f; else none">
+                  {{ f?.name }} ({{ (f?.size || 0) | number:'1.0-0' }} o)
+                </ng-container>
+                <ng-template #none> Aucun fichier </ng-template>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button class="px-4 py-2 rounded-md border" (click)="prev()">Retour</button>
+          <button class="px-4 py-2 rounded-md bg-emerald-600 text-white" (click)="submit()">Soumettre</button>
         </div>
       </div>
     </section>
 
-
-
-    <!-- 4) Risques -->
-    <div *ngIf="current()===3" class="rounded-xl border bg-white p-5 md:p-6">
-      <h2 class="text-lg font-semibold mb-4">Risques & mesures d’atténuation</h2>
-
-      <div class="flex items-center justify-between">
-        <span></span>
-        <button type="button" class="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-sm"
-                (click)="addRisk()">Ajouter un risque</button>
-      </div>
-
-      <div class="mt-3 grid gap-4">
-        <div class="rounded-xl border p-3"
-             *ngFor="let r of risks.controls; let i = index; trackBy: trackByIndex"
-             [formGroup]="r">
-          <div class="grid gap-3 md:grid-cols-[1fr,1fr,auto] md:items-center">
-            <div class="grid gap-1">
-              <label class="text-sm font-medium text-gray-700">Description</label>
-              <input class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                     formControlName="description" placeholder="Ex : Crues exceptionnelles…">
-            </div>
-            <div class="grid gap-1">
-              <label class="text-sm font-medium text-gray-700">Mesures d’atténuation</label>
-              <input class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                     formControlName="mitigation" placeholder="Ex : Phasage, dispositifs anti-crue…">
-            </div>
-            <button type="button" class="h-10 w-10 inline-grid place-items-center rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
-                    (click)="removeRisk(i)">🗑</button>
-          </div>
+    <!-- Guide -->
+    <aside class="lg:border-l lg:pl-6">
+      <div class="sticky top-4 space-y-4">
+        <div class="rounded-xl border bg-white p-4">
+          <div [innerHTML]="guideHtml[current()]"></div>
+        </div>
+        <div class="rounded-xl border bg-white p-4">
+          <h4 class="font-semibold text-emerald-700 mb-1">Conseils pratiques</h4>
+          <ul class="list-disc ml-5 space-y-1">
+            <li><b>Soyez clair et concis</b> : allez à l’essentiel pour susciter l’intérêt.</li>
+            <li><b>Impact</b> : mettez en avant les bénéfices concrets.</li>
+            <li><b>Alignement</b> : cohérence avec les objectifs/priorités FPBG et les appels en cours.</li>
+            <li><b>Professionnalisme</b> : respect des limites de mots, chiffres vérifiés.</li>
+          </ul>
+          <hr class="my-3">
+          <div [innerHTML]="conseilsHtml[current()]"></div>
         </div>
       </div>
-    </div>
+    </aside>
 
-    <!-- 5) Budget -->
-    <div *ngIf="current()===4" class="rounded-xl border bg-white p-5 md:p-6">
-      <h2 class="text-lg font-semibold mb-4">Budget estimatif</h2>
-      <div class="flex items-center justify-between">
-        <span></span>
-        <button type="button" class="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-sm"
-                (click)="addBudgetLine()">Ajouter une ligne</button>
-      </div>
-
-      <div class="mt-3 grid gap-4">
-        <div class="rounded-xl border p-3"
-             *ngFor="let b of budgetLines.controls; let i = index; trackBy: trackByIndex"
-             [formGroup]="b">
-          <div class="grid gap-3 md:grid-cols-5">
-            <div class="grid gap-1">
-              <label class="text-sm font-medium text-gray-700">Catégorie</label>
-              <select class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                      formControlName="category">
-                <option value="ACTIVITES_TERRAIN">Activités de terrain</option>
-                <option value="INVESTISSEMENTS">Investissements</option>
-                <option value="FONCTIONNEMENT">Fonctionnement</option>
-              </select>
-            </div>
-            <div class="grid gap-1 md:col-span-2">
-              <label class="text-sm font-medium text-gray-700">Description</label>
-              <input class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                     formControlName="description">
-            </div>
-            <div class="grid gap-1">
-              <label class="text-sm font-medium text-gray-700">Total</label>
-              <input type="number" min="0" class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                     formControlName="total">
-            </div>
-            <div class="grid gap-1">
-              <label class="text-sm font-medium text-gray-700">Part FPBG</label>
-              <input type="number" min="0" class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                     formControlName="partFPBG">
-            </div>
-            <div class="grid gap-1">
-              <label class="text-sm font-medium text-gray-700">Co-finance</label>
-              <input type="number" min="0" class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                     formControlName="partCofinance">
-            </div>
-          </div>
-          <div class="mt-1 text-xs text-red-600" *ngIf="b.errors?.['amountsMismatch']">La somme (FPBG + cofinancement) doit égaler le Total.</div>
-          <div class="mt-2">
-            <button type="button" class="h-10 w-10 inline-grid place-items-center rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
-                    (click)="removeBudgetLine(i)">🗑</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="mt-2 text-xs text-red-600" *ngIf="budgetError">Alerte : les lignes « Fonctionnement » dépassent 10 % du total.</div>
-    </div>
-
-    <!-- 6) État & financement -->
-    <div *ngIf="current()===5" class="rounded-xl border bg-white p-5 md:p-6">
-      <h2 class="text-lg font-semibold mb-4">État d’avancement & financement</h2>
-      <form [formGroup]="stateStep" class="grid gap-5">
-        <div class="grid gap-1 max-w-md">
-          <label class="text-sm font-medium text-gray-700">État d’avancement</label>
-          <select class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                  formControlName="projectStage">
-            <option value="CONCEPTION">Conception</option>
-            <option value="DEMARRAGE">Démarrage</option>
-            <option value="AVANCE">Avancé</option>
-            <option value="PHASE_FINALE">Phase finale</option>
-          </select>
-        </div>
-        <label class="inline-flex items-center gap-2 text-sm">
-          <input type="checkbox" formControlName="hasFunding" class="h-4 w-4 rounded border-gray-300 text-green-600">
-          Financement déjà demandé/obtenu ?
-        </label>
-        <div class="grid gap-1">
-          <label class="text-sm font-medium text-gray-700">Précisez (bailleur, montant, statut…)</label>
-          <textarea rows="3" class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                    formControlName="fundingDetails"></textarea>
-        </div>
-      </form>
-    </div>
-
-    <!-- 7) Durabilité & réplication -->
-    <div *ngIf="current()===6" class="rounded-xl border bg-white p-5 md:p-6">
-      <h2 class="text-lg font-semibold mb-4">Durabilité & potentiel de réplication</h2>
-      <form [formGroup]="sustainabilityStep" class="grid gap-5">
-        <div class="grid gap-1">
-          <label class="text-sm font-medium text-gray-700">Durabilité (comment les effets perdurent ?)</label>
-          <textarea rows="4" class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                    formControlName="sustainability"></textarea>
-        </div>
-        <div class="grid gap-1">
-          <label class="text-sm font-medium text-gray-700">Potentiel de réplication (ailleurs au Gabon ?)</label>
-          <textarea rows="4" class="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-[15px] shadow-sm"
-                    formControlName="replicability"></textarea>
-        </div>
-      </form>
-    </div>
-
-    <!-- 8) Annexes -->
-    <div *ngIf="current()===7" class="rounded-xl border bg-white p-5 md:p-6">
-      <h2 class="text-lg font-semibold mb-4">Annexes</h2>
-      <div class="grid gap-4 md:grid-cols-2">
-        <ng-container *ngFor="let key of ['LETTRE_MOTIVATION','STATUTS_REGLEMENT','FICHE_CIRCUIT','RIB','AGREMENT','CV','BUDGET_DETAILLE','CHRONOGRAMME','CARTOGRAPHIE','LETTRE_SOUTIEN']; trackBy: trackByIndex">
-          <div class="grid gap-1">
-            <label class="text-sm font-medium text-gray-700">
-              {{ key.replaceAll('_',' ') | lowercase }}
-            </label>
-            <input
-              type="file"
-              [attr.accept]="allowedAccept"
-              class="block w-full text-sm text-gray-700 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border file:border-gray-300 file:bg-gray-50 hover:file:bg-gray-100"
-              (change)="onFileChange($event, key)"
-            >
-
-          </div>
-        </ng-container>
-      </div>
-    </div>
-
-    <!-- 9) Récapitulatif -->
-    <div *ngIf="current()===8" class="rounded-xl border bg-white p-5 md:p-6">
-      <h2 class="text-lg font-semibold mb-4">Récapitulatif</h2>
-
-      <div class="rounded-xl border p-3 mb-3">
-        <strong>Titre :</strong> {{ stepProp.value.title }}<br>
-        <strong>Domaines :</strong> {{ (stepProp.value.domains||[]).join(', ') || '—' }}<br>
-        <strong>Lieu & groupe cible :</strong> {{ stepProp.value.locationAndTarget || '—' }}<br>
-        <strong>Contexte :</strong> {{ stepProp.value.contextJustification || '—' }}
-      </div>
-
-      <div class="rounded-xl border p-3 mb-3">
-        <strong>Objectifs :</strong> {{ stepObj.value.objectives || '—' }}<br>
-        <strong>Résultats attendus :</strong> {{ stepObj.value.expectedResults || '—' }}<br>
-        <strong>Durée :</strong> {{ stepObj.value.durationMonths }} mois
-      </div>
-
-      <div class="rounded-xl border p-3 mb-3">
-        <strong>Résumé activités :</strong> {{ activitiesSummary.value || '—' }}<br>
-        <strong>Activités :</strong>
-        <ul class="list-disc ml-5">
-          <li *ngFor="let a of activities.controls; trackBy: trackByIndex">
-            {{ a.value.label }} — Mois : {{ formatMonths(a.get('months')?.value) }}
-          </li>
-        </ul>
-      </div>
-
-      <div class="rounded-xl border p-3 mb-3">
-        <strong>Budget :</strong>
-        <ul class="list-disc ml-5">
-          <li *ngFor="let b of budgetLines.controls; trackBy: trackByIndex">
-            {{ b.get('category')?.value || '' }}
-            — {{ b.get('description')?.value || '' }}
-            — Total: {{ (b.get('total')?.value || 0) | number:'1.0-0' }}
-          </li>
-        </ul>
-        <div class="text-xs text-red-600" *ngIf="budgetError">Alerte : « Fonctionnement » &gt; 10 %.</div>
-      </div>
-
-      <div class="rounded-xl border p-3 mb-3">
-        <strong>État :</strong> {{ stateStep.value.projectStage }}<br>
-        <strong>Financement :</strong> {{ stateStep.value.hasFunding ? 'Oui' : 'Non' }} — {{ stateStep.value.fundingDetails || '—' }}
-      </div>
-
-      <div class="rounded-xl border p-3 mb-3">
-        <strong>Durabilité :</strong> {{ sustainabilityStep.value.sustainability || '—' }}<br>
-        <strong>Réplication :</strong> {{ sustainabilityStep.value.replicability || '—' }}
-      </div>
-
-      <div class="mt-3 flex gap-2">
-        <button class="px-3 py-2 rounded-lg border hover:bg-slate-50" (click)="prev()">Retour</button>
-        <button class="px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700" (click)="submit()">Soumettre</button>
-      </div>
-    </div>
-
-  </section>
-
-  <!-- ===== Colonne Aide (droite) ===== -->
-  <aside class="sticky top-4 h-max rounded-xl border bg-white p-5">
-    <h3 class="text-base font-semibold mb-2">
-      <span class="inline-block rounded-md bg-green-100 text-green-800 px-2 py-0.5 text-xs align-middle">Guide</span>
-      {{ help[current()].title }}
-    </h3>
-    <div class="space-y-2 text-sm text-gray-700" [innerHTML]="help[current()].html"></div>
-
-    <div class="mt-5 border-t pt-4">
-      <h4 class="text-sm font-semibold mb-1 text-green-700">Conseils pratiques</h4>
-      <div class="space-y-2 text-sm text-gray-700" [innerHTML]="adviceHtml"></div>
-    </div>
-
-    <div class="mt-5 border-t pt-4">
-      <h4 class="text-sm font-semibold mb-1 text-green-700">Sélection des dossiers</h4>
-      <div class="space-y-2 text-sm text-gray-700" [innerHTML]="selectionHtml"></div>
-    </div>
-  </aside>
+  </div>
 </div>
