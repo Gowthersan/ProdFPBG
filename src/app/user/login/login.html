@@ -1,80 +1,43 @@
-<!-- Fond plein écran -->
 <div class="min-h-screen grid place-items-center bg-[#1f3b52] px-4">
-  <!-- Carte -->
-  <div class="w-full max-w-xl rounded-2xl bg-[#112B3C] text-white p-8 shadow-2xl border border-white/10">
+  <div class="w-full max-w-3xl rounded-3xl bg-[#0F2434] text-white p-8 md:p-10 shadow-2xl border border-white/10">
 
-    <!-- Logo -->
-    <div class="flex justify-center">
-      <img src="assets/logo.png" alt="FPBG" class="h-14 w-auto" />
-    </div>
-
-    <!-- Titre -->
-    <h1 class="mt-4 text-center text-4xl font-bold">Bienvenue</h1>
+    <div class="flex justify-center"><img src="assets/logo.png" alt="FPBG" class="h-12 w-auto" /></div>
+    <h1 class="mt-4 text-center text-3xl font-bold">Bienvenue</h1>
 
     <!-- Onglets -->
-    <div class="mt-6 grid grid-cols-2 gap-3">
-      <a
-        routerLink="/login"
-        routerLinkActive="bg-green-600 text-white"
-        [routerLinkActiveOptions]="{ exact: true }"
-        class="rounded-md bg-[#173B52] text-slate-200 px-4 py-2 text-sm font-semibold text-center hover:bg-[#1C4660] transition"
-      >Connexion</a>
-
-      <a
-        routerLink="/register"
-        routerLinkActive="bg-green-600 text-white"
-        [routerLinkActiveOptions]="{ exact: true }"
-        class="rounded-md bg-[#173B52] text-slate-200 px-4 py-2 text-sm font-semibold text-center hover:bg-[#1C4660] transition"
-      >Inscription</a>
+    <div class="mt-6 mx-auto grid grid-cols-2 gap-6 max-w-md">
+      <button class="rounded-md bg-green-600 px-6 py-2 text-center font-semibold">Connexion</button>
+      <a routerLink="/register" class="rounded-md bg-[#1F3B52] text-slate-200 px-6 py-2 text-center font-semibold hover:bg-[#21435e] transition">
+        Inscription
+      </a>
     </div>
 
-    <!-- Formulaire -->
-    <form (ngSubmit)="submit()" [formGroup]="form" class="mt-6 space-y-4">
-      <!-- Email -->
+    <!-- pas de step ici -->
+    <h2 class="mt-7 text-center text-lg font-semibold">Identifiants</h2>
+
+    <div *ngIf="error()" class="mt-4 rounded-md border border-red-500/30 bg-red-500/10 text-red-200 px-4 py-3">{{ error() }}</div>
+
+    <form class="mt-6 grid gap-4 max-w-2xl mx-auto" [formGroup]="form" (ngSubmit)="submit()">
       <div>
-        <label class="block text-sm mb-1">Adresse e-mail</label>
-        <input
-          type="email"
-          formControlName="email"
-          placeholder="votre.email@exemple.com"
-          class="w-full rounded-lg bg-[#1f4a63] border border-white/10 text-white placeholder-white/60 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-        <p class="mt-1 text-xs text-red-400" *ngIf="form.controls.email.touched && form.controls.email.invalid">
-          Email invalide
-        </p>
+        <label class="block text-sm text-slate-300 mb-1">Personne de contact</label>
+        <!-- NOTE: formControlName = 'contact' (adapter login.ts si besoin) -->
+        <input type="text" formControlName="contact"
+               class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
+               placeholder="Nom Prénom" />
       </div>
 
-      <!-- Mot de passe + lien oublié -->
       <div>
-        <div class="flex items-center justify-between">
-          <label class="block text-sm mb-1">Mot de passe</label>
-          <a routerLink="/forgot-password" class="text-xs text-green-400 hover:text-green-300">
-            Mot de passe oublié ?
-          </a>
-        </div>
-        <input
-          type="password"
-          formControlName="password"
-          placeholder="votre mot de passe"
-          class="w-full rounded-lg bg-[#1f4a63] border border-white/10 text-white placeholder-white/60 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-        <p class="mt-1 text-xs text-red-400" *ngIf="form.controls.password.touched && form.controls.password.invalid">
-          6 caractères minimum
-        </p>
+        <label class="block text-sm text-slate-300 mb-1">Mot de passe</label>
+        <input type="password" formControlName="password"
+               class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
+               placeholder="********" />
       </div>
 
-      <!-- Bouton -->
-      <button
-        class="w-full rounded-lg bg-green-600 py-3 font-semibold hover:bg-green-700 disabled:opacity-60"
-        [disabled]="loading || form.invalid">
-        {{ loading ? 'Connexion...' : 'Se connecter' }}
-      </button>
-
-      <!-- Lien bas -->
-      <p class="text-center text-sm text-slate-300">
-        Pas de compte ?
-        <a routerLink="/register" class="underline underline-offset-2 text-white">Créer un compte</a>
-      </p>
+      <div class="mt-3 flex justify-center">
+        <button [disabled]="loading()" class="rounded-md bg-green-600 hover:bg-green-500 px-8 py-2.5 font-semibold disabled:opacity-60">
+          Se connecter
+        </button>
+      </div>
     </form>
   </div>
 </div>

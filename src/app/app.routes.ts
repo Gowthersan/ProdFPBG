@@ -1,35 +1,18 @@
+// app.routes.ts (exemple)
 import { Routes } from '@angular/router';
-import { authGuard } from './core/auth.guard';
-import { adminGuard } from './core/admin.guard';
-import { redirectIfLoggedIn } from './core/redirect-if-logged-in.guard';
+import { userRoutes } from './user/user.routes';
 
 export const routes: Routes = [
-  // Accueil publique (landing)
-  { path: '', loadComponent: () => import('./user/home/home').then(m => m.Home) },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
-  // Auth publique (redirige vers dashboard si déjà connecté)
-  { path: 'login', canMatch: [redirectIfLoggedIn], loadComponent: () => import('./user/login/login').then(m => m.Login) },
-  { path: 'register', canMatch: [redirectIfLoggedIn], loadComponent: () => import('./user/registration/registration').then(m => m.Registration) },
-  { path: 'otp', loadComponent: () => import('./auth/otp.component').then(m => m.OtpComponent) },
+  // Public global
+  { path: 'login', loadComponent: () => import('./user/login/login').then(m => m.Login) },
+  { path: 'register', loadComponent: () => import('./user/registration/registration').then(m => m.Registration) },
+  { path: 'otp', loadComponent: () => import('./user/otp/otp').then(m => m.Otp) },
 
-  // Dashboard User (protégé)
-  { path: 'dashboard', canMatch: [authGuard], loadComponent: () => import('./user/dashboard/dashboard').then(m => m.Dashboard) },
-  { path: 'form', canMatch: [authGuard], loadComponent: () => import('./user/form/submission-wizard/submission-wizard').then(m => m.SubmissionWizard) },
+  // Groupe "user"
+  { path: '', children: userRoutes }, // ⬅️ monte TOUT le bloc user ici
 
-  // ===== Admin =====
-  { path: 'admin/login', canMatch: [redirectIfLoggedIn], loadComponent: () => import('./admin/login/login').then(m => m.Login) },
-
-  // Récap projet (page dédiée) — ex: /admin/recap/123
-  { path: 'admin/recap/:id', canMatch: [adminGuard],
-    loadComponent: () => import('./admin/recap/recap').then(m => m.SubmissionRecap)
-  },
-
-  // Tableau de bord admin (liste)
-  { path: 'admin', canMatch: [adminGuard],
-    loadComponent: () => import('./admin/dashboard/dashboard').then(m => m.Dashboard)
-  },
-
-  // Fallback
-  { path: '**', redirectTo: 'login' }
+  // 404
+  { path: '**', redirectTo: 'login' },
 ];

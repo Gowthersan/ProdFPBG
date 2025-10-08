@@ -1,39 +1,127 @@
-// registration.ts
-import { Component, inject } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule /*, Validators*/ } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { AuthService } from '../../core/auth.service';
-import { OtpService } from '../../auth/otp.service'; // ✅ OTP
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, RouterLinkActive, NgOptimizedImage],
-  templateUrl: './registration.html'
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  templateUrl: './registration.html',
 })
 export class Registration {
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  private auth = inject(AuthService);
-  private otpService = inject(OtpService); // ✅ OTP
 
-  form = this.fb.group({
-    fullName: [''],
-    email: [''],
-    password: [''],
-    confirm: [''],
+  // état UI
+  public step = signal<1 | 2>(1);
+  public loading = signal(false);
+  public error = signal<string | null>(null);
+
+  // listes
+  public orgTypes = [
+    'Secteur privé (PME, PMI, Startups)',
+    'ONG et Associations',
+    'Coopératives communautaires',
+    'Communautés organisées',
+    'Entités gouvernementales',
+    'Organismes de recherche',
+  ];
+  public coverages = ['Locales', 'Nationales', 'Régionales', 'Internationales'];
+  public grantTypes = ['Petite subvention', 'Moyenne subvention']; // ⬅️ AJOUT
+
+  // form commun aux 2 étapes
+  public form = this.fb.group({
+    // ÉTAPE 1 — organisme
+    orgName: ['', Validators.required],
+    orgType: ['', Validators.required],
+    coverage: ['', Validators.required],
+    grantType: ['', Validators.required],                    // ⬅️ AJOUT
+    orgEmail: ['', [Validators.required, Validators.email]],
+    orgPhone: ['', Validators.required],
+
+    // ÉTAPE 2 — demandeur + credentials
+    contact: ['', Validators.required],
+    position: [''],
+    phone: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+    confirm: ['', [Validators.required, Validators.minLength(6)]],
   });
 
-  submit() {
-    // 1) “création” locale (mock)
-    const { email, fullName } = this.form.value as { email?: string; fullName?: string };
-    const safeEmail = (email || '').trim() || 'demo@fpbg.local';
-    const safeName  = (fullName || '').trim() || 'Porteur de projet';
-    this.auth.loginApplicant?.(safeEmail, safeName) ?? this.auth.register?.(this.form.value as any);
+  // passage étape 1 -> 2
+  public next() {
+    this.error.set(null);
 
-    // 2) Émettre un OTP (mock) et 3) rediriger vers /otp avec l’email
-    this.otpService.issue(safeEmail);
-    this.router.navigate(['/otp'], { queryParams: { email: safeEmail } });
+    // Contrôles réellement présents à l'étape 1
+    const step1Ctrls = [
+      this.form.controls.orgName,
+      this.form.controls.orgType,
+      this.form.controls.coverage,
+      this.form.controls.orgEmail,
+      this.form.controls.orgPhone,
+    ];
+
+    // Si grantType existe SUR LE FORMULAIRE, on le valide, sinon on l’ignore
+    const grantTypeCtrl = this.form.get('grantType');
+    if (grantTypeCtrl) step1Ctrls.push(grantTypeCtrl as any);
+
+    const invalid = step1Ctrls.some(c => c.invalid);
+    if (invalid) {
+      step1Ctrls.forEach(c => c.markAsTouched());
+      this.error.set('Veuillez compléter correctement les informations de l’organisme.');
+      return;
+    }
+
+    // Préremplissage de l’étape 2 si vide
+    if (!this.form.controls.email.value) {
+      this.form.controls.email.setValue(this.form.controls.orgEmail.value as string);
+    }
+    if (!this.form.controls.phone.value) {
+      this.form.controls.phone.setValue(this.form.controls.orgPhone.value as string);
+    }
+
+    this.step.set(2);
+  }
+
+  // soumission finale → OTP
+  public submit() {
+    this.error.set(null);
+
+    if (this.form.invalid) { this.form.markAllAsTouched(); this.error.set('Veuillez compléter tous les champs requis.'); return; }
+    if (this.form.value.password !== this.form.value.confirm) {
+      this.error.set('Les mots de passe ne correspondent pas.'); return;
+    }
+
+    const data = {
+      orgName: this.form.value.orgName!,
+      orgType: this.form.value.orgType!,
+      coverage: this.form.value.coverage!,
+      grantType: this.form.value.grantType!,                 // ⬅️ AJOUT
+      orgEmail: this.form.value.orgEmail!,
+      orgPhone: this.form.value.orgPhone!,
+      contact: this.form.value.contact!,
+      position: this.form.value.position || '',
+      phone: this.form.value.phone!,
+      email: this.form.value.email!,
+      password: this.form.value.password!,
+    };
+
+    const pending = {
+      data,
+      otp: this.genOTP(),
+      emailTo: data.email,
+      expiresAt: Date.now() + 10 * 60 * 1000
+    };
+
+    localStorage.setItem('fpbg.pendingReg', JSON.stringify(pending));
+    localStorage.setItem('fpbg.autofillLogin', '1'); // pour préremplir la connexion ensuite
+
+    this.router.navigate(['/otp'], { queryParams: { email: pending.emailTo } });
+  }
+
+  // helper
+  private genOTP(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 }

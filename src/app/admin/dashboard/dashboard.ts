@@ -15,7 +15,7 @@ const ADMIN_DATA_KEY = 'fpbg_admin_records';
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DatePipe, NgClass, JsonPipe],
+  imports: [CommonModule, ReactiveFormsModule, DatePipe, NgClass],
   templateUrl: './dashboard.html'
 })
 export class Dashboard {

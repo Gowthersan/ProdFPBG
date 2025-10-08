@@ -7,7 +7,7 @@ import { NgClass } from '@angular/common';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NgClass, RouterLink],
+  imports: [RouterOutlet, NgClass],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
