@@ -14,6 +14,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { debounceTime } from 'rxjs/operators';
 
+
 /* ==============================
    Constantes & utils
    ============================== */
@@ -80,6 +81,20 @@ export class SubmissionWizard {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private sanitizer = inject(DomSanitizer);
+
+  //bouton retour
+  backToDashboard(): void {
+    this.router.navigateByUrl('/dashboard');
+  }
+
+  // Optionnel : Alt + Flèche gauche = retour
+  onKeydown(e: KeyboardEvent) {
+    if (e.altKey && e.key === 'ArrowLeft') {
+      e.preventDefault();
+      this.backToDashboard();
+    }
+  }
+
 
   /* ---- Steps ---- */
   steps = [
@@ -223,6 +238,7 @@ export class SubmissionWizard {
   });
 
   allowedAccept = ALLOWED_MIME.join(',');
+  lastSavedAt = signal<number | null>(null);
 
   /* ==============================
      Cycle de vie
@@ -248,11 +264,25 @@ export class SubmissionWizard {
     // autosave
     this.form.valueChanges.pipe(debounceTime(350))
       .subscribe(v => localStorage.setItem(LS_DRAFT_KEY, JSON.stringify(v)));
+    // Autosave
+    this.form.valueChanges.pipe(debounceTime(400)).subscribe(v => {
+      localStorage.setItem(LS_DRAFT_KEY, JSON.stringify(v));
+      this.lastSavedAt.set(Date.now()); // ⬅️ on met à jour l’heure de sauvegarde
+    });
 
+    // si tu veux afficher une valeur dès l’ouverture
+    this.lastSavedAt.set(Date.now());
     // précharger guides
     this.loadGuides();
   }
 
+  // utilisé par le header
+  lastSaved(): string {
+    const t = this.lastSavedAt();
+    if (!t) return '—';
+    const d = new Date(t);
+    return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
   /* ==============================
      Méthodes UI
      ============================== */
