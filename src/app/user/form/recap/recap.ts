@@ -1,8 +1,8 @@
+// app/user/form/recap/recap.ts
 import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
-// --- Types existants inchangés ---
 type SubmissionStatus = 'BROUILLON' | 'SOUMIS' | 'EN_REVUE' | 'ACCEPTE' | 'REFUSE';
 
 interface Activity { label: string; months?: number[]; }
@@ -35,20 +35,25 @@ interface Submission {
   budgetLines?: BudgetLine[];
   stateStep?: StateStep;
   sustainabilityStep?: SustainabilityStep;
-  attachments?: Record<string, string>; // nom -> filename/url
+  attachments?: Record<string, string>;
   status?: SubmissionStatus;
-  updatedAt?: number;  // timestamp
+  updatedAt?: number;
 }
+
+const ADMIN_DATA_KEY = 'fpbg_admin_records';   // liste des dossiers "soumis" (ton wizard l’écrit)
+const SUBMISSION_META_KEY = 'submission_meta'; // { id, status, updatedAt } (écrit au submit)
+const DRAFT_KEYS = ['fpbg.nc.draft', 'fpbg_submission_v2']; // brouillon (selon version)
 
 @Component({
   selector: 'app-submission-recap',
   standalone: true,
   imports: [CommonModule, RouterLink, DatePipe],
-  templateUrl: './recap.html'
+  templateUrl: './recap.html',
 })
 export class SubmissionRecap implements OnInit, OnDestroy {
+  private route = inject(ActivatedRoute);
 
-  // ---------- Démo : données statiques si rien dans le localStorage ----------
+  /** ===== Démo par défaut si rien dans le LS ===== */
   private staticDemo: Submission = {
     step1: {
       orgName: 'Association Rivière Claire',
@@ -58,85 +63,174 @@ export class SubmissionRecap implements OnInit, OnDestroy {
       domains: 'Conservation, ingénierie écologique, sensibilisation',
       address: 'Baie des Rois, Immeuble FGIS 2ème étage',
       contactEmail: 'contact@riviereclaire.org',
-      contactPhone: '+241 06 00 00 00'
+      contactPhone: '+241 06 00 00 00',
     },
     step2: {
       title: 'Restauration de 3 km de berges pour la résilience climatique',
       locationAndTarget:
-        'Zones d’intervention : rivières Nkomi et Komo (communes X et Y). Groupes cibles : 6 villages riverains (~2 300 hab.), pêcheurs artisanaux, comités de gestion locaux.',
+        'Rivières Nkomi & Komo. Groupes cibles : villages riverains, pêcheurs artisanaux, comités locaux.',
       contextJustification:
-        'Érosion accélérée, turbidité élevée, perte d’habitats aquatiques. Causes : déboisement des ripisylves, pression agricole, crues extrêmes. ' +
-        'Le projet propose fascines et enrochements végétalisés, replantation d’espèces indigènes, suivi hydrologique et sensibilisation communautaire.'
+        'Érosion des berges, turbidité, perte d’habitats. Ingénierie écolo, replantation, suivi & sensibilisation.',
     },
     step3: {
       objectives:
-        'Obj.1 Restaurer la stabilité des berges et réduire l’érosion ; ' +
-        'Obj.2 Améliorer la qualité de l’eau ; Obj.3 Renforcer la gouvernance locale et la participation.',
+        'Stabiliser les berges ; améliorer la qualité de l’eau ; renforcer la gouvernance locale.',
       expectedResults:
-        '3 km de berges traitées ; 18 000 plants indigènes ; 6 comités formés ; amélioration mesurable de la turbidité.',
-      durationMonths: 12
+        '3 km traités ; 18 000 plants ; 6 comités formés ; indicateurs qualité eau en progrès.',
+      durationMonths: 12,
     },
     activitiesSummary:
-      'Cartographie fine, plan d’ingénierie écologique, travaux de stabilisation, replantation, suivi qualité eau, ' +
-      'sensibilisation et formation des comités.',
+      'Cartographie, plan d’ingénierie, travaux, replantation, suivi hydrologique, sensibilisation.',
     activities: [
-      { label: 'Cartographie & diagnostic', months: [1,2] },
-      { label: 'Ingénierie écologique (fascines/enrochements)', months: [3,4,5] },
-      { label: 'Replantation espèces indigènes', months: [6,7,8] },
-      { label: 'Suivi hydrologique & biodiversité', months: [2,6,9,12] },
-      { label: 'Sensibilisation communautaire', months: [1,4,7,10] },
+      { label: 'Cartographie & diagnostic', months: [1, 2] },
+      { label: 'Ingénierie écologique', months: [3, 4, 5] },
+      { label: 'Replantation', months: [6, 7, 8] },
+      { label: 'Suivi & biodiversité', months: [2, 6, 9, 12] },
+      { label: 'Sensibilisation', months: [1, 4, 7, 10] },
     ],
     risks: [
-      { description: 'Crues exceptionnelles', mitigation: 'Fenêtre de travaux adaptée + protections temporaires' },
-      { description: 'Blocages administratifs', mitigation: 'Concertation précoce avec autorités locales' }
+      { description: 'Crues exceptionnelles', mitigation: 'Fenêtre travaux + protections provisoires' },
+      { description: 'Blocages administratifs', mitigation: 'Concertation précoce autorités' },
     ],
     budgetLines: [
-      { category: 'ACTIVITES_TERRAIN', description: 'Travaux d’ingénierie écologique', total: 55000000 },
-      { category: 'INVESTISSEMENTS', description: 'Matériels de suivi hydrologique', total: 12000000 },
-      { category: 'FONCTIONNEMENT', description: 'Coordination & logistique', total: 6000000 }
+      { category: 'ACTIVITES_TERRAIN', description: 'Travaux ingénierie écolo', total: 55_000_000 },
+      { category: 'INVESTISSEMENTS', description: 'Matériels de suivi', total: 12_000_000 },
+      { category: 'FONCTIONNEMENT', description: 'Coordination & logistique', total: 6_000_000 },
     ],
-    stateStep: { projectStage: 'DEMARRAGE', hasFunding: true, fundingDetails: 'Co-finance Bailleurs A/B : 20 M FCFA, accord de principe' },
+    stateStep: { projectStage: 'DEMARRAGE', hasFunding: true, fundingDetails: 'Co-fin A/B : 20 M FCFA' },
     sustainabilityStep: {
-      sustainability: 'Maintenance confiée aux comités ; convention communale ; transfert de compétences.',
-      replicability: 'Modèle réplicable dans 2 bassins voisins (conditions : coût/ha, matériaux, capacité locale).'
+      sustainability: 'Maintenance par comités ; convention communale.',
+      replicability: 'Réplicable dans 2 bassins voisins.',
     },
     attachments: {
-      LETTRE_MOTIVATION: 'Lettre_RiviereClaire.pdf',
-      STATUTS_REGLEMENT: 'Statuts_ONG.pdf',
-      BUDGET_DETAILLE: 'Budget_detaille.xlsx'
+      LETTRE_MOTIVATION: 'Lettre.pdf',
+      STATUTS_REGLEMENT: 'Statuts.pdf',
+      BUDGET_DETAILLE: 'Budget.xlsx',
     },
     status: 'BROUILLON',
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
   };
 
-  // --------- Charger le dossier depuis le localStorage (fallback multi-clés) ----------
-  private load(): Submission | null {
-    const keys = ['fpbg_submission', 'submission', 'FPBG_SUBMISSION'];
-    for (const k of keys) {
-      const raw = localStorage.getItem(k);
-      if (raw) {
-        try { return JSON.parse(raw) as Submission; } catch { /* ignore */ }
-      }
+  /** ===== Chargement depuis LS ===== */
+  private loadFromSubmitted(idHint?: string | null): Submission | null {
+    try {
+      const meta = JSON.parse(localStorage.getItem(SUBMISSION_META_KEY) || 'null');
+      const id = idHint || meta?.id;
+      if (!id) return null;
+
+      const list = JSON.parse(localStorage.getItem(ADMIN_DATA_KEY) || '[]') as any[];
+      const rec = list.find((r) => r?.id === id);
+      if (!rec) return null;
+
+      // mapping -> notre interface Submission
+      const p = rec.project || {};
+      const s: Submission = {
+        step1: p.step1 || {
+          orgName: p.orgName || '—',
+          orgType: p.orgType || '—',
+          contactPerson: p.contact || '—',
+          geoCoverage: p.coverage || '—',
+          domains: (p.domains || []).join(', ') || '—',
+          address: p.address || '—',
+          contactEmail: p.email || '—',
+          contactPhone: p.phone || '—',
+        },
+        step2: { title: p.title || '—', locationAndTarget: p.locationAndTarget || '—', contextJustification: p.contextJustification || '—' },
+        step3: { objectives: p.objectives || '—', expectedResults: p.expectedResults || '—', durationMonths: +p.durationMonths || 0 },
+        activitiesSummary: p.activitiesSummary || '',
+        activities: p.activities || [],
+        risks: p.risks || [],
+        budgetLines: p.budgetLines || [],
+        stateStep: { projectStage: p.projectStage || 'CONCEPTION', hasFunding: !!p.hasFunding, fundingDetails: p.fundingDetails || '' },
+        sustainabilityStep: { sustainability: p.sustainability || '', replicability: p.replicability || '' },
+        attachments: rec.attachments || {},
+        status: rec.status || 'SOUMIS',
+        updatedAt: rec.updatedAt || Date.now(),
+      };
+      return s;
+    } catch {
+      return null;
+    }
+  }
+
+  private loadFromDraft(): Submission | null {
+    // Essaie plusieurs clés de brouillon
+    for (const k of DRAFT_KEYS) {
+      try {
+        const d = JSON.parse(localStorage.getItem(k) || 'null');
+        if (!d) continue;
+
+        // mapping "léger" pour afficher quelque chose de propre
+        const s: Submission = {
+          step1: {
+            orgName: d?.orgName || '—',
+            orgType: d?.orgType || '—',
+            contactPerson: d?.contact || '—',
+            geoCoverage: d?.coverage || '—',
+            domains: (d?.stepProp?.domains || []).join(', ') || '—',
+            address: d?.address || '—',
+            contactEmail: d?.email || '—',
+            contactPhone: d?.phone || '—',
+          },
+          step2: {
+            title: d?.stepProp?.title || d?.title || '—',
+            locationAndTarget: d?.stepProp?.locationAndTarget || '—',
+            contextJustification: d?.stepProp?.contextJustification || '—',
+          },
+          step3: {
+            objectives: d?.stepObj?.objectives || '—',
+            expectedResults: d?.stepObj?.expectedResults || '—',
+            durationMonths: +d?.stepObj?.durationMonths || 0,
+          },
+          activitiesSummary: d?.activitiesSummary || '',
+          activities: d?.activities || [],
+          risks: d?.risks || [],
+          budgetLines: d?.budgetLines || [],
+          stateStep: {
+            projectStage: d?.stateStep?.projectStage || 'CONCEPTION',
+            hasFunding: !!d?.stateStep?.hasFunding,
+            fundingDetails: d?.stateStep?.fundingDetails || '',
+          },
+          sustainabilityStep: {
+            sustainability: d?.sustainabilityStep?.sustainability || '',
+            replicability: d?.sustainabilityStep?.replicability || '',
+          },
+          attachments: {},
+          status: 'BROUILLON',
+          updatedAt: d?.updatedAt || Date.now(),
+        };
+        return s;
+      } catch { /* continue */ }
     }
     return null;
   }
 
-  submission = signal<Submission | null>(this.load() ?? this.staticDemo);
+  private loadInitial(): Submission {
+    const idFromRoute = this.route.snapshot.paramMap.get('id');
+    return (
+      this.loadFromSubmitted(idFromRoute) ||
+      this.loadFromDraft() ||
+      this.staticDemo
+    );
+  }
 
-  // --------- Utilitaires d’affichage existants (inchangés) -----------
+  submission = signal<Submission | null>(this.loadInitial());
+
+  /** ====== Utils d’affichage ====== */
   status = computed<SubmissionStatus | null>(() => this.submission()?.status ?? null);
 
-  budgetTotal = computed(() => (this.submission()?.budgetLines ?? [])
-    .reduce((s, b) => s + (+b.total || 0), 0));
-
-  budgetFonct = computed(() => (this.submission()?.budgetLines ?? [])
-    .filter(b => b.category === 'FONCTIONNEMENT')
-    .reduce((s, b) => s + (+b.total || 0), 0));
-
+  budgetTotal = computed(() =>
+    (this.submission()?.budgetLines ?? []).reduce((s, b) => s + (+b.total || 0), 0)
+  );
+  budgetFonct = computed(() =>
+    (this.submission()?.budgetLines ?? [])
+      .filter((b) => b.category === 'FONCTIONNEMENT')
+      .reduce((s, b) => s + (+b.total || 0), 0)
+  );
   budgetWarn = computed(() => {
     const tot = this.budgetTotal() || 0;
     const fct = this.budgetFonct() || 0;
-    return tot > 0 && fct / tot > 0.10;
+    return tot > 0 && fct / tot > 0.1;
   });
 
   short(text?: string, n = 220) {
@@ -144,21 +238,19 @@ export class SubmissionRecap implements OnInit, OnDestroy {
     return text.length > n ? text.slice(0, n).trim() + '…' : text;
   }
 
-  // --------- Modal “plein écran” (inchangé) -----------
+  /** ===== Modal plein écran ===== */
   modalOpen = signal(false);
   modal = signal<{ title: string; text: string } | null>(null);
-
   openModal(title: string, text?: string) {
     this.modal.set({ title, text: text || '—' });
     this.modalOpen.set(true);
   }
   closeModal() { this.modalOpen.set(false); this.modal.set(null); }
-
   private escHandler = (e: KeyboardEvent) => { if (e.key === 'Escape') this.closeModal(); };
   ngOnInit() { document.addEventListener('keydown', this.escHandler); }
   ngOnDestroy() { document.removeEventListener('keydown', this.escHandler); }
 
-  // --------- Nouveau : Stepper d’AFFICHAGE (ne change pas la logique) ----------
+  /** ===== Stepper d’affichage ===== */
   stepIndex = signal(0);
   stepTitles = [
     'Demandeur / Soumissionnaire',
@@ -169,7 +261,7 @@ export class SubmissionRecap implements OnInit, OnDestroy {
     'Budget estimatif',
     'État & financement',
     'Durabilité & réplication',
-    'Annexes'
+    'Annexes',
   ];
   goTo = (i: number) => { if (i >= 0 && i < this.stepTitles.length) this.stepIndex.set(i); };
   next = () => this.goTo(this.stepIndex() + 1);
@@ -177,14 +269,11 @@ export class SubmissionRecap implements OnInit, OnDestroy {
   progress = computed(() => Math.round(((this.stepIndex() + 1) / this.stepTitles.length) * 100));
 
   protected readonly Object = Object;
-  // ...dans la classe SubmissionRecap (même fichier recap.ts)
 
+  /** Lien de fichier (assets locaux ou URL absolue) */
   fileHref(v?: string): string {
     if (!v) return '#';
-    // Si c’est déjà une URL absolue ou un blob/data, on renvoie tel quel
     if (/^(https?:\/\/|data:|blob:)/i.test(v)) return v;
-    // Sinon on suppose que tu déposes les annexes dans /assets/uploads/
     return `/assets/uploads/${v}`;
   }
-
 }

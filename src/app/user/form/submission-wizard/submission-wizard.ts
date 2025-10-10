@@ -20,6 +20,9 @@ import { debounceTime } from 'rxjs/operators';
    ============================== */
 const LS_DRAFT_KEY = 'fpbg_submission_v3';
 const LS_STEP_KEY  = 'fpbg_submission_step_v3';
+// submission-wizard.ts
+const DRAFT_META_KEY = 'fpbg.nc.draft'; // méta simple pour le dashboard
+
 
 const ALLOWED_MIME = [
   'application/pdf',
@@ -265,10 +268,22 @@ export class SubmissionWizard {
     this.form.valueChanges.pipe(debounceTime(350))
       .subscribe(v => localStorage.setItem(LS_DRAFT_KEY, JSON.stringify(v)));
     // Autosave
+    // ... dans le constructor, là où tu as déjà form.valueChanges.pipe(debounceTime(400)) ...
     this.form.valueChanges.pipe(debounceTime(400)).subscribe(v => {
       localStorage.setItem(LS_DRAFT_KEY, JSON.stringify(v));
-      this.lastSavedAt.set(Date.now()); // ⬅️ on met à jour l’heure de sauvegarde
+
+      // à chaque autosave…
+      const now = Date.now();
+      const current = JSON.parse(localStorage.getItem('fpbg.nc.draft') || '{}') || {};
+      current.updatedAt = now;                            // nombre en ms (fiable partout)
+      current._updatedAt = new Date(now).toISOString();   // ISO pour lecture humaine/compat
+      localStorage.setItem('fpbg.nc.draft', JSON.stringify(current));
+
+// en plus, emets un événement custom pour MAJ immédiate du dashboard
+      window.dispatchEvent(new Event('fpbg:draft-updated'));
+
     });
+
 
     // si tu veux afficher une valeur dès l’ouverture
     this.lastSavedAt.set(Date.now());

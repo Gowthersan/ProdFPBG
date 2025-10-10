@@ -84,7 +84,7 @@ export class Otp {
 
   private _goLogin(p: any) {
     localStorage.setItem('fpbg.autofillLogin','1');
-    this.router.navigate(['/login'], { queryParams: { contact: p.data.contact } });
+    this.router.navigate(['/submission-wizard'], { queryParams: { contact: p.data.contact } });
   }
 
   // ===== helpers =====

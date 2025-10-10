@@ -11,24 +11,83 @@
       </div>
 
       <!-- Profil à droite -->
-      <div class="flex items-center gap-3">
-        <div class="text-right leading-tight">
-          <div class="text-[12px] md:text-[13px] font-semibold uppercase">
-            {{ user().fullName }}
+      <!-- Avatar + menu -->
+      <div class="relative select-none">
+        <!-- Bouton avatar -->
+        <!-- Avatar + menu (seulement les lignes <img>/<ng-template> changent) -->
+        <button type="button" (click)="toggleAvatarMenu($event)" class="flex items-center gap-3 group">
+          <div class="text-right leading-tight">
+            <div class="text-slate-900 font-semibold uppercase text-sm tracking-wide">{{ user().fullName || '—' }}</div>
+            <div class="text-emerald-600 font-semibold text-sm">PORTEUR DE PROJET</div>
           </div>
-          <div class="text-[11px] text-emerald-600 font-semibold">PORTEUR DE PROJET</div>
-        </div>
 
-        <ng-container *ngIf="!imgError(); else fallbackAvatar">
-          <img [ngSrc]="user().photoUrl || ''" (error)="imgError.set(true)" width="44" height="44" alt="Avatar"
-               class="h-11 w-11 rounded-full object-cover ring-2 ring-emerald-500/70 bg-white"/>
-        </ng-container>
+          <!-- Afficher l'image UNIQUEMENT si une URL existe ET pas d'erreur -->
+          <ng-container *ngIf="user().photoUrl && !imgError(); else fallbackAvatar">
+            <img [src]="user().photoUrl"
+                 (error)="onAvatarLoadError()"
+                 width="44" height="44" alt="Avatar"
+                 class="h-11 w-11 rounded-full object-cover ring-2 ring-emerald-500/70 bg-white"/>
+          </ng-container>
+        </button>
+
         <ng-template #fallbackAvatar>
-          <div class="h-11 w-11 rounded-full grid place-items-center bg-emerald-50 text-emerald-700 font-semibold ring-2 ring-emerald-500/70">
+          <div class="h-11 w-11 rounded-full ring-2 ring-emerald-500/70 grid place-items-center bg-emerald-50 text-emerald-700 font-bold">
             {{ initials() }}
           </div>
         </ng-template>
+
+
+        <!-- Menu déroulant -->
+        <div *ngIf="avatarMenuOpen()"
+             class="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white shadow-lg z-50 py-2">
+          <!-- Ajouter une photo -->
+          <button type="button" (click)="triggerAvatarUpload()"
+                  class="w-full text-left px-3 py-2.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700">
+            <!-- lucide: image -->
+            <svg class="h-5 w-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+              <circle cx="9" cy="9" r="2"></circle>
+              <path d="M21 15l-3.5-3.5a2.12 2.12 0 0 0-3 0L6 20"></path>
+            </svg>
+            Ajouter une photo
+          </button>
+
+          <!-- Retirer la photo -->
+          <button type="button" (click)="removeAvatar()"
+                  class="w-full text-left px-3 py-2.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700">
+            <!-- lucide: user-x -->
+            <svg class="h-5 w-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="m17 8 5 5m0-5-5 5"></path>
+            </svg>
+            Retirer la photo
+          </button>
+
+          <div class="my-2 border-t border-slate-200"></div>
+
+          <!-- Se déconnecter -->
+          <button type="button" (click)="logout()"
+                  class="w-full text-left px-3 py-2.5 hover:bg-red-50 flex items-center gap-2 text-red-600 font-medium">
+            <!-- lucide: log-out -->
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Se déconnecter
+          </button>
+        </div>
+
+        <!-- input fichier caché -->
+        <input #fileInput type="file" class="hidden"
+               accept="image/png,image/jpeg,image/webp"
+               (change)="onAvatarFileChange($event)">
       </div>
+
     </div>
   </header>
 
@@ -92,9 +151,10 @@
       </article>
 
       <!-- Dernière mise à jour -->
+      <!-- Dernière mise à jour -->
       <article class="rounded-[26px] bg-white p-6 shadow-sm border border-slate-200">
         <div class="flex items-center gap-2 text-sm text-indigo-700 font-semibold">
-          <!-- Lucide calendar -->
+          <!-- Icône calendrier (Lucide) -->
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 2v4"></path><path d="M16 2v4"></path>
@@ -104,7 +164,7 @@
         </div>
 
         <p class="mt-4 text-2xl font-semibold">
-          {{ lastUpdate() ? (lastUpdate() | date:'short') : '—' }}
+          {{ lastUpdate() ? (lastUpdate() | date:'dd/MM/yy, HH:mm') : '—' }}
         </p>
       </article>
     </section>
