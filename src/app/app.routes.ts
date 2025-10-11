@@ -1,6 +1,7 @@
 // app.routes.ts (exemple)
 import { Routes } from '@angular/router';
 import { userRoutes } from './user/user.routes';
+import {adminRoutes} from './admin/admin.route';
 
 export const routes: Routes = [
   // Accueil publique (landing)
@@ -8,12 +9,19 @@ export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
   // Public global
-  { path: 'login', loadComponent: () => import('./user/login/login').then(m => m.Login) },
-  { path: 'register', loadComponent: () => import('./user/registration/registration').then(m => m.Registration) },
   { path: 'otp', loadComponent: () => import('./user/otp/otp').then(m => m.Otp) },
+  { path: 'page404', loadComponent: () => import('./page404/page404').then(m => m.Page404) },
+  { path: 'appelaprojet', loadComponent: () => import('./appelaprojet/appelaprojet').then(m => m.Appelaprojet) },
+  { path: 'liste-appels', loadComponent: () => import('./liste-appels/liste-appels').then(m => m.ListeAppels) },
+
+
 
   // Groupe "user"
-  { path: '', children: userRoutes }, // ⬅️ monte TOUT le bloc user ici
+  { path: '', children: userRoutes }, //
+  { path: 'admin', children: adminRoutes }, //
+
+
+
 
   // Récap projet (page dédiée) — ex: /admin/recap/123
   { path: 'admin/recap/:id',
@@ -31,5 +39,5 @@ export const routes: Routes = [
   },
 
   // Fallback
-  { path: '**', redirectTo: 'login' }
+  { path: '**', redirectTo: 'page404' }
 ];
