@@ -1,12 +1,11 @@
 // app/admin.admin.routes.ts
 import { Routes } from '@angular/router';
 
+
 // @ts-ignore
 export const adminRoutes: Routes = [
-  { path: 'admin/login', loadComponent: () => import('./login/login').then(m => m.Login) },
-  // { path: 'register', loadComponent: () => import('./registration/registration').then(m => m.Registration) },
-// OTP doit être accessible pubiquement
-//   { path: 'otp', loadComponent: () => import('./otp/otp').then(m => m.Otp) },
+
+  { path: 'login', loadComponent: () => import('./login/login').then(m => m.Login) },
 
   // tes composants existants côté user :
   { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard) },

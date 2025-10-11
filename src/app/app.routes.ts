@@ -2,6 +2,7 @@
 import { Routes } from '@angular/router';
 import { userRoutes } from './user/user.routes';
 import {adminRoutes} from './admin/admin.route';
+import {redirectIfLoggedIn} from './core/redirect-if-logged-in.guard';
 
 export const routes: Routes = [
   // Accueil publique (landing)
@@ -19,8 +20,6 @@ export const routes: Routes = [
   // Groupe "user"
   { path: '', children: userRoutes }, //
   { path: 'admin', children: adminRoutes }, //
-
-
 
 
   // Récap projet (page dédiée) — ex: /admin/recap/123
