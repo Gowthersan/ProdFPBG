@@ -2,7 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, NgClass, JsonPipe } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
-import { Router } from '@angular/router';
+import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import { Aprojetv1 } from '../../services/aprojetv1';
 import { HttpClientModule } from '@angular/common/http';
 import { environDev } from '../../../environments/environment.development';
@@ -19,7 +19,7 @@ const ADMIN_DATA_KEY = 'fpbg_admin_records';
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DatePipe, NgClass, JsonPipe, HttpClientModule],
+  imports: [CommonModule, ReactiveFormsModule, DatePipe, NgClass, JsonPipe, HttpClientModule, RouterLink, RouterLinkActive],
   templateUrl: './dashboard.html',
   providers: [Aprojetv1]
 })
