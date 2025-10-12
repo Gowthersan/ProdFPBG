@@ -2,7 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, DatePipe, NgClass, JsonPipe } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
-import {Router, RouterLink, RouterLinkActive} from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Aprojetv1 } from '../../services/aprojetv1';
 import { HttpClientModule } from '@angular/common/http';
 import { environDev } from '../../../environments/environment.development';
@@ -11,17 +11,35 @@ import { ProjetFormDTO } from '../../model/projetFormdto';
 type ProjectStatus = 'BROUILLON' | 'SOUMIS' | 'EN_REVUE' | 'ACCEPTE' | 'REJETE';
 type BudgetCategory = 'ACTIVITES_TERRAIN' | 'INVESTISSEMENTS' | 'FONCTIONNEMENT';
 type DocumentType =
-  | 'FORMULAIRE' | 'LETTRE_MOTIVATION' | 'STATUTS_REGLEMENT' | 'FICHE_CIRCUIT' | 'RIB'
-  | 'AGREMENT' | 'CV' | 'BUDGET_DETAILLE' | 'CHRONOGRAMME' | 'CARTOGRAPHIE' | 'LETTRE_SOUTIEN';
+  | 'FORMULAIRE'
+  | 'LETTRE_MOTIVATION'
+  | 'STATUTS_REGLEMENT'
+  | 'FICHE_CIRCUIT'
+  | 'RIB'
+  | 'AGREMENT'
+  | 'CV'
+  | 'BUDGET_DETAILLE'
+  | 'CHRONOGRAMME'
+  | 'CARTOGRAPHIE'
+  | 'LETTRE_SOUTIEN';
 
 const ADMIN_DATA_KEY = 'fpbg_admin_records';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DatePipe, NgClass, JsonPipe, HttpClientModule, RouterLink, RouterLinkActive],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    DatePipe,
+    NgClass,
+    JsonPipe,
+    HttpClientModule,
+    RouterLink,
+    RouterLinkActive,
+  ],
   templateUrl: './dashboard.html',
-  providers: [Aprojetv1]
+  providers: [Aprojetv1],
 })
 export class Dashboard implements OnInit {
   private auth = inject(AuthService);
@@ -37,18 +55,22 @@ export class Dashboard implements OnInit {
     this.aprojetv1.getAllProjetsNoPage().subscribe({
       next: (response) => {
         console.log('Projets récupérés avec succès:', response);
-        this.allProjets = response
+        this.allProjets = response;
         console.log('Corps:', this.allProjets);
       },
       error: (error) => {
         console.error('Erreur lors de la récupération des projets:', error);
-      }
+      },
     });
   }
   // ===== Store local =====
   private readStore(): any[] {
     const raw = localStorage.getItem(ADMIN_DATA_KEY);
-    try { return raw ? JSON.parse(raw) : []; } catch { return []; }
+    try {
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
   }
   private writeStore(list: any[]) {
     localStorage.setItem(ADMIN_DATA_KEY, JSON.stringify(list));
@@ -62,7 +84,7 @@ export class Dashboard implements OnInit {
   filtered = computed(() => {
     const query = (this.q.value || '').toLowerCase().trim();
     if (!query) return this.records();
-    return this.records().filter(r => {
+    return this.records().filter((r) => {
       return (
         (r.project?.title || '').toLowerCase().includes(query) ||
         (r.applicant?.orgName || '').toLowerCase().includes(query) ||
@@ -79,16 +101,31 @@ export class Dashboard implements OnInit {
   );
 
   // Labels mois
-  monthsLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+  monthsLabels = [
+    'Jan',
+    'Fév',
+    'Mar',
+    'Avr',
+    'Mai',
+    'Jun',
+    'Jul',
+    'Aoû',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Déc',
+  ];
 
   // Actions UI
-  refresh() { this.records.set(this.readStore()); }
+  refresh() {
+    this.records.set(this.readStore());
+  }
   trackByIndex = (i: number) => i;
 
   // ===== Maj de statut (par id) =====
   private updateStatus(id: string, s: ProjectStatus) {
     const list = this.readStore();
-    const idx = list.findIndex(x => x.id === id);
+    const idx = list.findIndex((x) => x.id === id);
     if (idx < 0) return;
 
     const cur = { ...list[idx], status: s, updatedAt: Date.now() };
@@ -97,9 +134,15 @@ export class Dashboard implements OnInit {
     this.writeStore(list);
     this.records.set(list);
   }
-  markInReview(r: any) { if (r?.id) this.updateStatus(r.id, 'EN_REVUE'); }
-  validate(r: any) { if (r?.id) this.updateStatus(r.id, 'ACCEPTE'); }
-  reject(r: any) { if (r?.id) this.updateStatus(r.id, 'REJETE'); }
+  markInReview(r: any) {
+    if (r?.id) this.updateStatus(r.id, 'EN_REVUE');
+  }
+  validate(r: any) {
+    if (r?.id) this.updateStatus(r.id, 'ACCEPTE');
+  }
+  reject(r: any) {
+    if (r?.id) this.updateStatus(r.id, 'REJETE');
+  }
 
   // ===== Navigation =====
   goToRecap(id: number) {
@@ -109,8 +152,16 @@ export class Dashboard implements OnInit {
 
   // ===== Divers =====
   docs: DocumentType[] = [
-    'LETTRE_MOTIVATION', 'STATUTS_REGLEMENT', 'FICHE_CIRCUIT', 'RIB', 'AGREMENT', 'CV',
-    'BUDGET_DETAILLE', 'CHRONOGRAMME', 'CARTOGRAPHIE', 'LETTRE_SOUTIEN'
+    'LETTRE_MOTIVATION',
+    'STATUTS_REGLEMENT',
+    'FICHE_CIRCUIT',
+    'RIB',
+    'AGREMENT',
+    'CV',
+    'BUDGET_DETAILLE',
+    'CHRONOGRAMME',
+    'CARTOGRAPHIE',
+    'LETTRE_SOUTIEN',
   ];
 
   logout() {
