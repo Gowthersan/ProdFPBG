@@ -20,24 +20,35 @@
 
     <form class="mt-6 grid gap-4 max-w-2xl mx-auto" [formGroup]="form" (ngSubmit)="submit()">
       <div>
-        <label class="block text-sm text-slate-300 mb-1">Personne de contact</label>
-        <!-- NOTE: formControlName = 'contact' (adapter login.ts si besoin) -->
-        <input type="text" formControlName="contact"
+        <label class="block text-sm text-slate-300 mb-1">Adresse email <span class="text-red-400">*</span></label>
+        <input type="email" formControlName="email"
+               [class.border-red-500]="form.controls.email.invalid && form.controls.email.touched"
                class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
-               placeholder="Nom Prénom" />
+               placeholder="votre@email.com" />
+        <div *ngIf="form.controls.email.invalid && form.controls.email.touched" class="mt-1 text-sm text-red-400">
+          <span *ngIf="form.controls.email.errors?.['required']">L'email est requis</span>
+          <span *ngIf="form.controls.email.errors?.['email']">L'email n'est pas valide</span>
+        </div>
       </div>
 
       <!-- Mot de passe + lien oublié -->
       <div>
-        <label class="block text-sm text-slate-300 mb-1">Mot de passe</label>
+        <label class="block text-sm text-slate-300 mb-1">Mot de passe <span class="text-red-400">*</span></label>
         <input type="password" formControlName="password"
+               [class.border-red-500]="form.controls.password.invalid && form.controls.password.touched"
                class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
                placeholder="********" />
+        <div *ngIf="form.controls.password.invalid && form.controls.password.touched" class="mt-1 text-sm text-red-400">
+          <span *ngIf="form.controls.password.errors?.['required']">Le mot de passe est requis</span>
+          <span *ngIf="form.controls.password.errors?.['minlength']">Le mot de passe doit contenir au moins 6 caractères</span>
+        </div>
       </div>
 
       <div class="mt-3 flex justify-center">
-        <button [disabled]="loading()" class="rounded-md bg-green-600 hover:bg-green-500 px-8 py-2.5 font-semibold disabled:opacity-60">
-          Se connecter
+        <button type="submit" [disabled]="loading() || form.invalid"
+                class="rounded-md bg-green-600 hover:bg-green-500 px-8 py-2.5 font-semibold disabled:opacity-60 disabled:cursor-not-allowed transition">
+          <span *ngIf="!loading()">Se connecter</span>
+          <span *ngIf="loading()">Connexion...</span>
         </button>
       </div>
     </form>

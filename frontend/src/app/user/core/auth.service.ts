@@ -1,8 +1,12 @@
 // app/user/core/auth.service.ts
-// Auth locale (LocalStorage). Login par NOM uniquement (pas d'email).
+// Auth avec backend API + EmailJS pour OTP
 
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { EmailjsService } from '../../services/email/emailjs.service';
 
 const LS = {
   token: 'fpbg.token',
@@ -41,39 +45,128 @@ export interface RegisterPayload {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private http = inject(HttpClient);
+  private emailService = inject(EmailjsService);
+  private apiUrl = environment.urlServer + '/api/auth';
 
-  // === LOGIN : par NOM uniquement ===
+  // === LOGIN : via backend API ===
   login(p: LoginPayload): Observable<void> {
-    const users = this._getUsers();
-    const uname = this._norm(p.username);
+    return this.http.post<any>(`${this.apiUrl}/login`, p, { withCredentials: true }).pipe(
+      map((response) => {
+        const user = response.user;
+        const account: Account = {
+          login: user.username || user.contact || user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.numTel || user.phone,
+          position: user.position,
+          orgName: user.orgName || user.name,
+          orgType: user.orgType || user.type,
+          coverage: user.coverage,
+          email: user.email,
+          authorities: ['ROLE_USER'],
+        };
 
-    // on ne regarde QUE le nom d'utilisateur (contact)
-    const found = users.find(u => this._norm(u.username) === uname && u.password === p.password);
-    const ok = !!found || (uname === 'admin' && p.password === 'admin');
-
-    if (!ok) return throwError(() => new Error('INVALID_CREDENTIALS'));
-
-    const contact = found?.contact ?? 'Admin';
-    const [firstName, ...rest] = contact.split(' ');
-    const account: Account = {
-      login: contact,                        // <= identifiant affiché = NOM
-      firstName,
-      lastName: rest.join(' '),
-      phone: found?.phone,
-      position: found?.position,
-      orgName: found?.orgName,
-      orgType: found?.orgType,
-      coverage: found?.coverage,
-      email: found?.email,                   // conservé pour le profil, pas pour le login
-      authorities: ['ROLE_USER'],
-    };
-
-    localStorage.setItem(LS.token, crypto.randomUUID());
-    localStorage.setItem(LS.account, JSON.stringify(account));
-    return of(void 0);
+        localStorage.setItem(LS.token, response.token);
+        localStorage.setItem(LS.account, JSON.stringify(account));
+      }),
+      catchError((error) => {
+        console.error('❌ Erreur login:', error);
+        return throwError(() => new Error('INVALID_CREDENTIALS'));
+      })
+    );
   }
 
-  // === REGISTER : on stocke username = contact (pas l'email) ===
+  // === REGISTER : appel backend pour générer OTP et envoyer via EmailJS ===
+  registerOrganisation(data: {
+    orgName: string;
+    orgType: string;
+    coverage: string;
+    grantType: string;
+    orgEmail: string;
+    orgPhone: string;
+    contact: string;
+    position: string;
+    phone: string;
+    email: string;
+    password: string;
+  }): Observable<{ email: string; otp: string; userName: string }> {
+    // Préparer les données au format backend
+    const payload = {
+      email: data.email,
+      username: data.contact, // username = nom de contact
+      password: data.password,
+      name: data.orgName,
+      type: data.orgType,
+      grantType: data.grantType,
+      contact: data.contact,
+      numTel: data.phone,
+      postalAddress: null,
+      physicalAddress: null,
+    };
+
+    return this.http.post<any>(`${this.apiUrl}/register/organisation`, payload).pipe(
+      map((response) => {
+        console.log('✅ Backend response:', response);
+        // Le backend retourne { email, otp, userName }
+        // Envoyer l'OTP via EmailJS
+        this.emailService.sendOtpEmail(response.email, response.userName, response.otp)
+          .then(() => console.log('✅ OTP envoyé via EmailJS'))
+          .catch((err) => console.error('❌ Erreur envoi EmailJS:', err));
+
+        return response;
+      }),
+      catchError((error) => {
+        console.error('❌ Erreur registration backend:', error);
+        const msg = error?.error?.message || error?.message || 'REGISTRATION_FAILED';
+        return throwError(() => new Error(msg));
+      })
+    );
+  }
+
+  // === VERIFY OTP : vérifier via backend ===
+  verifyOtp(email: string, otp: string): Observable<void> {
+    return this.http.post<any>(`${this.apiUrl}/verify-otp`, { email, otp }, { withCredentials: true }).pipe(
+      map((response) => {
+        const user = response.user;
+        const account: Account = {
+          login: user.username || user.contact || user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.numTel || user.phone,
+          position: user.position,
+          orgName: user.orgName || user.name,
+          orgType: user.orgType || user.type,
+          coverage: user.coverage,
+          email: user.email,
+          authorities: ['ROLE_USER'],
+        };
+
+        localStorage.setItem(LS.token, response.token);
+        localStorage.setItem(LS.account, JSON.stringify(account));
+      }),
+      catchError((error) => {
+        console.error('❌ Erreur verify OTP:', error);
+        return throwError(() => new Error(error?.error?.message || 'OTP_INVALID'));
+      })
+    );
+  }
+
+  // === RESEND OTP : redemander un OTP via backend ===
+  resendOtp(email: string): Observable<{ email: string; otp: string }> {
+    return this.http.post<any>(`${this.apiUrl}/resend-otp`, { email }).pipe(
+      map((response) => {
+        console.log('✅ OTP renvoyé:', response);
+        return response;
+      }),
+      catchError((error) => {
+        console.error('❌ Erreur resend OTP:', error);
+        return throwError(() => new Error('RESEND_FAILED'));
+      })
+    );
+  }
+
+  // === REGISTER (ancienne méthode locale - à garder pour compatibilité) ===
   register(p: RegisterPayload): Observable<void> {
     const users = this._getUsers();
 

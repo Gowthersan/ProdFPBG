@@ -1,39 +1,111 @@
- <div class="min-h-screen grid place-items-center bg-white px-4">
-    <div class="w-full max-w-xl rounded-2xl bg-white text-[#0B1F2C] p-8 shadow-2xl border border-slate-200">
+<div class="min-h-screen grid place-items-center bg-white px-4">
+  <div class="w-full max-w-xl rounded-2xl bg-white text-[#0B1F2C] p-8 shadow-2xl border border-slate-200">
     <div class="h-1 w-full bg-green-400 rounded mb-6"></div>
 
     <div class="flex items-center justify-between text-sm">
-    <span></span>
-    <a routerLink="/register" class="text-slate-500 hover:text-slate-700">Retour</a>
+      <span></span>
+      <a routerLink="/register" class="text-slate-500 hover:text-slate-700">Retour</a>
     </div>
 
-      <!-- DEV ONLY: afficher le code OTP courant -->
-      <div *ngIf="currentOtp()" class="mt-3 rounded-md border border-amber-300 bg-amber-50 text-amber-900 px-4 py-2 text-sm">
-        <b>Code OTP (DEV) :</b> <span class="tabular-nums tracking-wider">{{ currentOtp() }}</span>
-        <span class="ml-2 text-xs text-amber-700">(retirer en production)</span>
-      </div>
     <h2 class="mt-2 text-2xl font-bold">Entrez le code OTP</h2>
+    <p class="mt-1 text-slate-500">
+      Un code à 6 chiffres a été envoyé à <b>{{ email() || 'votre email' }}</b>.
+    </p>
 
-
-      <p class="mt-1 text-slate-500">Un code à 6 chiffres a été généré pour <b>{{ email() || 'votre email' }}</b>.</p>
-
-    <div *ngIf="error()" class="mt-4 rounded-md border border-red-300 bg-red-50 text-red-700 px-4 py-3">{{ error() }}</div>
-
-    <!-- Inputs -->
-    <div class="mt-6 flex items-center gap-3">
-    <input #otpInput maxlength="1" (input)="onInput(0,$event)" (keydown)="onKeyDown(0,$event)" class="w-12 h-12 text-center border rounded-md text-lg" />
-    <input #otpInput maxlength="1" (input)="onInput(1,$event)" (keydown)="onKeyDown(1,$event)" class="w-12 h-12 text-center border rounded-md text-lg" />
-    <input #otpInput maxlength="1" (input)="onInput(2,$event)" (keydown)="onKeyDown(2,$event)" class="w-12 h-12 text-center border rounded-md text-lg" />
-    <input #otpInput maxlength="1" (input)="onInput(3,$event)" (keydown)="onKeyDown(3,$event)" class="w-12 h-12 text-center border rounded-md text-lg" />
-    <input #otpInput maxlength="1" (input)="onInput(4,$event)" (keydown)="onKeyDown(4,$event)" class="w-12 h-12 text-center border rounded-md text-lg" />
-    <input #otpInput maxlength="1" (input)="onInput(5,$event)" (keydown)="onKeyDown(5,$event)" class="w-12 h-12 text-center border rounded-md text-lg" />
+    <!-- Afficher les erreurs -->
+    <div *ngIf="error()" class="mt-4 rounded-md border border-red-300 bg-red-50 text-red-700 px-4 py-3">
+      {{ error() }}
     </div>
 
-    <div class="mt-6 flex items-center gap-3">
-    <button (click)="resend()" [disabled]="counter()>0"
-    class="rounded-md border px-4 py-2 disabled:opacity-50">Renvoyer <span *ngIf="counter()>0">({{counter()}}s)</span></button>
-    <button (click)="verify()" class="rounded-md bg-green-500 hover:bg-green-600 text-white px-4 py-2">Vérifier & continuer</button>
+    <!-- Inputs OTP -->
+    <div class="mt-6 flex items-center justify-center gap-3">
+      <input
+        #otpInput
+        type="text"
+        inputmode="numeric"
+        maxlength="1"
+        (input)="onInput(0, $event)"
+        (keydown)="onKeyDown(0, $event)"
+        [class.border-red-400]="error()"
+        class="w-12 h-12 text-center border-2 rounded-md text-lg font-bold focus:border-green-500 focus:outline-none transition"
+      />
+      <input
+        #otpInput
+        type="text"
+        inputmode="numeric"
+        maxlength="1"
+        (input)="onInput(1, $event)"
+        (keydown)="onKeyDown(1, $event)"
+        [class.border-red-400]="error()"
+        class="w-12 h-12 text-center border-2 rounded-md text-lg font-bold focus:border-green-500 focus:outline-none transition"
+      />
+      <input
+        #otpInput
+        type="text"
+        inputmode="numeric"
+        maxlength="1"
+        (input)="onInput(2, $event)"
+        (keydown)="onKeyDown(2, $event)"
+        [class.border-red-400]="error()"
+        class="w-12 h-12 text-center border-2 rounded-md text-lg font-bold focus:border-green-500 focus:outline-none transition"
+      />
+      <input
+        #otpInput
+        type="text"
+        inputmode="numeric"
+        maxlength="1"
+        (input)="onInput(3, $event)"
+        (keydown)="onKeyDown(3, $event)"
+        [class.border-red-400]="error()"
+        class="w-12 h-12 text-center border-2 rounded-md text-lg font-bold focus:border-green-500 focus:outline-none transition"
+      />
+      <input
+        #otpInput
+        type="text"
+        inputmode="numeric"
+        maxlength="1"
+        (input)="onInput(4, $event)"
+        (keydown)="onKeyDown(4, $event)"
+        [class.border-red-400]="error()"
+        class="w-12 h-12 text-center border-2 rounded-md text-lg font-bold focus:border-green-500 focus:outline-none transition"
+      />
+      <input
+        #otpInput
+        type="text"
+        inputmode="numeric"
+        maxlength="1"
+        (input)="onInput(5, $event)"
+        (keydown)="onKeyDown(5, $event)"
+        [class.border-red-400]="error()"
+        class="w-12 h-12 text-center border-2 rounded-md text-lg font-bold focus:border-green-500 focus:outline-none transition"
+      />
     </div>
+
+    <!-- Message d'aide -->
+    <p class="mt-4 text-center text-sm text-slate-500">
+      Vous n'avez pas reçu le code ?
+    </p>
+
+    <!-- Actions -->
+    <div class="mt-4 flex items-center justify-center gap-3">
+      <button
+        type="button"
+        (click)="resend()"
+        [disabled]="counter() > 0"
+        class="rounded-md border border-slate-300 hover:border-slate-400 px-4 py-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        Renvoyer
+        <span *ngIf="counter() > 0" class="ml-1 text-slate-500">({{ counter() }}s)</span>
+      </button>
+      <button
+        type="button"
+        (click)="verify()"
+        [disabled]="digits().join('').length !== 6"
+        class="rounded-md bg-green-500 hover:bg-green-600 text-white px-6 py-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
+      >
+        Vérifier & continuer
+      </button>
     </div>
-    </div>
+  </div>
+</div>
 

@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, signal, computed } from '@angular/core';
-import { NgIf, NgFor, DatePipe, TitleCasePipe, NgClass } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 type GrantCycleStep = { step: string; dates: string };
@@ -199,7 +199,7 @@ const AAP_DATA: AAP = {
 @Component({
   selector: 'appelaprojet',
   standalone: true,
-  imports: [NgIf, NgFor, RouterLink, DatePipe, TitleCasePipe, NgClass],
+  imports: [CommonModule, RouterLink],
   templateUrl: './appelaprojet.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

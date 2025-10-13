@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, inject, signal } from '@angular/core';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../core/auth.service';
 
 @Component({
   selector: 'app-registration',
@@ -12,6 +13,7 @@ import { Router, RouterLink } from '@angular/router';
 export class Registration {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private auth = inject(AuthService);
 
   // état UI
   public step = signal<1 | 2>(1);
@@ -27,7 +29,7 @@ export class Registration {
     'Entités gouvernementales',
     'Organismes de recherche',
   ];
-  public coverages = ['Locales', 'Nationales', 'Régionales', 'Internationales'];
+  public coverages = ['Estuaire', 'Ogooué Maritime', 'Nyanga'];
   public grantTypes = ['Petite subvention', 'Moyenne subvention']; // ⬅️ AJOUT
 
   // form commun aux 2 étapes
@@ -36,14 +38,14 @@ export class Registration {
     orgName: ['', Validators.required],
     orgType: ['', Validators.required],
     coverage: ['', Validators.required],
-    grantType: ['', Validators.required],                    // ⬅️ AJOUT
+    grantType: ['', Validators.required], // ⬅️ AJOUT
     orgEmail: ['', [Validators.required, Validators.email]],
-    orgPhone: ['', Validators.required],
+    orgPhone: ['', [Validators.required, gabonPhoneValidator()]],
 
     // ÉTAPE 2 — demandeur + credentials
     contact: ['', Validators.required],
     position: [''],
-    phone: ['', Validators.required],
+    phone: ['', [Validators.required, gabonPhoneValidator()]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
     confirm: ['', [Validators.required, Validators.minLength(6)]],
@@ -66,9 +68,9 @@ export class Registration {
     const grantTypeCtrl = this.form.get('grantType');
     if (grantTypeCtrl) step1Ctrls.push(grantTypeCtrl as any);
 
-    const invalid = step1Ctrls.some(c => c.invalid);
+    const invalid = step1Ctrls.some((c) => c.invalid);
     if (invalid) {
-      step1Ctrls.forEach(c => c.markAsTouched());
+      step1Ctrls.forEach((c) => c.markAsTouched());
       this.error.set('Veuillez compléter correctement les informations de l’organisme.');
       return;
     }
@@ -84,20 +86,27 @@ export class Registration {
     this.step.set(2);
   }
 
-  // soumission finale → OTP
+  // soumission finale → appel backend + OTP
   public submit() {
     this.error.set(null);
 
-    if (this.form.invalid) { this.form.markAllAsTouched(); this.error.set('Veuillez compléter tous les champs requis.'); return; }
-    if (this.form.value.password !== this.form.value.confirm) {
-      this.error.set('Les mots de passe ne correspondent pas.'); return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.error.set('Veuillez compléter tous les champs requis.');
+      return;
     }
+    if (this.form.value.password !== this.form.value.confirm) {
+      this.error.set('Les mots de passe ne correspondent pas.');
+      return;
+    }
+
+    this.loading.set(true);
 
     const data = {
       orgName: this.form.value.orgName!,
       orgType: this.form.value.orgType!,
       coverage: this.form.value.coverage!,
-      grantType: this.form.value.grantType!,                 // ⬅️ AJOUT
+      grantType: this.form.value.grantType!,
       orgEmail: this.form.value.orgEmail!,
       orgPhone: this.form.value.orgPhone!,
       contact: this.form.value.contact!,
@@ -107,21 +116,44 @@ export class Registration {
       password: this.form.value.password!,
     };
 
-    const pending = {
-      data,
-      otp: this.genOTP(),
-      emailTo: data.email,
-      expiresAt: Date.now() + 10 * 60 * 1000
-    };
+    // Appeler le backend pour générer et envoyer l'OTP via EmailJS
+    this.auth.registerOrganisation(data).subscribe({
+      next: (response) => {
+        console.log('✅ Registration initié:', response);
 
-    localStorage.setItem('fpbg.pendingReg', JSON.stringify(pending));
-    localStorage.setItem('fpbg.autofillLogin', '1'); // pour préremplir la connexion ensuite
+        // Stocker les infos pour la page OTP
+        const pending = {
+          data,
+          email: response.email,
+          expiresAt: Date.now() + 10 * 60 * 1000,
+        };
 
-    this.router.navigate(['/otp'], { queryParams: { email: pending.emailTo } });
+        localStorage.setItem('fpbg.pendingReg', JSON.stringify(pending));
+        localStorage.setItem('fpbg.autofillLogin', '1');
+
+        this.loading.set(false);
+        this.router.navigate(['/otp'], { queryParams: { email: response.email } });
+      },
+      error: (err) => {
+        this.loading.set(false);
+        console.error('❌ Erreur registration:', err);
+        const msg = err.message || 'Erreur lors de l\'inscription.';
+        if (msg.includes('déjà utilisé') || msg.includes('TAKEN')) {
+          this.error.set('Cet email ou nom d\'utilisateur est déjà utilisé.');
+        } else {
+          this.error.set('Erreur lors de l\'inscription. Veuillez réessayer.');
+        }
+      }
+    });
   }
+}
 
-  // helper
-  private genOTP(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  }
+// Validation du numéro de téléphone gabonais
+export function gabonPhoneValidator(): ValidatorFn {
+  const re = /^(?:0\d{8}|\+241\d{8}|00241\d{8}|0\d{2}(?:[ -]?\d{2}){3})$/;
+  return (control: AbstractControl): ValidationErrors | null => {
+    const val = (control.value ?? '').toString().trim();
+    if (!val) return null; // laisser required() gérer l'absence
+    return re.test(val) ? null : { gabonPhone: { valid: false, actual: val } };
+  };
 }

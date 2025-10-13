@@ -27,7 +27,6 @@ export class Otp {
     this.email.set(this.route.snapshot.queryParamMap.get('email') ?? '');
     const p = this._getPending();
     if (!p) { this.router.navigate(['/register']); return; }
-    this.currentOtp.set(p?.otp ?? null); // DEV only
     this._startTimer();
   }
 
@@ -44,47 +43,61 @@ export class Otp {
   }
 
   resend() {
-    const p = this._getPending(); if (!p) return;
-    p.otp = this._genOTP();
-    p.expiresAt = Date.now() + 10*60*1000;
-    this._savePending(p);
-    this.currentOtp.set(p.otp);
-    this.counter.set(60);
-    this._startTimer();
+    const p = this._getPending();
+    if (!p) return;
+
+    this.error.set(null);
+
+    // Appeler le backend pour renvoyer l'OTP
+    this.auth.resendOtp(p.email).subscribe({
+      next: () => {
+        console.log('✅ OTP renvoyé');
+        this.counter.set(60);
+        this._startTimer();
+        // Mettre à jour l'expiration
+        p.expiresAt = Date.now() + 10*60*1000;
+        this._savePending(p);
+      },
+      error: (err) => {
+        console.error('❌ Erreur resend:', err);
+        this.error.set('Erreur lors du renvoi du code.');
+      }
+    });
   }
 
-  // ===== Vérification + création utilisateur =====
+  // ===== Vérification + création utilisateur via backend =====
   verify() {
     const code = this.digits().join('');
     const p = this._getPending();
     if (!p) { this.error.set('Session expirée.'); return; }
     if (Date.now() > p.expiresAt) { this.error.set('Code expiré.'); return; }
-    if (code !== p.otp) { this.error.set('Code OTP invalide.'); return; }
 
-    // Création du compte LOCAL (username = contact)
-    this.auth.register({
-      email:    p.data.email,
-      password: p.data.password,
-      phone:    p.data.phone,
-      contact:  p.data.contact,     // <= NOM utilisé pour se connecter
-      position: p.data.position,
-      orgName:  p.data.orgName,
-      orgType:  p.data.orgType,
-      coverage: p.data.coverage,
-    }).subscribe({
-      next: () => this._goLogin(p),
-      error: (e) => {
-        const msg = (e?.message || e?.error?.message || '').toString();
-        // S'il existe déjà -> on continue quand même
-        if (msg === 'EMAIL_TAKEN' || msg === 'USERNAME_TAKEN') this._goLogin(p);
-        else this.error.set('Erreur à la création du compte.');
+    this.error.set(null);
+
+    // Vérifier l'OTP via le backend
+    this.auth.verifyOtp(p.email, code).subscribe({
+      next: () => {
+        console.log('✅ OTP vérifié, compte créé');
+        localStorage.removeItem('fpbg.pendingReg');
+        this._goLogin(p);
+      },
+      error: (err) => {
+        console.error('❌ Erreur verify OTP:', err);
+        const msg = err.message || '';
+        if (msg.includes('invalide') || msg.includes('INVALID')) {
+          this.error.set('Code OTP invalide.');
+        } else if (msg.includes('expiré') || msg.includes('EXPIRED')) {
+          this.error.set('Code expiré. Veuillez en demander un nouveau.');
+        } else {
+          this.error.set('Erreur lors de la vérification.');
+        }
       }
     });
   }
 
   private _goLogin(p: any) {
     localStorage.setItem('fpbg.autofillLogin','1');
-    this.router.navigate(['/submission-wizard'], { queryParams: { contact: p.data.contact } });
+    this.router.navigate(['/login'], { queryParams: { email: p.data?.email || p.email } });
   }
 
   // ===== helpers =====
@@ -94,7 +107,6 @@ export class Otp {
   private _savePending(p: any) {
     localStorage.setItem('fpbg.pendingReg', JSON.stringify(p));
   }
-  private _genOTP(): string { return Math.floor(100000 + Math.random()*900000).toString(); }
   private _startTimer(){
     if (this.timerId) clearInterval(this.timerId);
     this.timerId = setInterval(()=> {

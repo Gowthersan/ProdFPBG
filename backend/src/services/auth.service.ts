@@ -75,15 +75,12 @@ export class AuthService {
   async registerOrganisation(orgData: OrganisationDTO) {
     const { email, username, password } = orgData;
 
-    // Vérifier si l'organisation existe déjà
-    const existingOrg = await prisma.organisation.findFirst({
-      where: {
-        OR: [{ email }, ...(username ? [{ username }] : [])]
-      }
-    });
+    // Vérifier si l'email existe déjà (User ou Organisation)
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingOrg = await prisma.organisation.findUnique({ where: { email } });
 
-    if (existingOrg) {
-      throw new AppError("Email ou nom d'utilisateur déjà utilisé.", 409);
+    if (existingUser || existingOrg) {
+      throw new AppError('Cet email est déjà utilisé.', 409);
     }
 
     // Hasher le mot de passe
@@ -108,7 +105,7 @@ export class AuthService {
       message: 'Un code de vérification sera envoyé à votre adresse email.',
       email,
       otp, // Le frontend utilisera ceci pour envoyer l'email
-      userName: orgData.name || orgData.username
+      userName: orgData.name || orgData.contact || 'Utilisateur'
     };
   }
 
@@ -170,9 +167,10 @@ export class AuthService {
           type: 'user'
         };
       } else {
-        // ✅ L'utilisateur représente l'organisation
-        // ÉTAPE 1: Créer d'abord l'utilisateur (User)
-        // ÉTAPE 2: Puis créer l'organisation liée à cet utilisateur
+        // ✅ ORGANISATION : Créer User → Organisation → TypeOrganisation
+        // ÉTAPE 1: Créer le User
+        // ÉTAPE 2: Trouver ou créer le TypeOrganisation
+        // ÉTAPE 3: Créer l'Organisation liée
 
         const result = await prisma.$transaction(async (tx) => {
           // ÉTAPE 1: Créer le User en premier
@@ -192,7 +190,24 @@ export class AuthService {
             }
           });
 
-          // ÉTAPE 2: Créer l'Organisation liée à ce User
+          // ÉTAPE 2: Trouver ou créer le TypeOrganisation
+          let typeOrganisation = null;
+          if (registrationData.type) {
+            // Chercher si le type existe déjà
+            typeOrganisation = await tx.typeOrganisation.findUnique({
+              where: { nom: registrationData.type }
+            });
+
+            // Si le type n'existe pas, le créer automatiquement
+            if (!typeOrganisation) {
+              typeOrganisation = await tx.typeOrganisation.create({
+                data: { nom: registrationData.type }
+              });
+              console.log(`✅ TypeOrganisation créé: ${typeOrganisation.nom}`);
+            }
+          }
+
+          // ÉTAPE 3: Créer l'Organisation liée
           const organisation = await tx.organisation.create({
             data: {
               userId: user.id, // 🔗 Lien vers le User créé
@@ -207,13 +222,13 @@ export class AuthService {
               type: registrationData.type ?? null,
               grantType: registrationData.grantType ?? null,
               usernamePersonneContacter: registrationData.usernamePersonneContacter ?? null,
-              typeOrganisationId: registrationData.typeOrganisationId ?? null,
+              typeOrganisationId: typeOrganisation?.id ?? null, // 🔗 Lien vers TypeOrganisation
               otp: null,
               otpExpiry: null
             }
           });
 
-          return { user, organisation };
+          return { user, organisation, typeOrganisation };
         });
 
         delete pendingRegistrations[email];
@@ -230,7 +245,10 @@ export class AuthService {
         return {
           message: 'Compte vérifié avec succès !',
           token,
-          user: orgWithoutPassword,
+          user: {
+            ...orgWithoutPassword,
+            typeOrganisation: result.typeOrganisation
+          },
           type: 'organisation'
         };
       }
@@ -246,11 +264,16 @@ export class AuthService {
   async login(loginData: LoginVM) {
     const { username, password } = loginData;
 
-    // Le username peut être un email ou un username
-    // On cherche d'abord parmi les utilisateurs
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [{ email: username }, ...(username ? [{ username }] : [])]
+    // Le username est maintenant toujours un EMAIL
+    // On cherche d'abord parmi les utilisateurs (par email uniquement)
+    const user = await prisma.user.findUnique({
+      where: { email: username },
+      include: {
+        organisation: {
+          include: {
+            typeOrganisation: true
+          }
+        }
       }
     });
 
@@ -259,7 +282,7 @@ export class AuthService {
       const isPasswordValid = await bcrypt.compare(password, user.password);
 
       if (!isPasswordValid) {
-        throw new AppError('Identifiants incorrects.', 401);
+        throw new AppError('Email ou mot de passe incorrect.', 401);
       }
 
       // Vérifier que le compte est vérifié (pas d'OTP en attente)
@@ -267,7 +290,7 @@ export class AuthService {
         throw new AppError("Votre compte n'est pas encore vérifié. Veuillez vérifier votre email.", 403);
       }
 
-      // Générer le token JWT
+      // Générer le token JWT avec l'ID du USER
       const token = this.generateToken({
         userId: user.id,
         email: user.email,
@@ -280,88 +303,35 @@ export class AuthService {
         message: 'Connexion réussie.',
         token,
         user: userWithoutSensitiveData,
-        type: 'user'
+        type: user.userType || 'user'
       };
     }
 
-    // Chercher parmi les organisations
-    const organisation = await prisma.organisation.findFirst({
-      where: {
-        OR: [{ email: username }, ...(username ? [{ username }] : [])]
-      },
-      include: {
-        typeOrganisation: true
-      }
-    });
-
-    if (organisation) {
-      // Vérifier le mot de passe
-      const isPasswordValid = await bcrypt.compare(password, organisation.password);
-
-      if (!isPasswordValid) {
-        throw new AppError('Identifiants incorrects.', 401);
-      }
-
-      // Vérifier que le compte est vérifié
-      if (organisation.otp !== null) {
-        throw new AppError("Votre compte n'est pas encore vérifié. Veuillez vérifier votre email.", 403);
-      }
-
-      // Générer le token JWT
-      const token = this.generateToken({
-        userId: organisation.id,
-        email: organisation.email,
-        userType: 'organisation'
-      });
-
-      const { password: _, otp: __, otpExpiry: ___, ...orgWithoutSensitiveData } = organisation;
-
-      return {
-        message: 'Connexion réussie.',
-        token,
-        user: orgWithoutSensitiveData,
-        type: 'organisation'
-      };
-    }
-
-    throw new AppError('Identifiants incorrects.', 401);
+    throw new AppError('Email ou mot de passe incorrect.', 401);
   }
 
   /**
    * Vérifier si l'utilisateur est authentifié
    */
   async isAuthenticated(userId: string) {
-    // Chercher d'abord parmi les utilisateurs
+    // Chercher l'utilisateur avec son organisation et typeOrganisation
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        firstName: true,
-        lastName: true,
-        userType: true
+      include: {
+        organisation: {
+          include: {
+            typeOrganisation: true
+          }
+        }
       }
     });
 
     if (user) {
-      return { user, type: 'user' };
-    }
-
-    // Chercher parmi les organisations
-    const organisation = await prisma.organisation.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        name: true,
-        type: true
-      }
-    });
-
-    if (organisation) {
-      return { user: organisation, type: 'organisation' };
+      const { password: _, otp: __, otpExpiry: ___, ...userWithoutPassword } = user;
+      return {
+        user: userWithoutPassword,
+        type: user.userType || 'user'
+      };
     }
 
     throw new AppError('Utilisateur non trouvé.', 404);

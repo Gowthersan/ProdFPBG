@@ -19,16 +19,16 @@ export class Login {
   loading = signal(false);
   error = signal<string | null>(null);
 
-  // ⚠️ Connexion par NOM (Personne de contact) + mot de passe
+  // Connexion par EMAIL + mot de passe uniquement
   form = this.fb.group({
-    contact: ['', [Validators.required, Validators.minLength(2)]],
+    email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
   ngOnInit() {
-    // Pré-remplir si on arrive depuis OTP : /login?contact=...
-    const contactFromQuery = this.route.snapshot.queryParamMap.get('contact');
-    if (contactFromQuery) this.form.controls.contact.setValue(contactFromQuery);
+    // Pré-remplir si on arrive depuis OTP : /login?email=...
+    const emailFromQuery = this.route.snapshot.queryParamMap.get('email');
+    if (emailFromQuery) this.form.controls.email.setValue(emailFromQuery);
 
     // Pré-remplir si flag posé après inscription/OTP
     const wantsAutofill = localStorage.getItem('fpbg.autofillLogin') === '1';
@@ -37,7 +37,7 @@ export class Login {
         const raw = localStorage.getItem('fpbg.pendingReg');
         if (raw) {
           const p = JSON.parse(raw);
-          if (p?.data?.contact) this.form.controls.contact.setValue(p.data.contact);
+          if (p?.data?.email) this.form.controls.email.setValue(p.data.email);
           if (p?.data?.password) this.form.controls.password.setValue(p.data.password);
         }
       } catch {}
@@ -49,19 +49,20 @@ export class Login {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
 
     this.loading.set(true);
-    const { contact, password } = this.form.value as { contact: string; password: string };
+    const { email, password } = this.form.value as { email: string; password: string };
 
-    this.auth.login({ username: contact, password }).subscribe({
+    this.auth.login({ username: email, password }).subscribe({
       next: () => {
         this.loading.set(false);
-        // Aller au formulaire utilisateur
+        // Aller au dashboard
         this.router.navigate(['/dashboard']);
-        // Nettoyage optionnel du flag d’autofill
+        // Nettoyage
         localStorage.removeItem('fpbg.autofillLogin');
+        localStorage.removeItem('fpbg.pendingReg');
       },
       error: () => {
         this.loading.set(false);
-        this.error.set('Identifiants incorrects.');
+        this.error.set('Email ou mot de passe incorrect.');
       }
     });
   }

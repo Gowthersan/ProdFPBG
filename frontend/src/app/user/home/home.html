@@ -54,15 +54,63 @@
             class="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 group-hover:w-full transition-all duration-300"
           ></span>
         </a>
-        <a
-          routerLink="/liste-appels"
-          class="text-slate-700 hover:text-green-600 transition-colors relative group"
-        >
-          Appels à Projet
-          <span
-            class="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 group-hover:w-full transition-all duration-300"
-          ></span>
-        </a>
+        <div class="relative group">
+          <a
+            routerLink="/liste-appels"
+            class="text-slate-700 hover:text-green-600 transition-colors relative"
+          >
+            Appels à Projet
+            <span
+              class="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 group-hover:w-full transition-all duration-300"
+            ></span>
+          </a>
+
+          <!-- Menu déroulant au hover -->
+          <div
+            class="absolute left-0 top-full mt-2 w-96 bg-white rounded-lg shadow-xl border border-green-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50"
+          >
+            <div class="p-4 space-y-3" *ngFor="let appel of appels()">
+              <a
+                [routerLink]="['/appelaprojet']"
+                [queryParams]="{ id: appel.id }"
+                class="block hover:bg-green-50 rounded-lg p-4 transition-colors"
+              >
+                <div class="flex items-start gap-3">
+                  <div class="flex-shrink-0 w-2 h-2 rounded-full bg-green-500 mt-2"></div>
+                  <div class="flex-1">
+                    <h4 class="font-semibold text-slate-800 text-sm mb-1">{{ appel.code }}</h4>
+                    <p class="text-slate-900 font-medium text-xs mb-2">{{ appel.titre }}</p>
+                    <p class="text-slate-600 text-xs line-clamp-2">{{ appel.resume }}</p>
+                    <div class="flex flex-wrap gap-1 mt-2">
+                      <span
+                        *ngFor="let tag of appel.tags"
+                        class="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full"
+                      >
+                        {{ tag }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+            <div class="border-t border-green-100 p-3">
+              <a
+                routerLink="/liste-appels"
+                class="text-green-600 hover:text-green-700 text-sm font-medium flex items-center justify-center gap-2"
+              >
+                Voir tous les appels
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
         <a href="#faq" class="text-slate-700 hover:text-green-600 transition-colors relative group">
           FAQ
           <span
@@ -973,7 +1021,7 @@
 
             <!-- Numéro WhatsApp -->
             <a
-              href="https://wa.me/241XXXXXXXXX"
+              href="https://wa.me/24162897570"
               target="_blank"
               rel="noopener noreferrer"
               class="group flex items-center justify-center gap-3 w-full py-5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold text-lg rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
@@ -1274,7 +1322,7 @@
                   </svg>
                 </div>
                 <div>
-                  <h3 class="text-2xl font-bold">Écrivez-nous</h3>
+                  <h3 class="text-2xl font-bold">Contactez notre support</h3>
                   <p class="text-white/90 text-sm">Une question ? Nous sommes là pour vous aider</p>
                 </div>
               </div>
@@ -1659,7 +1707,7 @@
                 Accueil
               </a>
             </li>
-            <li>
+            <li class="relative group/footer">
               <a
                 routerLink="/liste-appels"
                 class="hover:text-green-400 transition-colors flex items-center gap-2 group"
@@ -1669,6 +1717,52 @@
                 ></span>
                 Appels à Projet
               </a>
+
+              <!-- Menu déroulant au hover dans le footer -->
+              <div
+                class="absolute left-0 bottom-full mb-2 w-96 bg-slate-800 rounded-lg shadow-xl border border-green-500/30 opacity-0 invisible group-hover/footer:opacity-100 group-hover/footer:visible transition-all duration-300 z-50"
+              >
+                <div class="p-4 space-y-3" *ngFor="let appel of appels()">
+                  <a
+                    [routerLink]="['/appelaprojet']"
+                    [queryParams]="{ id: appel.id }"
+                    class="block hover:bg-green-900/20 rounded-lg p-4 transition-colors"
+                  >
+                    <div class="flex items-start gap-3">
+                      <div class="flex-shrink-0 w-2 h-2 rounded-full bg-green-400 mt-2"></div>
+                      <div class="flex-1">
+                        <h4 class="font-semibold text-green-400 text-sm mb-1">{{ appel.code }}</h4>
+                        <p class="text-white font-medium text-xs mb-2">{{ appel.titre }}</p>
+                        <p class="text-slate-300 text-xs line-clamp-2">{{ appel.resume }}</p>
+                        <div class="flex flex-wrap gap-1 mt-2">
+                          <span
+                            *ngFor="let tag of appel.tags"
+                            class="text-xs px-2 py-0.5 bg-green-500/20 text-green-300 rounded-full"
+                          >
+                            {{ tag }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+                <div class="border-t border-green-500/30 p-3">
+                  <a
+                    routerLink="/liste-appels"
+                    class="text-green-400 hover:text-green-300 text-sm font-medium flex items-center justify-center gap-2"
+                  >
+                    Voir tous les appels
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              </div>
             </li>
             <li>
               <a
@@ -1715,10 +1809,16 @@
           <p class="text-center sm:text-left">
             © 2025 Fonds de Préservation de la Biodiversité au Gabon (FPBG) - Tous droits réservés
           </p>
-          <div class="flex items-center gap-4">
-            <a href="#" class="hover:text-green-200 transition-colors">Mentions légales</a>
-            <span class="text-green-300">•</span>
-            <a href="#" class="hover:text-green-200 transition-colors">Confidentialité</a>
+          <div class="flex items-center gap-6">
+            <div class="flex items-center gap-4">
+              <a href="#" class="hover:text-green-200 transition-colors">Mentions légales</a>
+              <span class="text-green-300">•</span>
+              <a href="#" class="hover:text-green-200 transition-colors">Confidentialité</a>
+            </div>
+            <div class="flex items-center gap-2 pl-6 border-l border-green-400/30">
+              <span class="text-white/90">Développé par eLAB SING</span>
+              <img src="assets/lgo_blan.png" alt="eLAB SING" class="h-6 w-auto" />
+            </div>
           </div>
         </div>
       </div>
