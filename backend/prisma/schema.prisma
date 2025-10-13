@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Type d'organisation (ONG, PME, PMI, Startup, etc.)
+model TypeOrganisation {
+  id             String           @id @default(uuid())
+  nom            String           @unique
+  organisations  Organisation[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+// Utilisateur FPBG (agents administrateurs)
+model User {
+  id              String          @id @default(uuid())
+  username        String?         @unique
+  email           String          @unique
+  password        String
+  firstName       String?
+  lastName        String?
+  numTel          String?
+  postalAddress   String?
+  physicalAddress String?
+  userType        String?         // Type d'utilisateur (admin, agent, organisation)
+  otp             String?
+  otpExpiry       DateTime?
+  organisation    Organisation?   // Relation: Un user peut avoir une organisation
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+// Organisation (ONG, entreprises, etc.)
+model Organisation {
+  id                        String             @id @default(uuid())
+  userId                    String?            @unique  // Lien vers le User propriétaire (optional for migration)
+  user                      User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                      String?
+  username                  String?            @unique
+  email                     String             @unique
+  password                  String
+  contact                   String?
+  numTel                    String?
+  postalAddress             String?
+  physicalAddress           String?
+  type                      String?
+  grantType                 String?            // Type de subvention demandée (Petite/Moyenne)
+  usernamePersonneContacter String?
+  typeOrganisationId        String?
+  typeOrganisation          TypeOrganisation?  @relation(fields: [typeOrganisationId], references: [id])
+  projets                   Projet[]
+  otp                       String?
+  otpExpiry                 DateTime?
+  createdAt                 DateTime           @default(now())
+  updatedAt                 DateTime           @updatedAt
+}
+
+// Projet soumis par les organisations
+model Projet {
+  id                String         @id @default(uuid())
+
+  // Relation avec l'organisme
+  organisationId    String?
+  organisation      Organisation?  @relation(fields: [organisationId], references: [id])
+
+  // Informations du projet
+  title             String?
+  actPrin           String?        @db.Text  // Activités principales
+  dateLimPro        DateTime?                // Date limite estimée
+  rAtt              String?        @db.Text  // Résultat attendu
+  objP              String?        @db.Text  // Objectif du projet
+  conjP             String?        @db.Text  // Contexte & justification
+  lexGcp            String?        @db.Text  // Lieu d'exécution & groupe cible
+  poRistEnvSoPo     String?        @db.Text  // Potentiel risque
+  dPRep             String?        @db.Text  // Durabilité et potentiel expérience
+  conseilPr         String?        @db.Text  // Conseil pratique pour la rédaction
+
+  // Fichiers (chemins vers les fichiers stockés)
+  cv                String[]       @default([]) // Plusieurs CV
+  ficheC            String?                     // Fiche circuit (PME/PMI/Startup)
+  lM                String?                     // Lettre de motivation
+  stR               String?                     // Statuts et règlement intérieur (ONG)
+  rib               String?                     // RIB
+  cA                String?                     // Copie de l'agrément
+  budgetD           String?                     // Budget d'estimation
+  che               String?                     // Chronogramme d'exécution
+  cartography       String?                     // Cartographie
+  lP                String?                     // Lettre de soutien/partenariat
+
+  // État d'avancement
+  stade             String?                     // Stade du projet (BROUILLON, SOUMIS, EN_REVUE, ACCEPTE, REFUSE)
+  funding           String?                     // Financement
+
+  // Métadonnées
+  dateCreation      DateTime       @default(now())
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+// Appel à Projets (AAP)
+model AppelAProjet {
+  id                        String                   @id @default(uuid())
+  code                      String                   @unique
+  titre                     String
+  resume                    String                   @db.Text
+  contexte                  String                   @db.Text
+  objectif                  String                   @db.Text
+  contactEmail              String
+  geographicEligibility     String[]                 @default([])
+  eligibleOrganisations     String[]                 @default([])
+  eligibleActivities        String[]                 @default([])
+  cofinancement             String?                  @db.Text
+  annexes                   String[]                 @default([])
+  launchDate                DateTime
+  cover                     String?                  // URL de l'image de couverture
+  tags                      String[]                 @default([])
+  isActive                  Boolean                  @default(true)
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+
+  // Relations
+  subventions               Subvention[]
+  thematiques               Thematique[]
+}
+
+// Subvention (Petite ou Moyenne)
+model Subvention {
+  id                        String                   @id @default(uuid())
+  appelAProjetId            String
+  appelAProjet              AppelAProjet             @relation(fields: [appelAProjetId], references: [id], onDelete: Cascade)
+
+  name                      String                   // "Petite subvention" ou "Subvention moyenne"
+  amountMin                 Int                      // Montant minimum en FCFA
+  amountMax                 Int                      // Montant maximum en FCFA
+  durationMaxMonths         Int                      // Durée maximale en mois
+  deadlineNoteConceptuelle  DateTime                 // Date limite pour la note conceptuelle
+
+  // Cycle de la subvention (étapes avec dates)
+  cycleSteps                CycleStep[]
+
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+}
+
+// Étape du cycle d'une subvention
+model CycleStep {
+  id                        String                   @id @default(uuid())
+  subventionId              String
+  subvention                Subvention               @relation(fields: [subventionId], references: [id], onDelete: Cascade)
+
+  step                      String                   // Description de l'étape
+  dates                     String                   // Dates de l'étape (format texte)
+  ordre                     Int                      // Ordre de l'étape dans le cycle
+
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+}
+
+// Thématique d'un appel à projets
+model Thematique {
+  id                        String                   @id @default(uuid())
+  appelAProjetId            String
+  appelAProjet              AppelAProjet             @relation(fields: [appelAProjetId], references: [id], onDelete: Cascade)
+
+  title                     String
+  bullets                   String[]                 @default([])
+  typeSubvention            String                   // "petite" ou "moyenne"
+
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+}
