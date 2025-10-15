@@ -4,12 +4,12 @@
   >
     <!-- Logo + titre -->
     <div class="flex justify-center">
-      <img src="assets/logo.png" alt="FPBG" class="h-12 w-auto" />
+      <img src="assets/logo.png" alt="FPBG" class="w-auto h-12" />
     </div>
-    <h1 class="mt-4 text-center text-3xl font-bold">Bienvenue</h1>
+    <h1 class="mt-4 text-3xl font-bold text-center">Bienvenue</h1>
 
     <!-- Onglets -->
-    <div class="mt-6 mx-auto grid grid-cols-2 gap-6 max-w-md">
+    <div class="grid max-w-md grid-cols-2 gap-6 mx-auto mt-6">
       <a
         routerLink="/login"
         class="rounded-md bg-[#1F3B52] text-slate-200 px-6 py-2 text-center font-semibold hover:bg-[#21435e] transition"
@@ -18,14 +18,14 @@
       </a>
       <button
         type="button"
-        class="rounded-md bg-green-600 hover:bg-green-500 px-6 py-2 text-center font-semibold transition"
+        class="px-6 py-2 font-semibold text-center transition bg-green-600 rounded-md hover:bg-green-500"
       >
         Inscription
       </button>
     </div>
 
     <!-- Stepper -->
-    <div class="mt-7 flex items-center justify-center gap-6">
+    <div class="flex items-center justify-center gap-6 mt-7">
       <div
         class="flex items-center justify-center w-8 h-8 rounded-full"
         [ngClass]="{ 'bg-green-600': step() >= 1, 'bg-[#1F3B52]': step() < 1 }"
@@ -41,23 +41,23 @@
       </div>
     </div>
 
-    <h2 class="mt-5 text-center text-lg font-semibold">
-      {{ step() === 1 ? 'Informations sur l’organisme' : 'Informations sur le Demandeur' }}
+    <h2 class="mt-5 text-lg font-semibold text-center">
+      {{ step() === 1 ? 'Informations sur l’organisme' : 'Informations sur le demandeur' }}
     </h2>
 
     <!-- Alerte erreur globale -->
     <div
       *ngIf="error()"
-      class="mt-4 rounded-md border border-red-500/30 bg-red-500/10 text-red-200 px-4 py-3"
+      class="px-4 py-3 mt-4 text-red-200 border rounded-md border-red-500/30 bg-red-500/10"
     >
       {{ error() }}
     </div>
 
     <!-- ===== Étape 1 : Organisme ===== -->
-    <form *ngIf="step() === 1" class="mt-6 grid gap-4" [formGroup]="form" (ngSubmit)="next()">
+    <form *ngIf="step() === 1" class="grid gap-4 mt-6" [formGroup]="form" (ngSubmit)="next()">
       <!-- Nom org -->
       <div>
-        <label class="block text-sm text-slate-300 mb-1">Nom de l’organisation</label>
+        <label class="block mb-1 text-sm text-slate-300">Nom de l’organisation</label>
         <input
           formControlName="orgName"
           class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
@@ -73,7 +73,7 @@
 
       <!-- Type org -->
       <div>
-        <label class="block text-sm text-slate-300 mb-1">Type d’organisation</label>
+        <label class="block mb-1 text-sm text-slate-300">Type d’organisation</label>
         <select
           formControlName="orgType"
           class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
@@ -91,7 +91,7 @@
 
       <!-- Couverture -->
       <div>
-        <label class="block text-sm text-slate-300 mb-1">Couverture géographique</label>
+        <label class="block mb-1 text-sm text-slate-300">Couverture géographique</label>
         <select
           formControlName="coverage"
           class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
@@ -109,8 +109,8 @@
 
       <!-- Type de subvention -->
       <div>
-        <label class="block text-sm text-slate-300 mb-1">Type de subvention</label>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label class="block mb-1 text-sm text-slate-300">Type de subvention</label>
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
           <label
             class="flex items-center gap-2 rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5 cursor-pointer"
           >
@@ -143,9 +143,9 @@
       </div>
 
       <!-- Email/Tel org -->
-      <div class="grid md:grid-cols-2 gap-4">
+      <div class="grid gap-4 md:grid-cols-2">
         <div>
-          <label class="block text-sm text-slate-300 mb-1">Email de contact</label>
+          <label class="block mb-1 text-sm text-slate-300">Email de contact</label>
           <input
             type="email"
             formControlName="orgEmail"
@@ -160,7 +160,7 @@
           </p>
         </div>
         <div>
-          <label class="block text-sm text-slate-300 mb-1">Téléphone</label>
+          <label class="block mb-1 text-sm text-slate-300">Téléphone</label>
           <input
             formControlName="orgPhone"
             class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
@@ -182,21 +182,24 @@
       </div>
 
       <!-- Actions -->
-      <div class="mt-3 flex justify-center gap-3">
-        <button type="submit" [disabled]="loading()"
-                class="rounded-md bg-green-600 hover:bg-green-500 px-8 py-2.5 font-semibold disabled:opacity-60 disabled:cursor-not-allowed transition">
+      <div class="flex justify-center gap-3 mt-3">
+        <button
+          type="submit"
+          [disabled]="loading()"
+          class="rounded-md bg-green-600 hover:bg-green-500 px-8 py-2.5 font-semibold disabled:opacity-60 disabled:cursor-not-allowed transition"
+        >
           Suivant
         </button>
       </div>
     </form>
 
     <!-- ===== Étape 2 : Demandeur ===== -->
-    <form *ngIf="step() === 2" class="mt-6 grid gap-4" [formGroup]="form" (ngSubmit)="submit()">
-      <h2 class="text-center text-lg font-semibold">Informations sur le Demandeur</h2>
+    <form *ngIf="step() === 2" class="grid gap-4 mt-6" [formGroup]="form" (ngSubmit)="submit()">
+      <!-- <h2 class="text-lg font-semibold text-center">Informations sur le Demandeur</h2> -->
 
       <!-- Contact -->
       <div>
-        <label class="block text-sm text-slate-300 mb-1">Personne de contact</label>
+        <label class="block mb-1 text-sm text-slate-300">Personne de contact</label>
         <input
           formControlName="contact"
           class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
@@ -212,7 +215,7 @@
 
       <!-- Poste -->
       <div>
-        <label class="block text-sm text-slate-300 mb-1">Fonction</label>
+        <label class="block mb-1 text-sm text-slate-300">Fonction</label>
         <input
           formControlName="position"
           class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
@@ -221,9 +224,9 @@
       </div>
 
       <!-- Tel / Email -->
-      <div class="grid md:grid-cols-2 gap-4">
+      <div class="grid gap-4 md:grid-cols-2">
         <div>
-          <label class="block text-sm text-slate-300 mb-1">Téléphone</label>
+          <label class="block mb-1 text-sm text-slate-300">Téléphone</label>
           <input
             formControlName="phone"
             class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
@@ -243,7 +246,7 @@
           </p>
         </div>
         <div>
-          <label class="block text-sm text-slate-300 mb-1">Email</label>
+          <label class="block mb-1 text-sm text-slate-300">Email</label>
           <input
             type="email"
             formControlName="email"
@@ -260,9 +263,9 @@
       </div>
 
       <!-- Password / Confirm -->
-      <div class="grid md:grid-cols-2 gap-4">
+      <div class="grid gap-4 md:grid-cols-2">
         <div>
-          <label class="block text-sm text-slate-300 mb-1">Mot de passe</label>
+          <label class="block mb-1 text-sm text-slate-300">Mot de passe</label>
           <input
             type="password"
             formControlName="password"
@@ -277,7 +280,7 @@
           </p>
         </div>
         <div>
-          <label class="block text-sm text-slate-300 mb-1">Confirmer le mot de passe</label>
+          <label class="block mb-1 text-sm text-slate-300">Confirmer le mot de passe</label>
           <input
             type="password"
             formControlName="confirm"
@@ -297,13 +300,19 @@
       </div>
 
       <!-- Actions -->
-      <div class="mt-3 flex justify-center gap-3">
-        <button type="button" (click)="step.set(1)"
-                class="rounded-md bg-slate-600 hover:bg-slate-500 px-8 py-2.5 font-semibold transition">
+      <div class="flex justify-center gap-3 mt-3">
+        <button
+          type="button"
+          (click)="step.set(1)"
+          class="rounded-md bg-slate-600 hover:bg-slate-500 px-8 py-2.5 font-semibold transition"
+        >
           Retour
         </button>
-        <button type="submit" [disabled]="loading()"
-                class="rounded-md bg-green-600 hover:bg-green-500 px-8 py-2.5 font-semibold disabled:opacity-60 disabled:cursor-not-allowed transition">
+        <button
+          type="submit"
+          [disabled]="loading()"
+          class="rounded-md bg-green-600 hover:bg-green-500 px-8 py-2.5 font-semibold disabled:opacity-60 disabled:cursor-not-allowed transition"
+        >
           <span *ngIf="!loading()">Créer le compte</span>
           <span *ngIf="loading()">Création en cours...</span>
         </button>

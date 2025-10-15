@@ -16,7 +16,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@emailjs/browser": "^4.4.1",
     "@prisma/client": "^6.17.1",
     "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.3",

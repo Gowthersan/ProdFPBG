@@ -8,9 +8,8 @@ describe('SubmissionWizard', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SubmissionWizard]
-    })
-    .compileComponents();
+      imports: [SubmissionWizard],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(SubmissionWizard);
     component = fixture.componentInstance;

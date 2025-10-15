@@ -31,23 +31,23 @@
     - Ajouter des animations de transition
   -->
   <header
-    class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm transition-all duration-300"
+    class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 shadow-sm bg-white/95 backdrop-blur-md"
   >
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+    <div class="flex items-center justify-between h-20 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <!-- Logo FPBG -->
       <a routerLink="/" class="flex items-center gap-3 group">
         <img
           src="assets/logo.png"
           alt="FPBG Logo"
-          class="h-14 w-auto object-contain group-hover:scale-105 transition-transform duration-300"
+          class="object-contain w-auto transition-transform duration-300 h-14 group-hover:scale-105"
         />
       </a>
 
       <!-- Navigation Desktop avec hover effects -->
-      <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
+      <nav class="items-center hidden gap-8 text-sm font-medium md:flex">
         <a
           routerLink="/"
-          class="text-slate-700 hover:text-green-600 transition-colors relative group"
+          class="relative transition-colors text-slate-700 hover:text-green-600 group"
         >
           Accueil
           <span
@@ -57,7 +57,7 @@
         <div class="relative group">
           <a
             routerLink="/liste-appels"
-            class="text-slate-700 hover:text-green-600 transition-colors relative"
+            class="relative transition-colors text-slate-700 hover:text-green-600"
           >
             Appels à Projet
             <span
@@ -67,20 +67,20 @@
 
           <!-- Menu déroulant au hover -->
           <div
-            class="absolute left-0 top-full mt-2 w-96 bg-white rounded-lg shadow-xl border border-green-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50"
+            class="absolute left-0 z-50 invisible mt-2 transition-all duration-300 bg-white border border-green-100 rounded-lg shadow-xl opacity-0 top-full w-96 group-hover:opacity-100 group-hover:visible"
           >
             <div class="p-4 space-y-3" *ngFor="let appel of appels()">
               <a
                 [routerLink]="['/appelaprojet']"
                 [queryParams]="{ id: appel.id }"
-                class="block hover:bg-green-50 rounded-lg p-4 transition-colors"
+                class="block p-4 transition-colors rounded-lg hover:bg-green-50"
               >
                 <div class="flex items-start gap-3">
-                  <div class="flex-shrink-0 w-2 h-2 rounded-full bg-green-500 mt-2"></div>
+                  <div class="flex-shrink-0 w-2 h-2 mt-2 bg-green-500 rounded-full"></div>
                   <div class="flex-1">
-                    <h4 class="font-semibold text-slate-800 text-sm mb-1">{{ appel.code }}</h4>
-                    <p class="text-slate-900 font-medium text-xs mb-2">{{ appel.titre }}</p>
-                    <p class="text-slate-600 text-xs line-clamp-2">{{ appel.resume }}</p>
+                    <h4 class="mb-1 text-sm font-semibold text-slate-800">{{ appel.code }}</h4>
+                    <p class="mb-2 text-xs font-medium text-slate-900">{{ appel.titre }}</p>
+                    <p class="text-xs text-slate-600 line-clamp-2">{{ appel.resume }}</p>
                     <div class="flex flex-wrap gap-1 mt-2">
                       <span
                         *ngFor="let tag of appel.tags"
@@ -93,10 +93,10 @@
                 </div>
               </a>
             </div>
-            <div class="border-t border-green-100 p-3">
+            <div class="p-3 border-t border-green-100">
               <a
                 routerLink="/liste-appels"
-                class="text-green-600 hover:text-green-700 text-sm font-medium flex items-center justify-center gap-2"
+                class="flex items-center justify-center gap-2 text-sm font-medium text-green-600 hover:text-green-700"
               >
                 Voir tous les appels
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,7 +111,7 @@
             </div>
           </div>
         </div>
-        <a href="#faq" class="text-slate-700 hover:text-green-600 transition-colors relative group">
+        <a href="#faq" class="relative transition-colors text-slate-700 hover:text-green-600 group">
           FAQ
           <span
             class="absolute bottom-0 left-0 w-0 h-0.5 bg-green-600 group-hover:w-full transition-all duration-300"
@@ -119,7 +119,7 @@
         </a>
         <a
           href="#contact"
-          class="text-slate-700 hover:text-green-600 transition-colors relative group"
+          class="relative transition-colors text-slate-700 hover:text-green-600 group"
         >
           Contact
           <span
@@ -145,7 +145,7 @@
 
         <!-- Bouton menu mobile -->
         <button
-          class="md:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+          class="p-2 transition-colors rounded-lg md:hidden text-slate-700 hover:bg-slate-100"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -185,7 +185,7 @@
         <img
           src="assets/hero.png"
           alt="Hero Background"
-          class="w-full h-full object-cover opacity-60"
+          class="object-cover w-full h-full opacity-60"
         />
         <!-- Overlay avec dégradé pour assurer la lisibilité -->
         <div
@@ -195,14 +195,14 @@
         <!-- Motifs décoratifs animés -->
         <div class="absolute inset-0 opacity-20">
           <div
-            class="absolute top-20 left-10 w-72 h-72 bg-green-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"
+            class="absolute bg-green-400 rounded-full top-20 left-10 w-72 h-72 mix-blend-multiply filter blur-3xl animate-pulse"
           ></div>
           <div
-            class="absolute bottom-20 right-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"
+            class="absolute bg-blue-400 rounded-full bottom-20 right-10 w-72 h-72 mix-blend-multiply filter blur-3xl animate-pulse"
             style="animation-delay: 2s"
           ></div>
           <div
-            class="absolute top-1/2 left-1/2 w-96 h-96 bg-green-300 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"
+            class="absolute bg-green-300 rounded-full top-1/2 left-1/2 w-96 h-96 mix-blend-multiply filter blur-3xl animate-pulse"
             style="animation-delay: 4s"
           ></div>
         </div>
@@ -210,23 +210,23 @@
 
       <!-- Contenu Hero -->
       <div class="relative w-full py-20">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div class="text-center max-w-4xl mx-auto">
+        <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <div class="max-w-4xl mx-auto text-center">
             <!-- Badge animé -->
             <div
-              class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-white text-sm font-semibold mb-8 shadow-lg"
+              class="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm font-semibold text-white rounded-full shadow-lg bg-white/10 backdrop-blur-md"
             >
-              <span class="relative flex h-3 w-3">
+              <span class="relative flex w-3 h-3">
                 <span
-                  class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
+                  class="absolute inline-flex w-full h-full bg-green-400 rounded-full opacity-75 animate-ping"
                 ></span>
-                <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                <span class="relative inline-flex w-3 h-3 bg-green-500 rounded-full"></span>
               </span>
               Appel à Projet Ouvert - 1ère Édition 2025
             </div>
 
             <!-- Titre principal optimisé -->
-            <h1 class="text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight mb-6">
+            <h1 class="mb-6 text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-7xl">
               CONSERVATION MARINE &<br />
               <span
                 class="bg-gradient-to-r from-green-300 via-blue-300 to-green-300 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient"
@@ -236,7 +236,7 @@
             </h1>
 
             <!-- Sous-titre amélioré -->
-            <p class="text-lg sm:text-xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed">
+            <p class="max-w-3xl mx-auto mb-12 text-lg leading-relaxed sm:text-xl text-white/90">
               Soutien des initiatives locales pour la conservation de la nature et<br
                 class="hidden sm:block"
               />
@@ -244,10 +244,10 @@
             </p>
 
             <!-- Boutons CTA avec icônes -->
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+            <div class="flex flex-col items-center justify-center gap-4 mb-16 sm:flex-row">
               <a
                 routerLink="/soumettre"
-                class="group w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 hover:bg-green-700 px-8 py-4 text-base font-semibold text-white shadow-2xl hover:shadow-green-500/50 transition-all duration-300 transform hover:scale-105"
+                class="inline-flex items-center justify-center w-full gap-2 px-8 py-4 text-base font-semibold text-white transition-all duration-300 transform bg-green-600 shadow-2xl group sm:w-auto rounded-xl hover:bg-green-700 hover:shadow-green-500/50 hover:scale-105"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -259,7 +259,7 @@
                 </svg>
                 Commencer maintenant
                 <svg
-                  class="w-5 h-5 group-hover:translate-x-1 transition-transform"
+                  class="w-5 h-5 transition-transform group-hover:translate-x-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -275,17 +275,17 @@
             </div>
 
             <!-- Statistiques rapides pour crédibilité -->
-            <div class="grid grid-cols-3 gap-8 max-w-2xl mx-auto pt-8 border-t border-white/20">
+            <div class="grid max-w-2xl grid-cols-3 gap-8 pt-8 mx-auto border-t border-white/20">
               <div class="text-center">
-                <div class="text-3xl sm:text-4xl font-bold text-white mb-1">200M</div>
+                <div class="mb-1 text-3xl font-bold text-white sm:text-4xl">200M</div>
                 <div class="text-sm text-white/70">Budget maximum</div>
               </div>
               <div class="text-center border-x border-white/20">
-                <div class="text-3xl sm:text-4xl font-bold text-white mb-1">1ère</div>
+                <div class="mb-1 text-3xl font-bold text-white sm:text-4xl">1ère</div>
                 <div class="text-sm text-white/70">Édition 2025</div>
               </div>
               <div class="text-center">
-                <div class="text-3xl sm:text-4xl font-bold text-white mb-1">4</div>
+                <div class="mb-1 text-3xl font-bold text-white sm:text-4xl">4</div>
                 <div class="text-sm text-white/70">Étapes simples</div>
               </div>
             </div>
@@ -327,19 +327,19 @@
     - Implémenter un système de progression
     - Ajouter des tooltips explicatifs
   -->
-  <section class="bg-gradient-to-b from-white to-slate-50 py-20">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  <section class="py-20 bg-gradient-to-b from-white to-slate-50">
+    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <!-- En-tête de section -->
-      <div class="text-center mb-16">
+      <div class="mb-16 text-center">
         <span
-          class="inline-block px-4 py-2 bg-green-100 text-green-700 text-sm font-semibold rounded-full mb-4"
+          class="inline-block px-4 py-2 mb-4 text-sm font-semibold text-green-700 bg-green-100 rounded-full"
         >
           Comment participer
         </span>
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
+        <h2 class="mb-4 text-3xl font-bold sm:text-4xl lg:text-5xl text-slate-900">
           Processus de Soumission
         </h2>
-        <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+        <p class="max-w-3xl mx-auto text-lg text-slate-600">
           Pour faciliter la transmission de vos projets, le FPBG met à votre disposition<br
             class="hidden sm:block"
           />
@@ -348,26 +348,26 @@
       </div>
 
       <!-- Grille d'étapes -->
-      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+      <div class="grid max-w-6xl gap-6 mx-auto md:grid-cols-2 lg:grid-cols-4">
         <!-- Étape 1 -->
-        <div class="group relative">
+        <div class="relative group">
           <!-- Ligne de connexion (desktop uniquement) -->
           <div
             class="hidden lg:block absolute top-20 left-full w-full h-0.5 bg-gradient-to-r from-slate-200 via-green-200 to-transparent -translate-x-1/2 z-0"
           ></div>
 
           <div
-            class="relative bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-100"
+            class="relative p-6 transition-all duration-300 transform bg-white border shadow-lg rounded-2xl hover:shadow-2xl hover:-translate-y-2 border-slate-100"
           >
             <!-- Badge numéro -->
             <div
-              class="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform duration-300"
+              class="absolute flex items-center justify-center w-12 h-12 transition-transform duration-300 transform shadow-lg -top-4 -right-4 bg-gradient-to-br from-green-500 to-green-600 rounded-xl group-hover:rotate-12"
             >
-              <span class="text-white font-bold text-lg">01</span>
+              <span class="text-lg font-bold text-white">01</span>
             </div>
 
             <!-- Icône -->
-            <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+            <div class="flex items-center justify-center mb-4 bg-green-100 w-14 h-14 rounded-xl">
               <svg
                 class="w-8 h-8 text-green-600"
                 fill="none"
@@ -384,8 +384,8 @@
             </div>
 
             <!-- Contenu -->
-            <h3 class="font-bold text-lg text-slate-900 mb-2">Consultez les exigences</h3>
-            <p class="text-slate-600 text-sm leading-relaxed">
+            <h3 class="mb-2 text-lg font-bold text-slate-900">Consultez les exigences</h3>
+            <p class="text-sm leading-relaxed text-slate-600">
               Vérifiez les critères d'éligibilité et les exigences du Fonds avant de soumettre votre
               projet
             </p>
@@ -393,21 +393,21 @@
         </div>
 
         <!-- Étape 2 -->
-        <div class="group relative">
+        <div class="relative group">
           <div
             class="hidden lg:block absolute top-20 left-full w-full h-0.5 bg-gradient-to-r from-slate-200 via-blue-200 to-transparent -translate-x-1/2 z-0"
           ></div>
 
           <div
-            class="relative bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-100"
+            class="relative p-6 transition-all duration-300 transform bg-white border shadow-lg rounded-2xl hover:shadow-2xl hover:-translate-y-2 border-slate-100"
           >
             <div
-              class="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform duration-300"
+              class="absolute flex items-center justify-center w-12 h-12 transition-transform duration-300 transform shadow-lg -top-4 -right-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl group-hover:rotate-12"
             >
-              <span class="text-white font-bold text-lg">02</span>
+              <span class="text-lg font-bold text-white">02</span>
             </div>
 
-            <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+            <div class="flex items-center justify-center mb-4 bg-blue-100 w-14 h-14 rounded-xl">
               <svg
                 class="w-8 h-8 text-blue-600"
                 fill="none"
@@ -423,29 +423,29 @@
               </svg>
             </div>
 
-            <h3 class="font-bold text-lg text-slate-900 mb-2">Créez votre compte</h3>
-            <p class="text-slate-600 text-sm leading-relaxed">
+            <h3 class="mb-2 text-lg font-bold text-slate-900">Créez votre compte</h3>
+            <p class="text-sm leading-relaxed text-slate-600">
               Inscription gratuite et activation immédiate de votre espace personnel
             </p>
           </div>
         </div>
 
         <!-- Étape 3 -->
-        <div class="group relative">
+        <div class="relative group">
           <div
             class="hidden lg:block absolute top-20 left-full w-full h-0.5 bg-gradient-to-r from-slate-200 via-purple-200 to-transparent -translate-x-1/2 z-0"
           ></div>
 
           <div
-            class="relative bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-100"
+            class="relative p-6 transition-all duration-300 transform bg-white border shadow-lg rounded-2xl hover:shadow-2xl hover:-translate-y-2 border-slate-100"
           >
             <div
-              class="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform duration-300"
+              class="absolute flex items-center justify-center w-12 h-12 transition-transform duration-300 transform shadow-lg -top-4 -right-4 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl group-hover:rotate-12"
             >
-              <span class="text-white font-bold text-lg">03</span>
+              <span class="text-lg font-bold text-white">03</span>
             </div>
 
-            <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+            <div class="flex items-center justify-center mb-4 bg-purple-100 w-14 h-14 rounded-xl">
               <svg
                 class="w-8 h-8 text-purple-600"
                 fill="none"
@@ -461,25 +461,25 @@
               </svg>
             </div>
 
-            <h3 class="font-bold text-lg text-slate-900 mb-2">Remplissez la note</h3>
-            <p class="text-slate-600 text-sm leading-relaxed">
+            <h3 class="mb-2 text-lg font-bold text-slate-900">Remplissez la note</h3>
+            <p class="text-sm leading-relaxed text-slate-600">
               Complétez la note conceptuelle de votre projet directement sur le système
             </p>
           </div>
         </div>
 
         <!-- Étape 4 -->
-        <div class="group relative">
+        <div class="relative group">
           <div
-            class="relative bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-100"
+            class="relative p-6 transition-all duration-300 transform bg-white border shadow-lg rounded-2xl hover:shadow-2xl hover:-translate-y-2 border-slate-100"
           >
             <div
-              class="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform duration-300"
+              class="absolute flex items-center justify-center w-12 h-12 transition-transform duration-300 transform shadow-lg -top-4 -right-4 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl group-hover:rotate-12"
             >
-              <span class="text-white font-bold text-lg">04</span>
+              <span class="text-lg font-bold text-white">04</span>
             </div>
 
-            <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
+            <div class="flex items-center justify-center mb-4 bg-orange-100 w-14 h-14 rounded-xl">
               <svg
                 class="w-8 h-8 text-orange-600"
                 fill="none"
@@ -495,8 +495,8 @@
               </svg>
             </div>
 
-            <h3 class="font-bold text-lg text-slate-900 mb-2">Joignez les documents</h3>
-            <p class="text-slate-600 text-sm leading-relaxed">
+            <h3 class="mb-2 text-lg font-bold text-slate-900">Joignez les documents</h3>
+            <p class="text-sm leading-relaxed text-slate-600">
               Ajoutez tous les documents requis et soumettez votre demande complète
             </p>
           </div>
@@ -519,26 +519,26 @@
     - Remplacer par vos vraies images de logos
     - Ajouter un carrousel si beaucoup de partenaires
   -->
-  <section class="relative bg-gradient-to-b from-slate-50 to-white py-20 overflow-hidden">
+  <section class="relative py-20 overflow-hidden bg-gradient-to-b from-slate-50 to-white">
     <!-- Motifs décoratifs en arrière-plan -->
     <div class="absolute inset-0 opacity-5">
-      <div class="absolute top-10 left-10 w-64 h-64 bg-green-500 rounded-full blur-3xl"></div>
-      <div class="absolute bottom-10 right-10 w-64 h-64 bg-blue-500 rounded-full blur-3xl"></div>
+      <div class="absolute w-64 h-64 bg-green-500 rounded-full top-10 left-10 blur-3xl"></div>
+      <div class="absolute w-64 h-64 bg-blue-500 rounded-full bottom-10 right-10 blur-3xl"></div>
     </div>
 
-    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="relative px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <!-- Titre de section amélioré -->
-      <div class="text-center mb-12">
+      <div class="mb-12 text-center">
         <span
-          class="inline-block px-6 py-2 bg-gradient-to-r from-green-100 to-blue-100 text-transparent bg-clip-text font-bold text-sm uppercase tracking-wider mb-3"
+          class="inline-block px-6 py-2 mb-3 text-sm font-bold tracking-wider text-transparent uppercase bg-gradient-to-r from-green-100 to-blue-100 bg-clip-text"
         >
-          <span class="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+          <span class="text-transparent bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text">
             Un Partenariat Stratégique
           </span>
         </span>
-        <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">Nos Partenaires</h2>
+        <h2 class="mb-3 text-3xl font-bold sm:text-4xl text-slate-900">Nos Partenaires</h2>
         <div
-          class="w-24 h-1 bg-gradient-to-r from-green-500 via-blue-500 to-green-500 mx-auto rounded-full"
+          class="w-24 h-1 mx-auto rounded-full bg-gradient-to-r from-green-500 via-blue-500 to-green-500"
         ></div>
       </div>
 
@@ -546,13 +546,13 @@
       <div class="relative max-w-4xl mx-auto">
         <!-- Ligne de connexion entre les logos -->
         <div
-          class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md"
+          class="absolute w-full max-w-md transform -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"
         >
           <div
             class="h-0.5 bg-gradient-to-r from-green-500 via-blue-400 to-blue-600 opacity-30"
           ></div>
           <div
-            class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full border-4 border-gradient-to-r from-green-500 to-blue-600 flex items-center justify-center shadow-lg"
+            class="absolute flex items-center justify-center w-12 h-12 transform -translate-x-1/2 -translate-y-1/2 bg-white border-4 rounded-full shadow-lg top-1/2 left-1/2 border-gradient-to-r from-green-500 to-blue-600"
           >
             <svg
               class="w-6 h-6 text-green-600"
@@ -572,39 +572,39 @@
 
         <!-- Grille des logos -->
         <div
-          class="grid grid-cols-1 sm:grid-cols-2 gap-12 sm:gap-16 items-center justify-items-center pt-8"
+          class="grid items-center grid-cols-1 gap-12 pt-8 sm:grid-cols-2 sm:gap-16 justify-items-center"
         >
           <!-- Logo FPBG -->
-          <div class="group relative">
+          <div class="relative group">
             <div
-              class="absolute inset-0 bg-gradient-to-br from-green-400 to-green-600 rounded-3xl blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-500"
+              class="absolute inset-0 transition-opacity duration-500 opacity-0 bg-gradient-to-br from-green-400 to-green-600 rounded-3xl blur-xl group-hover:opacity-30"
             ></div>
             <div
-              class="relative w-44 h-44 bg-white rounded-3xl flex items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-500 transform group-hover:scale-105 group-hover:-rotate-2 border-2 border-slate-100 p-6"
+              class="relative flex items-center justify-center p-6 transition-all duration-500 transform bg-white border-2 shadow-xl w-44 h-44 rounded-3xl hover:shadow-2xl group-hover:scale-105 group-hover:-rotate-2 border-slate-100"
             >
-              <img src="assets/logo.png" alt="FPBG Logo" class="w-full h-full object-contain" />
+              <img src="assets/logo.png" alt="FPBG Logo" class="object-contain w-full h-full" />
             </div>
-            <div class="text-center mt-4">
+            <div class="mt-4 text-center">
               <p class="text-sm font-semibold text-slate-700">FPBG</p>
               <p class="text-xs text-slate-500">Fonds de Préservation</p>
             </div>
           </div>
 
           <!-- Logo Obligations Bleues -->
-          <div class="group relative">
+          <div class="relative group">
             <div
-              class="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-600 rounded-3xl blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-500"
+              class="absolute inset-0 transition-opacity duration-500 opacity-0 bg-gradient-to-br from-blue-400 to-blue-600 rounded-3xl blur-xl group-hover:opacity-30"
             ></div>
             <div
-              class="relative w-44 h-44 bg-white rounded-3xl flex items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-500 transform group-hover:scale-105 group-hover:rotate-2 border-2 border-slate-100 p-6"
+              class="relative flex items-center justify-center p-6 transition-all duration-500 transform bg-white border-2 shadow-xl w-44 h-44 rounded-3xl hover:shadow-2xl group-hover:scale-105 group-hover:rotate-2 border-slate-100"
             >
               <img
                 src="assets/obligations-bleues-logo.png"
                 alt="Obligations Bleues Logo"
-                class="w-full h-full object-contain"
+                class="object-contain w-full h-full"
               />
             </div>
-            <div class="text-center mt-4">
+            <div class="mt-4 text-center">
               <p class="text-sm font-semibold text-slate-700">Obligations Bleues</p>
               <p class="text-xs text-slate-500">Finance Durable</p>
             </div>
@@ -613,8 +613,8 @@
       </div>
 
       <!-- Message de partenariat -->
-      <div class="text-center mt-12 max-w-2xl mx-auto">
-        <p class="text-slate-600 text-base leading-relaxed">
+      <div class="max-w-2xl mx-auto mt-12 text-center">
+        <p class="text-base leading-relaxed text-slate-600">
           Ensemble pour la conservation marine et le développement durable au Gabon
         </p>
       </div>
@@ -627,56 +627,56 @@
     ========================================
   -->
   <section
-    class="relative bg-gradient-to-br from-green-900 via-blue-900 to-green-900 py-20 overflow-hidden"
+    class="relative py-20 overflow-hidden bg-gradient-to-br from-green-900 via-blue-900 to-green-900"
   >
     <!-- Motifs décoratifs en arrière-plan -->
     <div class="absolute inset-0 opacity-20">
       <div
-        class="absolute top-10 left-10 w-96 h-96 bg-green-400 rounded-full blur-3xl animate-pulse"
+        class="absolute bg-green-400 rounded-full top-10 left-10 w-96 h-96 blur-3xl animate-pulse"
       ></div>
       <div
-        class="absolute bottom-10 right-10 w-96 h-96 bg-blue-400 rounded-full blur-3xl animate-pulse"
+        class="absolute bg-blue-400 rounded-full bottom-10 right-10 w-96 h-96 blur-3xl animate-pulse"
         style="animation-delay: 2s"
       ></div>
     </div>
 
-    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div class="grid lg:grid-cols-2 gap-12 items-center">
+    <div class="relative px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div class="grid items-center gap-12 lg:grid-cols-2">
         <!-- GAUCHE - Contenu -->
         <div class="text-white">
           <!-- Badge -->
           <div
-            class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md rounded-full text-sm font-semibold mb-6"
+            class="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-semibold rounded-full bg-white/10 backdrop-blur-md"
           >
-            <span class="relative flex h-2 w-2">
+            <span class="relative flex w-2 h-2">
               <span
-                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"
+                class="absolute inline-flex w-full h-full bg-orange-400 rounded-full opacity-75 animate-ping"
               ></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-orange-400"></span>
+              <span class="relative inline-flex w-2 h-2 bg-orange-400 rounded-full"></span>
             </span>
             Bientôt disponible...
           </div>
 
           <!-- Titre -->
-          <h2 class="text-4xl sm:text-5xl font-bold mb-6 leading-tight">
+          <h2 class="mb-6 text-4xl font-bold leading-tight sm:text-5xl">
             Gérez vos projets<br />
-            <span class="bg-gradient-to-r from-green-300 to-blue-300 bg-clip-text text-transparent">
+            <span class="text-transparent bg-gradient-to-r from-green-300 to-blue-300 bg-clip-text">
               où que vous soyez
             </span>
           </h2>
 
           <!-- Description -->
-          <p class="text-lg text-white/90 mb-8 leading-relaxed">
+          <p class="mb-8 text-lg leading-relaxed text-white/90">
             Téléchargez notre application mobile pour soumettre et suivre vos projets en toute
             simplicité, même hors connexion. Une expérience optimisée pour vous accompagner à chaque
             étape.
           </p>
 
           <!-- Fonctionnalités -->
-          <div class="space-y-4 mb-10">
+          <div class="mb-10 space-y-4">
             <div class="flex items-start gap-4 group">
               <div
-                class="flex-shrink-0 w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center group-hover:bg-green-500/30 transition-colors"
+                class="flex items-center justify-center flex-shrink-0 w-12 h-12 transition-colors bg-green-500/20 rounded-xl group-hover:bg-green-500/30"
               >
                 <svg
                   class="w-6 h-6 text-green-300"
@@ -693,8 +693,8 @@
                 </svg>
               </div>
               <div>
-                <h3 class="font-bold text-lg mb-1">Soumission simplifiée</h3>
-                <p class="text-white/70 text-sm">
+                <h3 class="mb-1 text-lg font-bold">Soumission simplifiée</h3>
+                <p class="text-sm text-white/70">
                   Soumettez vos projets directement depuis votre téléphone avec un formulaire
                   intuitif
                 </p>
@@ -703,7 +703,7 @@
 
             <div class="flex items-start gap-4 group">
               <div
-                class="flex-shrink-0 w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:bg-blue-500/30 transition-colors"
+                class="flex items-center justify-center flex-shrink-0 w-12 h-12 transition-colors bg-blue-500/20 rounded-xl group-hover:bg-blue-500/30"
               >
                 <svg
                   class="w-6 h-6 text-blue-300"
@@ -720,8 +720,8 @@
                 </svg>
               </div>
               <div>
-                <h3 class="font-bold text-lg mb-1">Suivi en temps réel</h3>
-                <p class="text-white/70 text-sm">
+                <h3 class="mb-1 text-lg font-bold">Suivi en temps réel</h3>
+                <p class="text-sm text-white/70">
                   Surveillez l'état de vos candidatures et recevez des notifications instantanées
                 </p>
               </div>
@@ -729,7 +729,7 @@
 
             <div class="flex items-start gap-4 group">
               <div
-                class="flex-shrink-0 w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center group-hover:bg-purple-500/30 transition-colors"
+                class="flex items-center justify-center flex-shrink-0 w-12 h-12 transition-colors bg-purple-500/20 rounded-xl group-hover:bg-purple-500/30"
               >
                 <svg
                   class="w-6 h-6 text-purple-300"
@@ -746,8 +746,8 @@
                 </svg>
               </div>
               <div>
-                <h3 class="font-bold text-lg mb-1">Mode hors ligne</h3>
-                <p class="text-white/70 text-sm">
+                <h3 class="mb-1 text-lg font-bold">Mode hors ligne</h3>
+                <p class="text-sm text-white/70">
                   Travaillez sur vos projets sans connexion, synchronisation automatique dès la
                   reconnexion
                 </p>
@@ -756,7 +756,7 @@
 
             <div class="flex items-start gap-4 group">
               <div
-                class="flex-shrink-0 w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center group-hover:bg-orange-500/30 transition-colors"
+                class="flex items-center justify-center flex-shrink-0 w-12 h-12 transition-colors bg-orange-500/20 rounded-xl group-hover:bg-orange-500/30"
               >
                 <svg
                   class="w-6 h-6 text-orange-300"
@@ -773,8 +773,8 @@
                 </svg>
               </div>
               <div>
-                <h3 class="font-bold text-lg mb-1">Alertes personnalisées</h3>
-                <p class="text-white/70 text-sm">
+                <h3 class="mb-1 text-lg font-bold">Alertes personnalisées</h3>
+                <p class="text-sm text-white/70">
                   Recevez des rappels sur les échéances et les mises à jour importantes
                 </p>
               </div>
@@ -782,10 +782,10 @@
           </div>
 
           <!-- Boutons de téléchargement -->
-          <div class="flex flex-col sm:flex-row gap-4 mb-6">
+          <div class="flex flex-col gap-4 mb-6 sm:flex-row">
             <a
               href="#"
-              class="inline-flex items-center justify-center gap-3 px-6 py-4 bg-black/50 text-white/50 rounded-2xl font-semibold cursor-not-allowed shadow-xl"
+              class="inline-flex items-center justify-center gap-3 px-6 py-4 font-semibold shadow-xl cursor-not-allowed bg-black/50 text-white/50 rounded-2xl"
             >
               <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
                 <path
@@ -800,7 +800,7 @@
 
             <a
               href="#"
-              class="inline-flex items-center justify-center gap-3 px-6 py-4 bg-black/50 text-white/50 rounded-2xl font-semibold cursor-not-allowed shadow-xl"
+              class="inline-flex items-center justify-center gap-3 px-6 py-4 font-semibold shadow-xl cursor-not-allowed bg-black/50 text-white/50 rounded-2xl"
             >
               <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
                 <path
@@ -816,7 +816,7 @@
 
           <!-- Avertissement Application -->
           <div
-            class="flex items-start gap-3 p-4 bg-yellow-500/20 border-l-4 border-yellow-400 rounded-lg backdrop-blur-sm"
+            class="flex items-start gap-3 p-4 border-l-4 border-yellow-400 rounded-lg bg-yellow-500/20 backdrop-blur-sm"
           >
             <svg
               class="w-6 h-6 text-yellow-300 flex-shrink-0 mt-0.5"
@@ -832,8 +832,8 @@
               />
             </svg>
             <div>
-              <p class="text-sm font-semibold text-yellow-100 mb-1">Application en développement</p>
-              <p class="text-xs text-yellow-100/90 leading-relaxed">
+              <p class="mb-1 text-sm font-semibold text-yellow-100">Application en développement</p>
+              <p class="text-xs leading-relaxed text-yellow-100/90">
                 L'application mobile FPBG est actuellement en cours de développement et sera bientôt
                 disponible sur iOS et Android. Restez connectés pour le lancement officiel !
               </p>
@@ -842,7 +842,7 @@
         </div>
 
         <!-- DROITE - Mockup Mobile -->
-        <div class="relative lg:order-last flex justify-center">
+        <div class="relative flex justify-center lg:order-last">
           <div class="relative">
             <!-- Effet de glow -->
             <div
@@ -855,33 +855,33 @@
             >
               <!-- Notch -->
               <div
-                class="absolute top-0 left-1/2 transform -translate-x-1/2 w-40 h-7 bg-slate-900 rounded-b-3xl"
+                class="absolute top-0 w-40 transform -translate-x-1/2 left-1/2 h-7 bg-slate-900 rounded-b-3xl"
               ></div>
 
               <!-- Écran -->
               <div
-                class="w-full h-full bg-gradient-to-br from-green-50 to-blue-50 p-6 flex flex-col items-center justify-center"
+                class="flex flex-col items-center justify-center w-full h-full p-6 bg-gradient-to-br from-green-50 to-blue-50"
               >
                 <!-- Logo FPBG -->
                 <div class="mb-6">
                   <div
-                    class="w-24 h-24 bg-gradient-to-br from-green-100 to-blue-300 rounded-3xl flex items-center justify-center shadow-xl"
+                    class="flex items-center justify-center w-24 h-24 shadow-xl bg-gradient-to-br from-green-100 to-blue-300 rounded-3xl"
                   >
-                    <img src="assets/logo.png" alt="FPBG" class="w-16 h-16 object-contain" />
+                    <img src="assets/logo.png" alt="FPBG" class="object-contain w-16 h-16" />
                   </div>
                 </div>
 
                 <!-- Texte -->
-                <h3 class="text-2xl font-bold text-slate-900 mb-2 text-center">FPBG Mobile</h3>
-                <p class="text-slate-600 text-sm text-center mb-6">
+                <h3 class="mb-2 text-2xl font-bold text-center text-slate-900">FPBG Mobile</h3>
+                <p class="mb-6 text-sm text-center text-slate-600">
                   Gérez vos projets en déplacement
                 </p>
 
                 <!-- Icônes de fonctionnalités -->
-                <div class="grid grid-cols-2 gap-4 w-full max-w-xs">
-                  <div class="bg-white rounded-2xl p-4 shadow-lg text-center">
+                <div class="grid w-full max-w-xs grid-cols-2 gap-4">
+                  <div class="p-4 text-center bg-white shadow-lg rounded-2xl">
                     <div
-                      class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-2"
+                      class="flex items-center justify-center w-12 h-12 mx-auto mb-2 bg-green-100 rounded-xl"
                     >
                       <svg
                         class="w-6 h-6 text-green-600"
@@ -899,9 +899,9 @@
                     </div>
                     <p class="text-xs font-semibold text-slate-700">Soumettre</p>
                   </div>
-                  <div class="bg-white rounded-2xl p-4 shadow-lg text-center">
+                  <div class="p-4 text-center bg-white shadow-lg rounded-2xl">
                     <div
-                      class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-2"
+                      class="flex items-center justify-center w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-xl"
                     >
                       <svg
                         class="w-6 h-6 text-blue-600"
@@ -919,9 +919,9 @@
                     </div>
                     <p class="text-xs font-semibold text-slate-700">Suivre</p>
                   </div>
-                  <div class="bg-white rounded-2xl p-4 shadow-lg text-center">
+                  <div class="p-4 text-center bg-white shadow-lg rounded-2xl">
                     <div
-                      class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-2"
+                      class="flex items-center justify-center w-12 h-12 mx-auto mb-2 bg-purple-100 rounded-xl"
                     >
                       <svg
                         class="w-6 h-6 text-purple-600"
@@ -939,9 +939,9 @@
                     </div>
                     <p class="text-xs font-semibold text-slate-700">Alertes</p>
                   </div>
-                  <div class="bg-white rounded-2xl p-4 shadow-lg text-center">
+                  <div class="p-4 text-center bg-white shadow-lg rounded-2xl">
                     <div
-                      class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-2"
+                      class="flex items-center justify-center w-12 h-12 mx-auto mb-2 bg-orange-100 rounded-xl"
                     >
                       <svg
                         class="w-6 h-6 text-orange-600"
@@ -973,18 +973,18 @@
     SECTION FAQ - WhatsApp Support
     ========================================
   -->
-  <section id="faq" class="relative bg-gradient-to-b from-white to-green-50 py-20">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-12">
+  <section id="faq" class="relative py-20 bg-gradient-to-b from-white to-green-50">
+    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div class="mb-12 text-center">
         <span
-          class="inline-block px-4 py-2 bg-green-100 text-green-700 text-sm font-semibold rounded-full mb-4"
+          class="inline-block px-4 py-2 mb-4 text-sm font-semibold text-green-700 bg-green-100 rounded-full"
         >
           Questions Fréquentes
         </span>
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
+        <h2 class="mb-4 text-3xl font-bold sm:text-4xl lg:text-5xl text-slate-900">
           Besoin de Renseignements ?
         </h2>
-        <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+        <p class="max-w-3xl mx-auto text-lg text-slate-600">
           Notre service d'assistance WhatsApp est disponible pour répondre à toutes vos questions
           sur le programme
         </p>
@@ -993,38 +993,38 @@
       <!-- WhatsApp Contact Card -->
       <div class="max-w-2xl mx-auto">
         <div
-          class="relative bg-white rounded-3xl shadow-2xl border-2 border-green-100 overflow-hidden transform hover:scale-105 transition-all duration-300"
+          class="relative overflow-hidden transition-all duration-300 transform bg-white border-2 border-green-100 shadow-2xl rounded-3xl hover:scale-105"
         >
           <!-- Motif décoratif -->
           <div
-            class="absolute top-0 right-0 w-64 h-64 bg-green-500/5 rounded-full -translate-y-32 translate-x-32"
+            class="absolute top-0 right-0 w-64 h-64 translate-x-32 -translate-y-32 rounded-full bg-green-500/5"
           ></div>
 
           <div class="relative p-8 sm:p-12">
             <!-- Logo WhatsApp -->
             <div class="flex justify-center mb-6">
               <div
-                class="w-24 h-24 bg-gradient-to-br from-green-50 to-green-200 rounded-3xl flex items-center justify-center shadow-xl transform hover:rotate-6 transition-transform duration-300"
+                class="flex items-center justify-center w-24 h-24 transition-transform duration-300 transform shadow-xl bg-gradient-to-br from-green-50 to-green-200 rounded-3xl hover:rotate-6"
               >
-                <img src="assets/whatsapp.png" alt="WhatsApp" class="w-16 h-16 object-contain" />
+                <img src="assets/whatsapp.png" alt="WhatsApp" class="object-contain w-16 h-16" />
               </div>
             </div>
 
             <!-- Titre -->
-            <h3 class="text-2xl font-bold text-slate-900 text-center mb-4">
+            <h3 class="mb-4 text-2xl font-bold text-center text-slate-900">
               Contactez-nous sur WhatsApp
             </h3>
-            <p class="text-slate-600 text-center mb-8">
+            <p class="mb-8 text-center text-slate-600">
               Obtenez des réponses instantanées à vos questions concernant les appels à projets, les
               critères d'éligibilité, et le processus de soumission.
             </p>
 
             <!-- Numéro WhatsApp -->
             <a
-              href="https://wa.me/24162897570"
+              href="https://wa.me/24176533462"
               target="_blank"
               rel="noopener noreferrer"
-              class="group flex items-center justify-center gap-3 w-full py-5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold text-lg rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+              class="flex items-center justify-center w-full gap-3 py-5 text-lg font-bold text-white transition-all duration-300 transform shadow-lg group bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-2xl hover:shadow-2xl hover:scale-105"
             >
               <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
                 <path
@@ -1033,7 +1033,7 @@
               </svg>
               <span>+241 XX XX XX XX</span>
               <svg
-                class="w-5 h-5 group-hover:translate-x-1 transition-transform"
+                class="w-5 h-5 transition-transform group-hover:translate-x-1"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1048,10 +1048,10 @@
             </a>
 
             <!-- Features -->
-            <div class="grid sm:grid-cols-3 gap-4 mt-8">
+            <div class="grid gap-4 mt-8 sm:grid-cols-3">
               <div class="text-center">
                 <div
-                  class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-2"
+                  class="flex items-center justify-center w-12 h-12 mx-auto mb-2 bg-green-100 rounded-xl"
                 >
                   <svg
                     class="w-6 h-6 text-green-600"
@@ -1071,7 +1071,7 @@
               </div>
               <div class="text-center">
                 <div
-                  class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-2"
+                  class="flex items-center justify-center w-12 h-12 mx-auto mb-2 bg-green-100 rounded-xl"
                 >
                   <svg
                     class="w-6 h-6 text-green-600"
@@ -1091,7 +1091,7 @@
               </div>
               <div class="text-center">
                 <div
-                  class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-2"
+                  class="flex items-center justify-center w-12 h-12 mx-auto mb-2 bg-green-100 rounded-xl"
                 >
                   <svg
                     class="w-6 h-6 text-green-600"
@@ -1113,7 +1113,7 @@
 
             <!-- Avertissement Chatbot -->
             <div
-              class="mt-8 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg flex items-start gap-3"
+              class="flex items-start gap-3 p-4 mt-8 border-l-4 border-blue-500 rounded-lg bg-blue-50"
             >
               <svg
                 class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"
@@ -1129,8 +1129,8 @@
                 />
               </svg>
               <div>
-                <p class="text-sm text-blue-900 font-semibold mb-1">Service Automatisé</p>
-                <p class="text-xs text-blue-800 leading-relaxed">
+                <p class="mb-1 text-sm font-semibold text-blue-900">Service Automatisé</p>
+                <p class="text-xs leading-relaxed text-blue-800">
                   Les réponses sont fournies par notre chatbot intelligent pour un service optimal
                   et des réponses instantanées. Pour des questions plus complexes, vous serez
                   redirigé vers un conseiller humain.
@@ -1160,35 +1160,35 @@
     - Gérer la soumission avec HttpClient
   -->
   <section id="contact" class="relative py-20 bg-gradient-to-b from-white to-slate-50 scroll-mt-20">
-    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div class="grid lg:grid-cols-2 gap-16 items-start">
+    <div class="relative px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div class="grid items-start gap-16 lg:grid-cols-2">
         <!-- GAUCHE - Infos Subventions -->
         <div>
-          <div class="text-center lg:text-left mb-12">
+          <div class="mb-12 text-center lg:text-left">
             <!-- Badge animé -->
             <div
-              class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-full text-sm font-semibold mb-6 shadow-lg"
+              class="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-semibold text-white bg-green-600 rounded-full shadow-lg"
             >
-              <span class="relative flex h-2 w-2">
+              <span class="relative flex w-2 h-2">
                 <span
-                  class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"
+                  class="absolute inline-flex w-full h-full bg-white rounded-full opacity-75 animate-ping"
                 ></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                <span class="relative inline-flex w-2 h-2 bg-white rounded-full"></span>
               </span>
               APPEL À PROJET OUVERT
             </div>
 
-            <h2 class="text-4xl sm:text-5xl font-bold text-slate-900 mb-4">
+            <h2 class="mb-4 text-4xl font-bold sm:text-5xl text-slate-900">
               Conservation Marine<br />
               <span
-                class="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent"
+                class="text-transparent bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text"
               >
                 & Littorale
               </span>
             </h2>
 
             <div
-              class="inline-flex items-center gap-2 px-5 py-2 bg-green-100 text-green-700 rounded-full font-semibold mt-4"
+              class="inline-flex items-center gap-2 px-5 py-2 mt-4 font-semibold text-green-700 bg-green-100 rounded-full"
             >
               <span class="text-2xl">🌊</span>
               1ère édition - 2025
@@ -1199,18 +1199,18 @@
           <div class="space-y-6">
             <!-- Petite subvention -->
             <div
-              class="group relative bg-gradient-to-br from-green-50 to-white rounded-3xl border-2 border-green-200 hover:border-green-400 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
+              class="relative overflow-hidden transition-all duration-300 border-2 border-green-200 shadow-xl group bg-gradient-to-br from-green-50 to-white rounded-3xl hover:border-green-400 hover:shadow-2xl"
             >
               <!-- Motif décoratif -->
               <div
-                class="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full -translate-y-16 translate-x-16"
+                class="absolute top-0 right-0 w-32 h-32 translate-x-16 -translate-y-16 rounded-full bg-green-500/10"
               ></div>
 
               <div class="relative p-8">
                 <div class="flex items-start justify-between mb-4">
                   <div class="flex-1">
                     <div
-                      class="inline-flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg text-xs font-bold mb-3"
+                      class="inline-flex items-center gap-2 px-3 py-1 mb-3 text-xs font-bold text-white bg-green-600 rounded-lg"
                     >
                       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
@@ -1222,11 +1222,11 @@
                       </svg>
                       PETITE SUBVENTION
                     </div>
-                    <h3 class="text-3xl font-bold text-slate-900 mb-2">
+                    <h3 class="mb-2 text-3xl font-bold text-slate-900">
                       5M - 50M
-                      <span class="text-xl text-slate-600 ml-2">FCFA</span>
+                      <span class="ml-2 text-xl text-slate-600">FCFA</span>
                     </h3>
-                    <p class="text-slate-600 text-sm">
+                    <p class="text-sm text-slate-600">
                       Idéal pour les petits projets communautaires et initiatives locales de
                       conservation
                     </p>
@@ -1234,7 +1234,7 @@
 
                   <!-- Icône -->
                   <div
-                    class="flex-shrink-0 ml-4 w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:rotate-6 transition-transform duration-300"
+                    class="flex items-center justify-center flex-shrink-0 w-16 h-16 ml-4 transition-transform duration-300 transform bg-green-600 shadow-lg rounded-2xl group-hover:rotate-6"
                   >
                     <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
@@ -1251,18 +1251,18 @@
 
             <!-- Subvention moyenne -->
             <div
-              class="group relative bg-gradient-to-br from-blue-50 to-white rounded-3xl border-2 border-blue-200 hover:border-blue-400 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden"
+              class="relative overflow-hidden transition-all duration-300 border-2 border-blue-200 shadow-xl group bg-gradient-to-br from-blue-50 to-white rounded-3xl hover:border-blue-400 hover:shadow-2xl"
             >
               <!-- Motif décoratif -->
               <div
-                class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -translate-y-16 translate-x-16"
+                class="absolute top-0 right-0 w-32 h-32 translate-x-16 -translate-y-16 rounded-full bg-blue-500/10"
               ></div>
 
               <div class="relative p-8">
                 <div class="flex items-start justify-between mb-4">
                   <div class="flex-1">
                     <div
-                      class="inline-flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-bold mb-3"
+                      class="inline-flex items-center gap-2 px-3 py-1 mb-3 text-xs font-bold text-white bg-blue-600 rounded-lg"
                     >
                       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
@@ -1274,11 +1274,11 @@
                       </svg>
                       SUBVENTION MOYENNE
                     </div>
-                    <h3 class="text-3xl font-bold text-slate-900 mb-2">
+                    <h3 class="mb-2 text-3xl font-bold text-slate-900">
                       51M - 200M
-                      <span class="text-xl text-slate-600 ml-2">FCFA</span>
+                      <span class="ml-2 text-xl text-slate-600">FCFA</span>
                     </h3>
-                    <p class="text-slate-600 text-sm">
+                    <p class="text-sm text-slate-600">
                       Pour les projets d'envergure régionale avec un impact significatif sur la
                       biodiversité
                     </p>
@@ -1286,7 +1286,7 @@
 
                   <!-- Icône -->
                   <div
-                    class="flex-shrink-0 ml-4 w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:rotate-6 transition-transform duration-300"
+                    class="flex items-center justify-center flex-shrink-0 w-16 h-16 ml-4 transition-transform duration-300 transform bg-blue-600 shadow-lg rounded-2xl group-hover:rotate-6"
                   >
                     <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
@@ -1305,12 +1305,12 @@
 
         <!-- DROITE - Formulaire de Contact -->
         <div class="lg:sticky lg:top-24">
-          <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+          <div class="overflow-hidden bg-white border shadow-2xl rounded-3xl border-slate-200">
             <!-- En-tête du formulaire avec dégradé -->
-            <div class="bg-gradient-to-r from-green-600 to-blue-600 p-8 text-white">
+            <div class="p-8 text-white bg-gradient-to-r from-green-600 to-blue-600">
               <div class="flex items-center gap-3 mb-3">
                 <div
-                  class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center"
+                  class="flex items-center justify-center w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl"
                 >
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -1323,7 +1323,7 @@
                 </div>
                 <div>
                   <h3 class="text-2xl font-bold">Contactez notre support</h3>
-                  <p class="text-white/90 text-sm">Une question ? Nous sommes là pour vous aider</p>
+                  <p class="text-sm text-white/90">Une question ? Nous sommes là pour vous aider</p>
                 </div>
               </div>
             </div>
@@ -1332,7 +1332,7 @@
             <form action="#" method="post" class="p-8 space-y-6">
               <!-- Nom complet -->
               <div>
-                <label for="name" class="block text-sm font-semibold text-slate-700 mb-2">
+                <label for="name" class="block mb-2 text-sm font-semibold text-slate-700">
                   Nom & Prénom
                   <span class="text-red-500">*</span>
                 </label>
@@ -1341,15 +1341,15 @@
                   name="name"
                   type="text"
                   required
-                  class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all outline-none placeholder:text-slate-400"
+                  class="w-full px-4 py-3 transition-all border-2 outline-none rounded-xl border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 placeholder:text-slate-400"
                   placeholder="Jean Dupont"
                 />
               </div>
 
               <!-- Email et Téléphone -->
-              <div class="grid sm:grid-cols-2 gap-4">
+              <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label for="email" class="block text-sm font-semibold text-slate-700 mb-2">
+                  <label for="email" class="block mb-2 text-sm font-semibold text-slate-700">
                     Email
                     <span class="text-red-500">*</span>
                   </label>
@@ -1358,19 +1358,19 @@
                     name="email"
                     type="email"
                     required
-                    class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all outline-none placeholder:text-slate-400"
+                    class="w-full px-4 py-3 transition-all border-2 outline-none rounded-xl border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 placeholder:text-slate-400"
                     placeholder="vous@exemple.com"
                   />
                 </div>
                 <div>
-                  <label for="phone" class="block text-sm font-semibold text-slate-700 mb-2">
+                  <label for="phone" class="block mb-2 text-sm font-semibold text-slate-700">
                     Téléphone
                   </label>
                   <input
                     id="phone"
                     name="phone"
                     type="tel"
-                    class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all outline-none placeholder:text-slate-400"
+                    class="w-full px-4 py-3 transition-all border-2 outline-none rounded-xl border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 placeholder:text-slate-400"
                     placeholder="+241 76 53 34 62"
                   />
                 </div>
@@ -1378,7 +1378,7 @@
 
               <!-- Message -->
               <div>
-                <label for="message" class="block text-sm font-semibold text-slate-700 mb-2">
+                <label for="message" class="block mb-2 text-sm font-semibold text-slate-700">
                   Message
                   <span class="text-red-500">*</span>
                 </label>
@@ -1387,7 +1387,7 @@
                   name="message"
                   rows="5"
                   required
-                  class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all outline-none placeholder:text-slate-400 resize-none"
+                  class="w-full px-4 py-3 transition-all border-2 outline-none resize-none rounded-xl border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 placeholder:text-slate-400"
                   placeholder="Décrivez votre question ou demande..."
                 ></textarea>
               </div>
@@ -1396,10 +1396,10 @@
               <div class="pt-2">
                 <button
                   type="submit"
-                  class="group w-full py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 transform hover:scale-105"
+                  class="flex items-center justify-center w-full gap-2 py-4 font-semibold text-white transition-all duration-300 transform shadow-lg group bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-xl hover:shadow-xl hover:scale-105"
                 >
                   <svg
-                    class="w-5 h-5 group-hover:translate-x-1 transition-transform"
+                    class="w-5 h-5 transition-transform group-hover:translate-x-1"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
@@ -1410,7 +1410,7 @@
               </div>
 
               <!-- Note de confidentialité -->
-              <p class="text-xs text-slate-500 text-center">
+              <p class="text-xs text-center text-slate-500">
                 Vos informations sont sécurisées et ne seront jamais partagées
               </p>
             </form>
@@ -1437,15 +1437,15 @@
     - Inclure un sitemap
     - Ajouter des liens légaux (CGU, Confidentialité)
   -->
-  <footer class="bg-gradient-to-br from-slate-900 via-green-900 to-slate-900 text-white">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+  <footer class="text-white bg-gradient-to-br from-slate-900 via-green-900 to-slate-900">
+    <div class="px-4 py-16 mx-auto max-w-7xl sm:px-6 lg:px-8">
       <div class="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
         <!-- Colonne 1 - À propos -->
         <div class="lg:col-span-1">
           <div class="flex items-center gap-3 mb-6">
-            <img src="assets/logo.png" alt="FPBG Logo" class="h-12 w-auto object-contain" />
+            <img src="assets/logo.png" alt="FPBG Logo" class="object-contain w-auto h-12" />
           </div>
-          <p class="text-slate-300 text-sm leading-relaxed mb-6">
+          <p class="mb-6 text-sm leading-relaxed text-slate-300">
             Le FPBG est une organisation internationale à but non lucratif dédiée à la préservation
             de la biodiversité et au développement durable au Gabon.
           </p>
@@ -1456,7 +1456,7 @@
               href="https://www.facebook.com/profile.php?id=61572016092621"
               target="_blank"
               rel="noopener noreferrer"
-              class="w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl flex items-center justify-center transition-all hover:scale-110"
+              class="flex items-center justify-center w-10 h-10 transition-all bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl hover:scale-110"
               aria-label="Facebook"
             >
               <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -1469,7 +1469,7 @@
               href="https://x.com/FPBG_Gabon"
               target="_blank"
               rel="noopener noreferrer"
-              class="w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl flex items-center justify-center transition-all hover:scale-110"
+              class="flex items-center justify-center w-10 h-10 transition-all bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl hover:scale-110"
               aria-label="Twitter/X"
             >
               <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -1482,7 +1482,7 @@
               href="https://www.linkedin.com/company/106050434/"
               target="_blank"
               rel="noopener noreferrer"
-              class="w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl flex items-center justify-center transition-all hover:scale-110"
+              class="flex items-center justify-center w-10 h-10 transition-all bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl hover:scale-110"
               aria-label="LinkedIn"
             >
               <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -1496,7 +1496,7 @@
 
         <!-- Colonne 2 - Contact -->
         <div>
-          <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+          <h3 class="flex items-center gap-2 mb-6 text-lg font-bold">
             <svg
               class="w-5 h-5 text-green-400"
               fill="none"
@@ -1565,7 +1565,7 @@
                   d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.69l1.5 4.49a1 1 0 01-.5 1.21l-2.26 1.13a11.04 11.04 0 005.52 5.52l1.13-2.26a1 1 0 011.21-.5l4.49 1.5a1 1 0 01.69.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z"
                 />
               </svg>
-              <a href="tel:+24176533462" class="hover:text-green-400 transition-colors"
+              <a href="tel:+24176533462" class="transition-colors hover:text-green-400"
                 >(+241) 76 53 34 62</a
               >
             </li>
@@ -1583,7 +1583,7 @@
                   d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                 />
               </svg>
-              <a href="mailto:contact@fpbg.org" class="hover:text-green-400 transition-colors"
+              <a href="mailto:contact@fpbg.org" class="transition-colors hover:text-green-400"
                 >contact@fpbg.org</a
               >
             </li>
@@ -1592,7 +1592,7 @@
 
         <!-- Colonne 3 - Biodiversité -->
         <div>
-          <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+          <h3 class="flex items-center gap-2 mb-6 text-lg font-bold">
             <svg
               class="w-5 h-5 text-green-400"
               fill="none"
@@ -1611,7 +1611,7 @@
           <ul class="space-y-3 text-sm text-slate-300">
             <li>
               <a
-                class="hover:text-green-400 transition-colors flex items-center gap-2 group"
+                class="flex items-center gap-2 transition-colors hover:text-green-400 group"
                 href="https://fpbg.org/ecosystemes-marins/"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -1624,7 +1624,7 @@
             </li>
             <li>
               <a
-                class="hover:text-green-400 transition-colors flex items-center gap-2 group"
+                class="flex items-center gap-2 transition-colors hover:text-green-400 group"
                 href="https://fpbg.org/ecosystemes-terrestres/"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -1637,7 +1637,7 @@
             </li>
             <li>
               <a
-                class="hover:text-green-400 transition-colors flex items-center gap-2 group"
+                class="flex items-center gap-2 transition-colors hover:text-green-400 group"
                 href="https://fpbg.org/ecosystemes-deau-douce/"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -1650,7 +1650,7 @@
             </li>
             <li>
               <a
-                class="hover:text-green-400 transition-colors flex items-center gap-2 group"
+                class="flex items-center gap-2 transition-colors hover:text-green-400 group"
                 href="https://fpbg.org/especes-emblematiques/"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -1663,7 +1663,7 @@
             </li>
             <li>
               <a
-                class="hover:text-green-400 transition-colors flex items-center gap-2 group"
+                class="flex items-center gap-2 transition-colors hover:text-green-400 group"
                 href="https://fpbg.org/wp-content/uploads/2025/09/25-Manuel_de_subvention_-_Annexe_-_Outils_SGES_1-Liste_dexclusion1.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -1679,7 +1679,7 @@
 
         <!-- Colonne 4 - Liens rapides -->
         <div>
-          <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+          <h3 class="flex items-center gap-2 mb-6 text-lg font-bold">
             <svg
               class="w-5 h-5 text-green-400"
               fill="none"
@@ -1699,7 +1699,7 @@
             <li>
               <a
                 routerLink="/"
-                class="hover:text-green-400 transition-colors flex items-center gap-2 group"
+                class="flex items-center gap-2 transition-colors hover:text-green-400 group"
               >
                 <span
                   class="w-1.5 h-1.5 bg-blue-400 rounded-full group-hover:scale-150 transition-transform"
@@ -1710,7 +1710,7 @@
             <li class="relative group/footer">
               <a
                 routerLink="/liste-appels"
-                class="hover:text-green-400 transition-colors flex items-center gap-2 group"
+                class="flex items-center gap-2 transition-colors hover:text-green-400 group"
               >
                 <span
                   class="w-1.5 h-1.5 bg-blue-400 rounded-full group-hover:scale-150 transition-transform"
@@ -1720,20 +1720,20 @@
 
               <!-- Menu déroulant au hover dans le footer -->
               <div
-                class="absolute left-0 bottom-full mb-2 w-96 bg-slate-800 rounded-lg shadow-xl border border-green-500/30 opacity-0 invisible group-hover/footer:opacity-100 group-hover/footer:visible transition-all duration-300 z-50"
+                class="absolute left-0 z-50 invisible mb-2 transition-all duration-300 border rounded-lg shadow-xl opacity-0 bottom-full w-96 bg-slate-800 border-green-500/30 group-hover/footer:opacity-100 group-hover/footer:visible"
               >
                 <div class="p-4 space-y-3" *ngFor="let appel of appels()">
                   <a
                     [routerLink]="['/appelaprojet']"
                     [queryParams]="{ id: appel.id }"
-                    class="block hover:bg-green-900/20 rounded-lg p-4 transition-colors"
+                    class="block p-4 transition-colors rounded-lg hover:bg-green-900/20"
                   >
                     <div class="flex items-start gap-3">
-                      <div class="flex-shrink-0 w-2 h-2 rounded-full bg-green-400 mt-2"></div>
+                      <div class="flex-shrink-0 w-2 h-2 mt-2 bg-green-400 rounded-full"></div>
                       <div class="flex-1">
-                        <h4 class="font-semibold text-green-400 text-sm mb-1">{{ appel.code }}</h4>
-                        <p class="text-white font-medium text-xs mb-2">{{ appel.titre }}</p>
-                        <p class="text-slate-300 text-xs line-clamp-2">{{ appel.resume }}</p>
+                        <h4 class="mb-1 text-sm font-semibold text-green-400">{{ appel.code }}</h4>
+                        <p class="mb-2 text-xs font-medium text-white">{{ appel.titre }}</p>
+                        <p class="text-xs text-slate-300 line-clamp-2">{{ appel.resume }}</p>
                         <div class="flex flex-wrap gap-1 mt-2">
                           <span
                             *ngFor="let tag of appel.tags"
@@ -1746,10 +1746,10 @@
                     </div>
                   </a>
                 </div>
-                <div class="border-t border-green-500/30 p-3">
+                <div class="p-3 border-t border-green-500/30">
                   <a
                     routerLink="/liste-appels"
-                    class="text-green-400 hover:text-green-300 text-sm font-medium flex items-center justify-center gap-2"
+                    class="flex items-center justify-center gap-2 text-sm font-medium text-green-400 hover:text-green-300"
                   >
                     Voir tous les appels
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1767,7 +1767,7 @@
             <li>
               <a
                 routerLink="/soumettre"
-                class="hover:text-green-400 transition-colors flex items-center gap-2 group"
+                class="flex items-center gap-2 transition-colors hover:text-green-400 group"
               >
                 <span
                   class="w-1.5 h-1.5 bg-blue-400 rounded-full group-hover:scale-150 transition-transform"
@@ -1778,7 +1778,7 @@
             <li>
               <a
                 routerLink="/login"
-                class="hover:text-green-400 transition-colors flex items-center gap-2 group"
+                class="flex items-center gap-2 transition-colors hover:text-green-400 group"
               >
                 <span
                   class="w-1.5 h-1.5 bg-blue-400 rounded-full group-hover:scale-150 transition-transform"
@@ -1789,7 +1789,7 @@
             <li>
               <a
                 routerLink="/register"
-                class="hover:text-green-400 transition-colors flex items-center gap-2 group"
+                class="flex items-center gap-2 transition-colors hover:text-green-400 group"
               >
                 <span
                   class="w-1.5 h-1.5 bg-blue-400 rounded-full group-hover:scale-150 transition-transform"
@@ -1803,21 +1803,21 @@
     </div>
 
     <!-- Barre de copyright -->
-    <div class="bg-green-600/95 text-white border-t border-green-500/50">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+    <div class="text-white border-t bg-green-600/95 border-green-500/50">
+      <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div class="flex flex-col items-center justify-between gap-4 py-6 text-sm sm:flex-row">
           <p class="text-center sm:text-left">
             © 2025 Fonds de Préservation de la Biodiversité au Gabon (FPBG) - Tous droits réservés
           </p>
           <div class="flex items-center gap-6">
             <div class="flex items-center gap-4">
-              <a href="#" class="hover:text-green-200 transition-colors">Mentions légales</a>
+              <a href="#" class="transition-colors hover:text-green-200">Mentions légales</a>
               <span class="text-green-300">•</span>
-              <a href="#" class="hover:text-green-200 transition-colors">Confidentialité</a>
+              <a href="#" class="transition-colors hover:text-green-200">Confidentialité</a>
             </div>
             <div class="flex items-center gap-2 pl-6 border-l border-green-400/30">
               <span class="text-white/90">Développé par eLAB SING</span>
-              <img src="assets/lgo_blan.png" alt="eLAB SING" class="h-6 w-auto" />
+              <img src="assets/lgo_blan.png" alt="eLAB SING" class="w-auto h-6" />
             </div>
           </div>
         </div>

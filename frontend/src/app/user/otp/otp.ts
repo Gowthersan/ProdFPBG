@@ -48,10 +48,13 @@ export class Otp {
 
     this.error.set(null);
 
-    // Appeler le backend pour renvoyer l'OTP
+    // ====================================
+    // Appeler le backend pour générer et envoyer un nouveau OTP via Nodemailer
+    // ====================================
     this.auth.resendOtp(p.email).subscribe({
-      next: () => {
-        console.log('✅ OTP renvoyé');
+      next: (response: any) => {
+        console.log('✅ Nouveau OTP généré et envoyé via Nodemailer');
+
         this.counter.set(60);
         this._startTimer();
         // Mettre à jour l'expiration
@@ -74,12 +77,26 @@ export class Otp {
 
     this.error.set(null);
 
+    // ====================================
     // Vérifier l'OTP via le backend
+    // ====================================
     this.auth.verifyOtp(p.email, code).subscribe({
-      next: () => {
-        console.log('✅ OTP vérifié, compte créé');
+      next: (response: any) => {
+        console.log('✅ OTP vérifié, compte créé - Réponse complète:', response);
+        console.log('🔍 redirectTo =', response?.redirectTo);
         localStorage.removeItem('fpbg.pendingReg');
-        this._goLogin(p);
+
+        // ====================================
+        // 🎯 Redirection vers /submission-wizard si le backend le spécifie
+        // ====================================
+        if (response && response.redirectTo) {
+          console.log(`🎯 Redirection vers: ${response.redirectTo}`);
+          this.router.navigate([response.redirectTo]);
+        } else {
+          console.warn('⚠️ Pas de redirectTo dans la réponse, redirection par défaut vers login');
+          // Par défaut, rediriger vers login
+          this._goLogin(p);
+        }
       },
       error: (err) => {
         console.error('❌ Erreur verify OTP:', err);

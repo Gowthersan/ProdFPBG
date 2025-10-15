@@ -1,0 +1,446 @@
+/// ==============================
+///  Prisma — FPBG (schéma normalisé)
+/// ==============================
+/// Ce schéma organise clairement :
+/// - Référentiels : TypeSubvention, Domaines, Thématiques (Thematique)
+/// - Noyau AAP : AppelAProjet + pivot AProjetOrganisation (AAP ↔ Organisation)
+/// - Soumission : ProjectSubmission, Activities/SubActivities/BudgetLines, Risks, Attachments
+/// - Auth légère : User + Session (adaptable si tu dois coller à JHipster)
+///
+/// Points clés de normalisation :
+/// - On sépare bien les référentiels des transactions.
+/// - Les relations sont explicites (FK + onDelete cohérents).
+/// - Index aux bons endroits pour les filtres fréquents (statut, AAP, org, dates).
+/// - Snapshots "orgName/orgType" gardés en option dans ProjectSubmission (si besoin de figer les libellés au dépôt).
+/// - Possibilité d’attacher des activités directement à la soumission (processus projet)
+///   ET/OU à l’association AAP↔Organisation (processus administratif), selon le besoin.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// ==============================
+///  Enums (référentiels fixes)
+/// ==============================
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrgType {
+  ASSOCIATION
+  ONG
+  COMMUNAUTE
+  COOPERATIVE
+  PME
+  PMI
+  STARTUP
+  SECTEUR_PUBLIC
+  RECHERCHE
+  PRIVE
+  AUTRE
+}
+
+enum ProjectStage {
+  CONCEPTION
+  DEMARRAGE
+  AVANCE
+  PHASE_FINALE
+}
+
+enum BudgetKind {
+  DIRECT
+  INDIRECT
+}
+
+enum DocumentKey {
+  LETTRE_MOTIVATION
+  CV
+  CERTIFICAT_ENREGISTREMENT
+  STATUTS_REGLEMENT
+  PV_ASSEMBLEE
+  RAPPORTS_FINANCIERS
+  RCCM
+  AGREMENT
+  ETATS_FINANCIERS
+  DOCUMENTS_STATUTAIRES
+  RIB
+  LETTRES_SOUTIEN
+  PREUVE_NON_FAILLITE
+  CARTOGRAPHIE
+  FICHE_CIRCUIT
+  BUDGET_DETAILLE
+  CHRONOGRAMME
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+/// ==============================
+///  Auth / Comptes
+/// ==============================
+/// NB : Minimaliste ici. Si tu veux coller à JHipster,
+/// remappe les champs (login, authorities, etc.) ou ajoute un pont.
+
+model User {
+  id           String  @id @default(uuid())
+  email        String  @unique
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  phone        String?
+
+  // Infos d’organisation rattachées à l’utilisateur (facultatif).
+  // Préfère une vraie relation via Organisation pour la donnée “vivante”.
+  orgName  String?
+  orgType  OrgType?
+  orgEmail String?
+  orgPhone String?
+
+  role        Role                @default(USER)
+  isActive    Boolean             @default(true)
+  sessions    Session[]
+  submissions ProjectSubmission[] // Soumissions faites par cet utilisateur
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgType])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+/// ==============================
+///  Référentiels AAP & Thématiques
+/// ==============================
+/// On modélise TypeSubvention comme une TABLE (et non une enum),
+/// pour s’aligner avec le backend Spring qui a un FK depuis theme_aprojet
+/// vers type_subvention.
+
+model TypeSubvention {
+  id    Int    @id @default(autoincrement())
+  code  String @unique // ex: "PETITE", "MOYENNE", "GRANDE"
+  label String
+
+  // Liens
+  appels      AppelAProjet[] // Plusieurs AAP peuvent partager le même type
+  thematiques Thematique[] // Thématiques classées par type de subvention
+}
+
+model AppelAProjet {
+  id               String          @id @default(cuid())
+  code             String          @unique // ex: AAP-OBL-2025
+  titre            String
+  description      String?
+  dateDebut        DateTime
+  dateFin          DateTime
+  typeSubvention   TypeSubvention? @relation(fields: [typeSubventionId], references: [id], onDelete: SetNull)
+  typeSubventionId Int?
+
+  // Référentiels / Aides : thématiques proposées dans cet AAP
+  thematiques Thematique[]
+
+  // Rattachements organisations ↔ AAP (administratif)
+  organisations AProjetOrganisation[]
+
+  // Soumissions (projets déposés dans le cadre de cet AAP)
+  submissions ProjectSubmission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([typeSubventionId])
+  @@index([dateDebut, dateFin])
+}
+
+model Thematique {
+  /// Table alignée avec "theme_aprojet" côté Spring (nom FR pour lisibilité)
+  id             String       @id @default(cuid())
+  appelAProjet   AppelAProjet @relation(fields: [appelAProjetId], references: [id], onDelete: Cascade)
+  appelAProjetId String
+
+  title            String
+  bullets          String[]       @default([]) // Liste de points / exigences
+  typeSubvention   TypeSubvention @relation(fields: [typeSubventionId], references: [id], onDelete: Restrict)
+  typeSubventionId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([appelAProjetId, typeSubventionId])
+}
+
+/// ==============================
+///  Organisations & rattachements aux AAP
+/// ==============================
+/// "Organisation" contient l’identité d’un porteur de projet.
+/// "AProjetOrganisation" = pivot AAP ↔ Organisation (équiv. a_projet_organisation)
+
+model Organisation {
+  id    String  @id @default(cuid())
+  nom   String
+  type  OrgType
+  email String?
+  phone String?
+
+  // Rattachements à des AAP (administratif : habilitation / périodes)
+  liensAAP AProjetOrganisation[]
+
+  // Soumissions déposées par cette organisation
+  projets ProjectSubmission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([nom])
+}
+
+model AProjetOrganisation {
+  /// Pivot "AAP ↔ Organisation" (équivalent Spring: a_projet_organisation)
+  id             String       @id @default(cuid())
+  aprojet        AppelAProjet @relation(fields: [aProjetId], references: [id], onDelete: Cascade)
+  aProjetId      String
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId String
+
+  statut    String? // ex: validé, en attente…
+  dateDebut DateTime?
+  dateFin   DateTime?
+
+  // Si besoin d’activités “administratives” liées au rattachement AAP↔Org :
+  activites Activity[]
+
+  @@unique([aProjetId, organisationId]) // une org rattachée une seule fois à un AAP
+  @@index([aProjetId])
+  @@index([organisationId])
+}
+
+/// ==============================
+///  Domaines (multi-tag par projet)
+/// ==============================
+model Domain {
+  id       Int             @id @default(autoincrement())
+  code     String          @unique // ex: "CONSERVATION_MARINE"
+  label    String
+  projects ProjectDomain[]
+}
+
+model ProjectDomain {
+  /// Pivot "ProjectSubmission ↔ Domain"
+  projectId String
+  domainId  Int
+
+  project ProjectSubmission @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  domain  Domain            @relation(fields: [domainId], references: [id], onDelete: Restrict)
+
+  @@id([projectId, domainId])
+  @@index([domainId])
+}
+
+/// ==============================
+///  Soumission de projet (noyau métier)
+/// ==============================
+/// ProjectSubmission incarne la demande complète.
+/// Elle pointe l’AAP, l’Organisation, l’Utilisateur soumettant,
+/// et structure le contenu par étapes (titres, objectifs, activités, budget, etc.)
+
+model ProjectSubmission {
+  id     String           @id @default(cuid())
+  code   String?          @unique // ex: AAP-OBL-2025-0001
+  status SubmissionStatus @default(SUBMITTED)
+
+  // Contexte “ferme”
+  aProjet   AppelAProjet? @relation(fields: [aProjetId], references: [id], onDelete: SetNull)
+  aProjetId String?
+  org       Organisation? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  orgId     String?
+
+  // Auteur
+  submittedBy   User?   @relation(fields: [submittedById], references: [id], onDelete: SetNull)
+  submittedById String?
+
+  // Snapshots d’identité (optionnels) pour figer la photo au dépôt
+  organizationName String?
+  organizationType OrgType?
+
+  // Étape 1 — Proposition
+  title                String
+  location             String
+  targetGroup          String
+  contextJustification String
+
+  // Étape 2 — Objectifs & résultats
+  objectives      String
+  expectedResults String
+  durationMonths  Int // 1..12 (validation côté service)
+
+  // Étape 3 — En-tête activités + résumé
+  activitiesStartDate DateTime
+  activitiesEndDate   DateTime
+  activitiesSummary   String
+
+  // Détails relationnels
+  activities Activity[] // activités “projet” (processus opérationnel)
+  risks      Risk[]
+  domains    ProjectDomain[]
+
+  // Budget (rubriques + taux)
+  usdRate              Int     @default(600)
+  indirectOverheadsCfa Decimal @db.Decimal(14, 2) @default(0)
+
+  // Rubriques agrégées (facultatives)
+  terrainCfa  Decimal? @db.Decimal(14, 2)
+  investCfa   Decimal? @db.Decimal(14, 2)
+  overheadCfa Decimal? @db.Decimal(14, 2)
+  cofinCfa    Decimal? @db.Decimal(14, 2)
+
+  // Étape 6 — État & financement
+  projectStage   ProjectStage @default(DEMARRAGE)
+  hasFunding     Boolean      @default(false)
+  fundingDetails String?
+  honorAccepted  Boolean      @default(false)
+
+  // Étape 7 — Durabilité & réplication
+  sustainabilityText String
+  replicationText    String?
+
+  // Étape 8 — Annexes
+  attachments Attachment[]
+
+  // Méta
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([submittedById, createdAt])
+  @@index([projectStage, status])
+  @@index([aProjetId])
+  @@index([orgId])
+}
+
+/// ==============================
+///  Activités / Sous-activités / Budget
+/// ==============================
+/// Deux rattachements possibles pour Activity :
+/// - à une ProjectSubmission (activités du projet),
+/// - ET/OU à un AProjetOrganisation (activités administratives liées au rattachement AAP↔Org).
+/// Les deux colonnes FK sont optionnelles et indexées.
+
+model Activity {
+  id        String             @id @default(cuid())
+  project   ProjectSubmission? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String?
+
+  aProjetOrganisation   AProjetOrganisation? @relation(fields: [aProjetOrganisationId], references: [id], onDelete: SetNull)
+  aProjetOrganisationId String?
+
+  order   Int      @default(0) // pour l’ordre d’affichage
+  title   String
+  start   DateTime
+  end     DateTime
+  summary String
+
+  subs        SubActivity[]
+  budgetLines BudgetLine[]
+
+  @@index([projectId, order])
+  @@index([aProjetOrganisationId])
+}
+
+model SubActivity {
+  id         String   @id @default(cuid())
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activityId String
+
+  order   Int     @default(0)
+  label   String
+  summary String?
+
+  @@index([activityId, order])
+}
+
+model BudgetLine {
+  id         String   @id @default(cuid())
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activityId String
+
+  order    Int        @default(0)
+  label    String
+  kind     BudgetKind @default(DIRECT)
+  cfa      Decimal    @db.Decimal(14, 2) // Montant en FCFA
+  fpbgPct  Int        @default(100) // % FPBG (fpbgPct + cofinPct = 100)
+  cofinPct Int        @default(0)
+
+  @@index([activityId, order])
+}
+
+/// ==============================
+///  Risques & Annexes
+/// ==============================
+
+model Risk {
+  id        String            @id @default(cuid())
+  project   ProjectSubmission @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  order       Int    @default(0)
+  description String
+  mitigation  String
+
+  @@index([projectId, order])
+}
+
+model Attachment {
+  /// 1 pièce par type de clé documentaire pour un projet (contrainte unique)
+  id        String            @id @default(cuid())
+  project   ProjectSubmission @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  key        DocumentKey
+  fileName   String
+  mimeType   String
+  sizeBytes  Int
+  storageKey String // chemin local ou clé S3
+  url        String? // URL publique/signée optionnelle
+  required   Boolean     @default(false)
+  uploadedAt DateTime    @default(now())
+
+  @@unique([projectId, key])
+  @@index([key])
+}
+
+/// ==============================
+///  (Optionnel) OTP si tu veux des logins avec code temporaire
+/// ==============================
+
+model Otp {
+  id        String   @id @default(cuid())
+  username  String // email ou login
+  code      String
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([username])
+  @@index([expiresAt])
+}

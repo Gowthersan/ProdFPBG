@@ -6,8 +6,14 @@ const authService = new AuthService();
 
 export class AuthController {
   /**
+   * ====================================
    * POST /api/auth/register/agent
-   * Inscription d'un agent FPBG - Étape 1 : Envoi de l'OTP
+   * ====================================
+   * ÉTAPE 1 DE L'INSCRIPTION : Inscription d'un agent FPBG
+   *
+   * Cette route génère un code OTP et l'envoie par email à l'utilisateur
+   * Body: FpbgUsersDTO (email, username, password, firstName, lastName, etc.)
+   * Response: { message: string, email: string }
    */
   static async registerAgentFpbg(req: Request, res: Response, next: NextFunction) {
     try {
@@ -19,8 +25,14 @@ export class AuthController {
   }
 
   /**
+   * ====================================
    * POST /api/auth/register/organisation
-   * Inscription d'une organisation - Étape 1 : Envoi de l'OTP
+   * ====================================
+   * ÉTAPE 1 DE L'INSCRIPTION : Inscription d'une organisation
+   *
+   * Cette route génère un code OTP et l'envoie par email à l'organisation
+   * Body: OrganisationDTO (email, password, name, username, etc.)
+   * Response: { message: string, email: string }
    */
   static async registerOrganisation(req: Request, res: Response, next: NextFunction) {
     try {
@@ -32,28 +44,44 @@ export class AuthController {
   }
 
   /**
+   * ====================================
    * POST /api/auth/verify-otp
-   * Vérification de l'OTP - Étape 2 : Création du compte et génération du JWT
+   * ====================================
+   * ÉTAPE 2 DE L'INSCRIPTION : Vérification de l'OTP et création du compte
+   *
+   * Cette route vérifie le code OTP, crée le compte dans la base de données,
+   * génère un token JWT et retourne l'URL de redirection vers /submission-wizard
+   *
    * Body: { email: string, otp: string }
+   * Response: {
+   *   message: string,
+   *   token: string,
+   *   user: object,
+   *   type: string,
+   *   redirectTo: '/submission-wizard' 🎯
+   * }
    */
   static async verifyOtp(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, otp } = req.body;
 
+      // Vérifier que les champs requis sont présents
       if (!email || !otp) {
         throw new AppError('Email et code OTP requis.', 400);
       }
 
+      // Vérifier l'OTP et créer le compte
       const result = await authService.verifyOtp(email, otp);
 
-      // Définir le cookie avec le token
+      // Définir le cookie avec le token JWT (valide 7 jours)
       res.cookie('token', result.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        httpOnly: true,  // Empêche l'accès depuis JavaScript (sécurité XSS)
+        secure: process.env.NODE_ENV === 'production', // HTTPS uniquement en production
+        sameSite: 'lax', // Protection CSRF
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
       });
 
+      // ✅ Retourner la réponse avec redirectTo: '/submission-wizard'
       res.status(201).json(result);
     } catch (error) {
       next(error);
@@ -61,18 +89,27 @@ export class AuthController {
   }
 
   /**
+   * ====================================
    * POST /api/auth/resend-otp
-   * Renvoyer un nouveau code OTP
+   * ====================================
+   * RENVOYER UN CODE OTP : Génère et envoie un nouveau code OTP
+   *
+   * Cette route permet de renvoyer un code OTP si l'utilisateur
+   * ne l'a pas reçu ou s'il a expiré (valide 5 minutes)
+   *
    * Body: { email: string }
+   * Response: { message: string, email: string }
    */
   static async resendOtp(req: Request, res: Response, next: NextFunction) {
     try {
       const { email } = req.body;
 
+      // Vérifier que l'email est fourni
       if (!email) {
         throw new AppError('Email requis.', 400);
       }
 
+      // Générer et envoyer un nouveau code OTP
       const result = await authService.resendOtp(email);
       res.status(200).json(result);
     } catch (error) {

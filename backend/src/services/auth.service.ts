@@ -5,7 +5,7 @@ import prisma from '../config/db.js';
 import { AppError } from '../middlewares/error.middleware.js';
 import { FpbgUsersDTO, JwtPayload, LoginVM, OrganisationDTO } from '../types/index.js';
 import { generateOtp } from '../utils/generateOtp.js';
-import { sendOTPEmail } from '../utils/sendEmailWithBrevo.js';
+import { sendOTPEmail } from '../utils/mailer.js';
 
 // Stockage temporaire des inscriptions en attente (en production, utilisez Redis)
 const pendingRegistrations: {
@@ -28,11 +28,14 @@ const getJwtSecret = (): string => {
 export class AuthService {
   /**
    * INSCRIPTION - Étape 1 : Enregistrer un agent FPBG et envoyer l'OTP
+   * Cette méthode génère un code OTP et l'envoie par email à l'utilisateur
    */
   async registerAgentFpbg(userData: FpbgUsersDTO) {
     const { email, username, password } = userData;
 
-    // Vérifier si l'utilisateur existe déjà
+    // ====================================
+    // 1. Vérifier si l'utilisateur existe déjà
+    // ====================================
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ email }, ...(username ? [{ username }] : [])]
@@ -43,14 +46,20 @@ export class AuthService {
       throw new AppError("Email ou nom d'utilisateur déjà utilisé.", 409);
     }
 
-    // Hasher le mot de passe
+    // ====================================
+    // 2. Hasher le mot de passe pour la sécurité
+    // ====================================
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Générer OTP
+    // ====================================
+    // 3. Générer le code OTP (6 chiffres, valide 5 minutes)
+    // ====================================
     const otp = generateOtp();
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-    // Stocker temporairement
+    // ====================================
+    // 4. Stocker temporairement les données d'inscription
+    // ====================================
     pendingRegistrations[email] = {
       registrationData: { ...userData, password: hashedPassword },
       otp,
@@ -58,24 +67,35 @@ export class AuthService {
       type: 'user'
     };
 
-    // Retourner l'OTP pour que le frontend l'envoie via EmailJS
-    console.log(`✅ OTP généré pour ${email}: ${otp}`);
+    // ====================================
+    // 5. Envoyer l'OTP par email via Nodemailer
+    // ====================================
+    console.log(`📧 OTP généré pour ${email}: ${otp}`);
+
+    try {
+      await sendOTPEmail(email, otp, userData.firstName || userData.username || 'Utilisateur');
+      console.log(`✅ Email OTP envoyé à ${email}`);
+    } catch (error: any) {
+      console.error(`❌ Erreur envoi email à ${email}:`, error.message);
+      throw new AppError("Impossible d'envoyer l'email de vérification", 500);
+    }
 
     return {
-      message: 'Un code de vérification sera envoyé à votre adresse email.',
-      email,
-      otp, // Le frontend utilisera ceci pour envoyer l'email
-      userName: userData.firstName || userData.username
+      message: 'Un code de vérification a été envoyé à votre adresse email.',
+      email
     };
   }
 
   /**
    * INSCRIPTION - Étape 1 : Enregistrer une organisation et envoyer l'OTP
+   * Cette méthode génère un code OTP et l'envoie par email à l'organisation
    */
   async registerOrganisation(orgData: OrganisationDTO) {
     const { email, username, password } = orgData;
 
-    // Vérifier si l'email existe déjà (User ou Organisation)
+    // ====================================
+    // 1. Vérifier si l'email existe déjà (User ou Organisation)
+    // ====================================
     const existingUser = await prisma.user.findUnique({ where: { email } });
     const existingOrg = await prisma.organisation.findUnique({ where: { email } });
 
@@ -83,14 +103,20 @@ export class AuthService {
       throw new AppError('Cet email est déjà utilisé.', 409);
     }
 
-    // Hasher le mot de passe
+    // ====================================
+    // 2. Hasher le mot de passe pour la sécurité
+    // ====================================
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Générer OTP
+    // ====================================
+    // 3. Générer le code OTP (6 chiffres, valide 5 minutes)
+    // ====================================
     const otp = generateOtp();
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-    // Stocker temporairement
+    // ====================================
+    // 4. Stocker temporairement les données d'inscription
+    // ====================================
     pendingRegistrations[email] = {
       registrationData: { ...orgData, password: hashedPassword },
       otp,
@@ -98,31 +124,50 @@ export class AuthService {
       type: 'organisation'
     };
 
-    // Retourner l'OTP pour que le frontend l'envoie via EmailJS
-    console.log(`✅ OTP généré pour ${email}: ${otp}`);
+    // ====================================
+    // 5. Envoyer l'OTP par email via Nodemailer
+    // ====================================
+    console.log(`📧 OTP généré pour ${email}: ${otp}`);
+
+    try {
+      await sendOTPEmail(email, otp, orgData.name || orgData.contact || 'Organisation');
+      console.log(`✅ Email OTP envoyé à ${email}`);
+    } catch (error: any) {
+      console.error(`❌ Erreur envoi email à ${email}:`, error.message);
+      throw new AppError("Impossible d'envoyer l'email de vérification", 500);
+    }
 
     return {
-      message: 'Un code de vérification sera envoyé à votre adresse email.',
-      email,
-      otp, // Le frontend utilisera ceci pour envoyer l'email
-      userName: orgData.name || orgData.contact || 'Utilisateur'
+      message: 'Un code de vérification a été envoyé à votre adresse email.',
+      email
     };
   }
 
   /**
    * INSCRIPTION - Étape 2 : Vérifier l'OTP et créer le compte
+   * Cette méthode vérifie le code OTP entré par l'utilisateur,
+   * crée le compte dans la base de données, et génère un token JWT
    */
   async verifyOtp(email: string, otp: string) {
+    // ====================================
+    // 1. Récupérer les données d'inscription en attente
+    // ====================================
     const pending = pendingRegistrations[email];
 
     if (!pending) {
       throw new AppError('Aucune inscription en attente pour cet email.', 400);
     }
 
+    // ====================================
+    // 2. Vérifier que le code OTP est correct
+    // ====================================
     if (pending.otp !== otp) {
       throw new AppError('Code OTP invalide.', 400);
     }
 
+    // ====================================
+    // 3. Vérifier que le code OTP n'est pas expiré (5 minutes)
+    // ====================================
     if (pending.otpExpiry < new Date()) {
       delete pendingRegistrations[email];
       throw new AppError("Code OTP expiré. Veuillez recommencer l'inscription.", 400);
@@ -132,7 +177,9 @@ export class AuthService {
 
     try {
       if (type === 'user') {
-        // Créer l'utilisateur
+        // ====================================
+        // 4a. UTILISATEUR : Créer le compte utilisateur
+        // ====================================
         const user = await prisma.user.create({
           data: {
             email: registrationData.email,
@@ -149,9 +196,12 @@ export class AuthService {
           }
         });
 
+        // Supprimer les données temporaires
         delete pendingRegistrations[email];
 
-        // Générer le token JWT
+        // ====================================
+        // 5a. Générer le token JWT pour la session
+        // ====================================
         const token = this.generateToken({
           userId: user.id,
           email: user.email,
@@ -160,18 +210,20 @@ export class AuthService {
 
         const { password: _, ...userWithoutPassword } = user;
 
+        // ====================================
+        // 6. Retourner les données avec le chemin de redirection
+        // ====================================
         return {
           message: 'Compte vérifié avec succès !',
           token,
           user: userWithoutPassword,
-          type: 'user'
+          type: 'user',
+          redirectTo: '/submission-wizard' // 🎯 Redirection vers submission-wizard
         };
       } else {
-        // ✅ ORGANISATION : Créer User → Organisation → TypeOrganisation
-        // ÉTAPE 1: Créer le User
-        // ÉTAPE 2: Trouver ou créer le TypeOrganisation
-        // ÉTAPE 3: Créer l'Organisation liée
-
+        // ====================================
+        // 4b. ORGANISATION : Créer User → Organisation → TypeOrganisation
+        // ====================================
         const result = await prisma.$transaction(async (tx) => {
           // ÉTAPE 1: Créer le User en premier
           const user = await tx.user.create({
@@ -231,9 +283,12 @@ export class AuthService {
           return { user, organisation, typeOrganisation };
         });
 
+        // Supprimer les données temporaires
         delete pendingRegistrations[email];
 
-        // Générer le token JWT avec l'ID du User (pas de l'organisation)
+        // ====================================
+        // 5b. Générer le token JWT avec l'ID du User (pas de l'organisation)
+        // ====================================
         const token = this.generateToken({
           userId: result.user.id,
           email: result.user.email,
@@ -242,6 +297,9 @@ export class AuthService {
 
         const { password: _, ...orgWithoutPassword } = result.organisation;
 
+        // ====================================
+        // 6. Retourner les données avec le chemin de redirection
+        // ====================================
         return {
           message: 'Compte vérifié avec succès !',
           token,
@@ -249,7 +307,8 @@ export class AuthService {
             ...orgWithoutPassword,
             typeOrganisation: result.typeOrganisation
           },
-          type: 'organisation'
+          type: 'organisation',
+          redirectTo: '/submission-wizard' // 🎯 Redirection vers submission-wizard
         };
       }
     } catch (error: any) {
@@ -360,29 +419,45 @@ export class AuthService {
   }
 
   /**
-   * Renvoyer un nouveau code OTP
+   * RENVOYER OTP : Générer et envoyer un nouveau code OTP
+   * Cette méthode permet de renvoyer un nouveau code OTP si le précédent a expiré
+   * ou n'a pas été reçu par l'utilisateur
    */
   async resendOtp(email: string) {
+    // ====================================
+    // 1. Vérifier qu'il existe une inscription en attente
+    // ====================================
     const pending = pendingRegistrations[email];
 
     if (!pending) {
       throw new AppError('Aucune inscription en attente pour cet email.', 400);
     }
 
-    // Générer un nouveau OTP
+    // ====================================
+    // 2. Générer un nouveau code OTP (6 chiffres, valide 5 minutes)
+    // ====================================
     const otp = generateOtp();
-    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
+    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
+    // Mettre à jour le code OTP dans les données temporaires
     pending.otp = otp;
     pending.otpExpiry = otpExpiry;
 
-    // Envoyer le nouvel OTP
+    // ====================================
+    // 3. Envoyer le nouveau OTP par email via Nodemailer
+    // ====================================
+    console.log(`📧 Nouveau OTP généré pour ${email}: ${otp}`);
+
     try {
-      const name =
-        pending.registrationData.firstName || pending.registrationData.name || pending.registrationData.username;
-      await sendOTPEmail(email, otp, name);
-    } catch (error) {
-      throw new AppError("Erreur lors de l'envoi de l'email de vérification.", 500);
+      const userName = pending.type === 'user'
+        ? (pending.registrationData.firstName || pending.registrationData.username || 'Utilisateur')
+        : (pending.registrationData.name || pending.registrationData.contact || 'Organisation');
+
+      await sendOTPEmail(email, otp, userName);
+      console.log(`✅ Nouvel email OTP envoyé à ${email}`);
+    } catch (error: any) {
+      console.error(`❌ Erreur envoi email à ${email}:`, error.message);
+      throw new AppError("Impossible d'envoyer l'email de vérification", 500);
     }
 
     return {

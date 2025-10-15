@@ -37,6 +37,7 @@ model User {
   otp             String?
   otpExpiry       DateTime?
   organisation    Organisation?   // Relation: Un user peut avoir une organisation
+  collaborateurs  Collaborateur[] // Relation: Un user peut créer plusieurs collaborateurs
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 }
@@ -66,6 +67,29 @@ model Organisation {
   updatedAt                 DateTime           @updatedAt
 }
 
+// Collaborateur d'un projet (membre de l'équipe projet)
+model Collaborateur {
+  id                String         @id @default(uuid())
+
+  // Relation avec l'utilisateur qui a créé ce collaborateur
+  userId            String
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relation avec le projet (plusieurs collaborateurs peuvent travailler sur le même projet)
+  projetId          String
+  projet            Projet         @relation(fields: [projetId], references: [id], onDelete: Cascade)
+
+  // Informations du collaborateur
+  nom               String
+  prenom            String
+  email             String
+  telephone         String?
+  role              String?        // Rôle dans le projet (Coordinateur, Expert, Chargé de mission, etc.)
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
 // Projet soumis par les organisations
 model Projet {
   id                String         @id @default(uuid())
@@ -74,36 +98,85 @@ model Projet {
   organisationId    String?
   organisation      Organisation?  @relation(fields: [organisationId], references: [id])
 
-  // Informations du projet
-  title             String?
-  actPrin           String?        @db.Text  // Activités principales
-  dateLimPro        DateTime?                // Date limite estimée
-  rAtt              String?        @db.Text  // Résultat attendu
-  objP              String?        @db.Text  // Objectif du projet
-  conjP             String?        @db.Text  // Contexte & justification
-  lexGcp            String?        @db.Text  // Lieu d'exécution & groupe cible
-  poRistEnvSoPo     String?        @db.Text  // Potentiel risque
-  dPRep             String?        @db.Text  // Durabilité et potentiel expérience
-  conseilPr         String?        @db.Text  // Conseil pratique pour la rédaction
+  // === ÉTAPE 1 : Proposition du projet ===
+  title             String?        // Titre du projet
+  domains           String[]       @default([]) // Domaines d'intervention
+  location          String?        @db.Text  // Lieu d'exécution
+  targetGroup       String?        @db.Text  // Groupe cible
+  contextJustification String?     @db.Text  // Contexte & justification
 
-  // Fichiers (chemins vers les fichiers stockés)
-  cv                String[]       @default([]) // Plusieurs CV
-  ficheC            String?                     // Fiche circuit (PME/PMI/Startup)
-  lM                String?                     // Lettre de motivation
-  stR               String?                     // Statuts et règlement intérieur (ONG)
-  rib               String?                     // RIB
-  cA                String?                     // Copie de l'agrément
-  budgetD           String?                     // Budget d'estimation
-  che               String?                     // Chronogramme d'exécution
-  cartography       String?                     // Cartographie
-  lP                String?                     // Lettre de soutien/partenariat
+  // === ÉTAPE 2 : Objectifs & résultats ===
+  objectives        Json?                     // Objectifs
+  expectedResults   String?        @db.Text  // Résultats attendus
+  durationMonths    Int?           // Durée en mois
 
-  // État d'avancement
-  stade             String?                     // Stade du projet (BROUILLON, SOUMIS, EN_REVUE, ACCEPTE, REFUSE)
-  funding           String?                     // Financement
+  // === ÉTAPE 3 : Activités & calendrier ===
+  activitiesStartDate   DateTime?  // Date de début
+  activitiesEndDate     DateTime?  // Date de fin
+  activitiesSummary     String?    @db.Text  // Résumé des activités
+  activities            Json?      // Array d'activités [{title, start, end, summary, subs:[{label,summary}]}]
 
-  // Métadonnées
+  // === ÉTAPE 4 : Risques ===
+  risks                 Json?      // Array de risques [{description, mitigation}]
+
+  // === ÉTAPE 5 : Budget ===
+  usdRate               Int?       @default(655) // Taux de change FCFA/USD
+  budgetActivities      Json?      // Budget par activité [{activityIndex, lines:[{label,cfa,fpbgPct,cofinPct}]}]
+  indirectOverheads     Int?       @default(0) // Frais indirects (plafond 10%)
+
+  // === ÉTAPE 6 : État & financement ===
+  projectStage      String?        // CONCEPTION, DEMARRAGE, AVANCE, PHASE_FINALE
+  hasFunding        Boolean?       @default(false)
+  fundingDetails    String?        @db.Text
+  honorAccepted     Boolean?       @default(false) // Engagement sur l'honneur
+
+  // === ÉTAPE 7 : Durabilité ===
+  sustainability    String?        @db.Text  // Durabilité
+  replicability     String?        @db.Text  // Potentiel de réplication
+
+  // === ÉTAPE 8 : Annexes (fichiers) ===
+  lettreMotivation  String?        // Lettre de motivation
+  statutsReglement  String?        // Statuts & règlement
+  ficheCircuit      String?        // Fiche circuit (PME/PMI/Startup)
+  cote              String?        // CÔTE
+  agrement          String?        // Agrément / Récépissé
+  cv                String[]       @default([]) // CV (porteur & responsables)
+  budgetDetaille    String?        // Budget détaillé
+  chronogramme      String?        // Chronogramme
+  cartographie      String?        // Cartographie (optionnel)
+  lettreSoutien     String?        // Lettre de soutien (optionnel)
+
+  // === Champs hérités (compatibilité) ===
+  actPrin           String?        @db.Text  // Activités principales (ancien)
+  dateLimPro        DateTime?      // Date limite estimée (ancien)
+  rAtt              String?        @db.Text  // Résultat attendu (ancien)
+  objP              String?        @db.Text  // Objectif du projet (ancien)
+  conjP             String?        @db.Text  // Contexte & justification (ancien)
+  lexGcp            String?        @db.Text  // Lieu d'exécution & groupe cible (ancien)
+  poRistEnvSoPo     String?        @db.Text  // Potentiel risque (ancien)
+  dPRep             String?        @db.Text  // Durabilité (ancien)
+  conseilPr         String?        @db.Text  // Conseil pratique (ancien)
+  lM                String?        // Lettre de motivation (ancien)
+  stR               String?        // Statuts et règlement (ancien)
+  ficheC            String?        // Fiche circuit (ancien)
+  rib               String?        // RIB (ancien)
+  cA                String?        // Copie de l'agrément (ancien)
+  budgetD           String?        // Budget d'estimation (ancien)
+  che               String?        // Chronogramme d'exécution (ancien)
+  cartography       String?        // Cartographie (ancien)
+  lP                String?        // Lettre de soutien/partenariat (ancien)
+
+  // === État du projet ===
+  status            String         @default("BROUILLON") // BROUILLON, SOUMIS, EN_REVUE, ACCEPTE, REFUSE
+  stade             String?        // Stade du projet (ancien - à migrer vers status)
+  funding           String?        // Financement (ancien)
+
+  // === Collaborateurs ===
+  collaborateurs    Collaborateur[]
+
+  // === Métadonnées ===
   dateCreation      DateTime       @default(now())
+  submittedAt       DateTime?      // Date de soumission
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 }

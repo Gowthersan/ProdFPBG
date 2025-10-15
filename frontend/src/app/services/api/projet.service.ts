@@ -143,4 +143,57 @@ export class ProjetService {
     const response = await instance.delete(`${this.baseUrl}/${id}`);
     return response.data;
   }
+
+  /**
+   * Soumettre un projet complet depuis le wizard
+   */
+  async submitProject(projectData: any): Promise<any> {
+    const response = await instance.post(`${this.baseUrl}/submit`, projectData);
+    return response.data;
+  }
+
+  /**
+   * Récupérer le projet de l'utilisateur connecté
+   */
+  async getMyProject(): Promise<Projet | null> {
+    try {
+      const response = await instance.get(`${this.baseUrl}/my-project`);
+      return response.data;
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Récupérer tous les collaborateurs de l'utilisateur
+   */
+  async getMyCollaborateurs(): Promise<any[]> {
+    const response = await instance.get(`${this.baseUrl}/my-collaborateurs`);
+    return response.data;
+  }
+
+  /**
+   * Ajouter un collaborateur à un projet
+   */
+  async addCollaborateur(projetId: string, collaborateurData: {
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone?: string;
+    role?: string;
+  }): Promise<any> {
+    const response = await instance.post(`${this.baseUrl}/${projetId}/collaborateurs`, collaborateurData);
+    return response.data;
+  }
+
+  /**
+   * Supprimer un collaborateur
+   */
+  async deleteCollaborateur(collaborateurId: string): Promise<{ message: string }> {
+    const response = await instance.delete(`${this.baseUrl}/collaborateurs/${collaborateurId}`);
+    return response.data;
+  }
 }

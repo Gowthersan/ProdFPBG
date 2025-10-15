@@ -2,9 +2,228 @@ import prisma from '../config/db.js';
 import { AppError } from '../middlewares/error.middleware.js';
 import { ProjetFormDTO } from '../types/index.js';
 
+/**
+ * Interface pour la soumission complète d'un projet depuis le wizard
+ */
+interface ProjectSubmissionData {
+  // Étape 1 : Proposition
+  title: string;
+  domains: string[];
+  location: string;
+  targetGroup: string;
+  contextJustification: string;
+
+  // Étape 2 : Objectifs
+  objectives: string;
+  expectedResults: string;
+  durationMonths: number;
+
+  // Étape 3 : Activités
+  activitiesStartDate?: string;
+  activitiesEndDate?: string;
+  activitiesSummary?: string;
+  activities?: any[];
+
+  // Étape 4 : Risques
+  risks?: any[];
+
+  // Étape 5 : Budget
+  usdRate?: number;
+  budgetActivities?: any[];
+  indirectOverheads?: number;
+
+  // Étape 6 : État & financement
+  projectStage?: string;
+  hasFunding?: boolean;
+  fundingDetails?: string;
+  honorAccepted?: boolean;
+
+  // Étape 7 : Durabilité
+  sustainability?: string;
+  replicability?: string;
+
+  // Étape 8 : Annexes (fichiers)
+  attachments?: {
+    LETTRE_MOTIVATION?: string;
+    STATUTS_REGLEMENT?: string;
+    FICHE_CIRCUIT?: string;
+    COTE?: string;
+    AGREMENT?: string;
+    CV?: string[];
+    BUDGET_DETAILLE?: string;
+    CHRONOGRAMME?: string;
+    CARTOGRAPHIE?: string;
+    LETTRE_SOUTIEN?: string;
+  };
+
+  // Collaborateurs
+  collaborateurs?: Array<{
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone?: string;
+    role?: string;
+  }>;
+}
+
 export class ProjetService {
   /**
-   * Créer un nouveau projet
+   * Soumettre un projet complet (depuis le wizard)
+   * Un utilisateur ne peut soumettre qu'un seul projet
+   */
+  async submitProject(userId: string, data: ProjectSubmissionData) {
+    try {
+      // Trouver l'organisation liée à cet utilisateur
+      const organisation = await prisma.organisation.findUnique({
+        where: { userId: userId }
+      });
+
+      if (!organisation) {
+        throw new AppError('Organisation non trouvée', 404);
+      }
+
+      // Vérifier si un projet existe déjà pour cette organisation
+      const existingProject = await prisma.projet.findFirst({
+        where: { organisationId: organisation.id }
+      });
+
+      // Préparer les données du projet
+      const projectData: any = {
+        // Étape 1
+        title: data.title,
+        domains: data.domains || [],
+        location: data.location,
+        targetGroup: data.targetGroup,
+        contextJustification: data.contextJustification,
+
+        // Étape 2
+        objectives: data.objectives,
+        expectedResults: data.expectedResults,
+        durationMonths: data.durationMonths,
+
+        // Étape 3
+        activitiesStartDate: data.activitiesStartDate ? new Date(data.activitiesStartDate) : null,
+        activitiesEndDate: data.activitiesEndDate ? new Date(data.activitiesEndDate) : null,
+        activitiesSummary: data.activitiesSummary || '',
+        activities: data.activities || [],
+
+        // Étape 4
+        risks: data.risks || [],
+
+        // Étape 5
+        usdRate: data.usdRate || 655,
+        budgetActivities: data.budgetActivities || [],
+        indirectOverheads: data.indirectOverheads || 0,
+
+        // Étape 6
+        projectStage: data.projectStage || 'CONCEPTION',
+        hasFunding: data.hasFunding || false,
+        fundingDetails: data.fundingDetails || '',
+        honorAccepted: data.honorAccepted || false,
+
+        // Étape 7
+        sustainability: data.sustainability || '',
+        replicability: data.replicability || '',
+
+        // Étape 8 - Annexes
+        lettreMotivation: data.attachments?.LETTRE_MOTIVATION,
+        statutsReglement: data.attachments?.STATUTS_REGLEMENT,
+        ficheCircuit: data.attachments?.FICHE_CIRCUIT,
+        cote: data.attachments?.COTE,
+        agrement: data.attachments?.AGREMENT,
+        cv: data.attachments?.CV || [],
+        budgetDetaille: data.attachments?.BUDGET_DETAILLE,
+        chronogramme: data.attachments?.CHRONOGRAMME,
+        cartographie: data.attachments?.CARTOGRAPHIE,
+        lettreSoutien: data.attachments?.LETTRE_SOUTIEN,
+
+        // État
+        status: 'SOUMIS',
+        submittedAt: new Date()
+      };
+
+      let projet;
+
+      if (existingProject) {
+        // Mise à jour du projet existant
+        projet = await prisma.projet.update({
+          where: { id: existingProject.id },
+          data: projectData,
+          include: {
+            organisation: {
+              include: {
+                typeOrganisation: true
+              }
+            },
+            collaborateurs: true
+          }
+        });
+      } else {
+        // Création d'un nouveau projet
+        projet = await prisma.projet.create({
+          data: {
+            ...projectData,
+            organisationId: organisation.id
+          },
+          include: {
+            organisation: {
+              include: {
+                typeOrganisation: true
+              }
+            },
+            collaborateurs: true
+          }
+        });
+      }
+
+      // Gérer les collaborateurs si fournis
+      if (data.collaborateurs && data.collaborateurs.length > 0 && organisation.userId) {
+        // Supprimer les anciens collaborateurs de ce projet
+        await prisma.collaborateur.deleteMany({
+          where: { projetId: projet.id }
+        });
+
+        // Créer les nouveaux collaborateurs (liés à l'utilisateur ET au projet)
+        for (const collab of data.collaborateurs) {
+          await prisma.collaborateur.create({
+            data: {
+              userId: organisation.userId, // L'utilisateur qui a créé ce collaborateur
+              projetId: projet.id, // Le projet sur lequel il travaille
+              nom: collab.nom,
+              prenom: collab.prenom,
+              email: collab.email,
+              telephone: collab.telephone ?? null,
+              role: collab.role ?? null
+            }
+          });
+        }
+      }
+
+      // Recharger le projet avec les collaborateurs
+      const finalProjet = await prisma.projet.findUnique({
+        where: { id: projet.id },
+        include: {
+          organisation: {
+            include: {
+              typeOrganisation: true
+            }
+          },
+          collaborateurs: true
+        }
+      });
+
+      return {
+        message: 'Projet soumis avec succès',
+        projet: finalProjet
+      };
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la soumission du projet:', error);
+      throw new AppError(error.message || 'Erreur lors de la soumission du projet', 500);
+    }
+  }
+
+  /**
+   * Créer un nouveau projet (ancienne méthode - conservée pour compatibilité)
    */
   async createProjet(projetData: Partial<ProjetFormDTO>, files: any, userId: string) {
     // Récupérer l'organisation liée à l'utilisateur
@@ -290,5 +509,136 @@ export class ProjetService {
     });
 
     return { message: 'Projet supprimé avec succès.' };
+  }
+
+  /**
+   * Récupérer tous les collaborateurs d'un utilisateur
+   * Permet de savoir combien de collaborateurs l'utilisateur a créés
+   */
+  async getCollaborateursByUser(userId: string) {
+    try {
+      // Récupérer l'organisation liée à l'utilisateur
+      const organisation = await prisma.organisation.findFirst({
+        where: { userId }
+      });
+
+      if (!organisation) {
+        throw new AppError('Organisation non trouvée.', 404);
+      }
+
+      // Récupérer tous les collaborateurs créés par cet utilisateur
+      const collaborateurs = await prisma.collaborateur.findMany({
+        where: { userId },
+        include: {
+          projet: {
+            select: {
+              id: true,
+              title: true,
+              status: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+
+      return {
+        total: collaborateurs.length,
+        collaborateurs
+      };
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la récupération des collaborateurs:', error);
+      throw new AppError(error.message || 'Erreur lors de la récupération des collaborateurs', 500);
+    }
+  }
+
+  /**
+   * Ajouter un collaborateur à un projet existant
+   */
+  async addCollaborateur(
+    userId: string,
+    projetId: string,
+    collaborateurData: {
+      nom: string;
+      prenom: string;
+      email: string;
+      telephone?: string;
+      role?: string;
+    }
+  ) {
+    try {
+      // Vérifier que le projet existe et appartient à l'utilisateur
+      const projet = await prisma.projet.findFirst({
+        where: {
+          id: projetId,
+          organisation: {
+            userId
+          }
+        }
+      });
+
+      if (!projet) {
+        throw new AppError('Projet non trouvé ou non autorisé', 404);
+      }
+
+      // Créer le collaborateur
+      const collaborateur = await prisma.collaborateur.create({
+        data: {
+          userId,
+          projetId,
+          nom: collaborateurData.nom,
+          prenom: collaborateurData.prenom,
+          email: collaborateurData.email,
+          telephone: collaborateurData.telephone ?? null,
+          role: collaborateurData.role ?? null
+        },
+        include: {
+          projet: {
+            select: {
+              id: true,
+              title: true
+            }
+          }
+        }
+      });
+
+      return {
+        message: 'Collaborateur ajouté avec succès',
+        collaborateur
+      };
+    } catch (error: any) {
+      console.error("❌ Erreur lors de l'ajout du collaborateur:", error);
+      throw new AppError(error.message || "Erreur lors de l'ajout du collaborateur", 500);
+    }
+  }
+
+  /**
+   * Supprimer un collaborateur
+   */
+  async deleteCollaborateur(userId: string, collaborateurId: string) {
+    try {
+      // Vérifier que le collaborateur existe et appartient à l'utilisateur
+      const collaborateur = await prisma.collaborateur.findFirst({
+        where: {
+          id: collaborateurId,
+          userId
+        }
+      });
+
+      if (!collaborateur) {
+        throw new AppError('Collaborateur non trouvé ou non autorisé', 404);
+      }
+
+      // Supprimer le collaborateur
+      await prisma.collaborateur.delete({
+        where: { id: collaborateurId }
+      });
+
+      return { message: 'Collaborateur supprimé avec succès' };
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la suppression du collaborateur:', error);
+      throw new AppError(error.message || 'Erreur lors de la suppression du collaborateur', 500);
+    }
   }
 }

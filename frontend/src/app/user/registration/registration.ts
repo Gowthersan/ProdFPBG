@@ -116,10 +116,13 @@ export class Registration {
       password: this.form.value.password!,
     };
 
-    // Appeler le backend pour générer et envoyer l'OTP via EmailJS
+    // ====================================
+    // Appeler le backend pour générer et envoyer l'OTP via Nodemailer
+    // ====================================
     this.auth.registerOrganisation(data).subscribe({
       next: (response) => {
         console.log('✅ Registration initié:', response);
+        console.log('📧 Email OTP envoyé automatiquement par le backend via Nodemailer');
 
         // Stocker les infos pour la page OTP
         const pending = {

@@ -1,13 +1,35 @@
 // app/user/dashboard/dashboard.ts
-import { Component, OnInit, OnDestroy, HostListener, ViewChild, ElementRef, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  HostListener,
+  ViewChild,
+  ElementRef,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../core/auth.service';
 import { ToastHost } from '../ui/toast-host/toast-host';
+import { ProjetService } from '../../services/api/projet.service';
 
-type Submission = { id?: string; status: 'BROUILLON' | 'EN REVUE' | 'ACCEPTE' | 'REJETE'; updatedAt: number };
-type Collaborator = { fullName: string; email: string; role: string };
+type Submission = {
+  id?: string;
+  status: 'BROUILLON' | 'EN REVUE' | 'ACCEPTE' | 'REJETE';
+  updatedAt: number;
+};
+type Collaborator = {
+  id?: string;
+  fullName: string;
+  nom?: string;
+  prenom?: string;
+  email: string;
+  telephone?: string;
+  role: string;
+};
 
 const LS = {
   draft: 'fpbg.nc.draft',
@@ -26,6 +48,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private projetService = inject(ProjetService);
 
   /** === ÉTATS UI === */
   asideOpen = signal(false);
@@ -41,9 +64,11 @@ export class Dashboard implements OnInit, OnDestroy {
 
   /** === DONNÉES PROJET === */
   submission = signal<Submission | null>(null);
+  currentProjetId = signal<string | null>(null);
 
   /** === COLLABORATEURS === */
   collaborators = signal<Collaborator[]>([]);
+  loadingCollabs = signal(false);
   collabForm = this.fb.group({
     fullName: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
@@ -55,7 +80,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private heartbeat?: any;
 
   // ---------- lifecycle ----------
-// Dans Dashboard (TS)
+  // Dans Dashboard (TS)
 
   ngOnInit() {
     /** 1) Avatar : charger la photo locale AVANT tout rendu/asynchrone */
@@ -67,8 +92,7 @@ export class Dashboard implements OnInit, OnDestroy {
     /** 2) Profil depuis AuthService (maj du nom, on préserve la photo) */
     this.auth.me().subscribe({
       next: (acc) => {
-        const fullName =
-          [acc.firstName, acc.lastName].filter(Boolean).join(' ') || acc.login;
+        const fullName = [acc.firstName, acc.lastName].filter(Boolean).join(' ') || acc.login;
         // on garde la photo déjà chargée en mémoire / LS
         const photoUrl = this.user().photoUrl || this.readPhotoFromLS() || '';
         this.user.set({ fullName, photoUrl });
@@ -84,14 +108,8 @@ export class Dashboard implements OnInit, OnDestroy {
     this.refreshSubmissionFromStorage();
     this.refreshLastUpdated();
 
-    /** 4) Collaborateurs */
-    try {
-      this.collaborators.set(
-        JSON.parse(localStorage.getItem(LS.collaborators) || '[]')
-      );
-    } catch {
-      /* noop */
-    }
+    /** 4) Charger le projet et les collaborateurs depuis le backend */
+    this.loadProjectAndCollaborators();
 
     /** 5) Listeners (MAJ live date + mutli-onglets) */
     window.addEventListener('storage', this.onStorage);
@@ -133,7 +151,9 @@ export class Dashboard implements OnInit, OnDestroy {
       this.imgError.set(false);
     }
   };
-  private onVisibility = () => { if (!document.hidden) this.refreshLastUpdated(); };
+  private onVisibility = () => {
+    if (!document.hidden) this.refreshLastUpdated();
+  };
   private onFocus = () => this.refreshLastUpdated();
   private onDraftEvent = () => this.refreshLastUpdated();
 
@@ -141,7 +161,9 @@ export class Dashboard implements OnInit, OnDestroy {
     try {
       const subRaw = localStorage.getItem(LS.submission);
       this.submission.set(subRaw ? JSON.parse(subRaw) : null);
-    } catch { this.submission.set(null); }
+    } catch {
+      this.submission.set(null);
+    }
   }
   private readLastUpdatedAtFromStorage(): number | null {
     try {
@@ -165,16 +187,22 @@ export class Dashboard implements OnInit, OnDestroy {
     } catch {}
     return null;
   }
-  private refreshLastUpdated() { this.lastUpdatedAt.set(this.readLastUpdatedAtFromStorage()); }
-  lastUpdate(): number | null { return this.lastUpdatedAt(); }
+  private refreshLastUpdated() {
+    this.lastUpdatedAt.set(this.readLastUpdatedAtFromStorage());
+  }
+  lastUpdate(): number | null {
+    return this.lastUpdatedAt();
+  }
 
   // ---------- Avatar ----------
   toggleAvatarMenu(ev?: Event) {
     ev?.stopPropagation();
-    this.avatarMenuOpen.update(v => !v);
+    this.avatarMenuOpen.update((v) => !v);
   }
   @HostListener('document:click')
-  closeAvatarMenu() { this.avatarMenuOpen.set(false); }
+  closeAvatarMenu() {
+    this.avatarMenuOpen.set(false);
+  }
 
   triggerAvatarUpload() {
     this.closeAvatarMenu();
@@ -218,21 +246,38 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   private readPhotoFromLS(): string | null {
-    try { return localStorage.getItem(LS.photo); } catch { return null; }
+    try {
+      return localStorage.getItem(LS.photo);
+    } catch {
+      return null;
+    }
   }
   private savePhotoToLS(dataUrl: string) {
-    try { localStorage.setItem(LS.photo, dataUrl); } catch {}
+    try {
+      localStorage.setItem(LS.photo, dataUrl);
+    } catch {}
   }
 
   // ---------- Divers UI ----------
-  toggleAside() { this.asideOpen.update(v => !v); }
+  toggleAside() {
+    this.asideOpen.update((v) => !v);
+  }
   initials(): string {
     const n = this.user().fullName || '';
-    return n.split(' ').map(s => s.charAt(0)).slice(0, 2).join('').toUpperCase();
+    return n
+      .split(' ')
+      .map((s) => s.charAt(0))
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
   }
 
-  hasProject(): boolean { return this.isDraft() || !!this.submission(); }
-  isDraft(): boolean { return !!localStorage.getItem(LS.draft); }
+  hasProject(): boolean {
+    return this.isDraft() || !!this.submission();
+  }
+  isDraft(): boolean {
+    return !!localStorage.getItem(LS.draft);
+  }
 
   status(): string {
     if (this.isDraft()) return 'BROUILLON';
@@ -241,15 +286,15 @@ export class Dashboard implements OnInit, OnDestroy {
   statusClass(): string {
     const s = this.status();
     if (s === 'BROUILLON') return 'bg-amber-100 text-amber-800';
-    if (s === 'EN REVUE')  return 'bg-blue-100 text-blue-800';
-    if (s === 'ACCEPTE')   return 'bg-green-100 text-green-800';
-    if (s === 'REJETE')    return 'bg-red-100 text-red-800';
+    if (s === 'EN REVUE') return 'bg-blue-100 text-blue-800';
+    if (s === 'ACCEPTE') return 'bg-green-100 text-green-800';
+    if (s === 'REJETE') return 'bg-red-100 text-red-800';
     return 'bg-slate-200 text-slate-800';
   }
 
   ctaLabel(): string {
     if (!this.hasProject()) return 'Créer un projet';
-    if (this.isDraft())     return 'Continuer le formulaire';
+    if (this.isDraft()) return 'Continuer le formulaire';
     return 'Voir le projet';
   }
 
@@ -258,10 +303,18 @@ export class Dashboard implements OnInit, OnDestroy {
     else this.goRecap();
     this.asideOpen.set(false);
   }
+
   scrollTo(id: string) {
     this.asideOpen.set(false);
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // 👉 Met la bonne version selon ton préfixe de module :
+    const toWizard = '/submission-wizard'; // ou '/user/submission-wizard'
+    const toRecap = '/form/recap/current'; // ou '/user/form/recap/current'
+
+    if (!this.hasProject() || this.isDraft()) {
+      this.router.navigateByUrl(toWizard);
+    } else {
+      this.router.navigateByUrl(toRecap);
+    }
   }
   // Dashboard.ts
   goRecap() {
@@ -269,7 +322,6 @@ export class Dashboard implements OnInit, OnDestroy {
     const id = meta?.id ?? 'current';
     this.router.navigate(['/form/recap', id]);
   }
-
 
   logout() {
     this.closeAvatarMenu();
@@ -280,19 +332,30 @@ export class Dashboard implements OnInit, OnDestroy {
   startProject() {
     if (!this.isDraft()) {
       const now = Date.now();
-      const draft = { createdAt: now, updatedAt: now, _updatedAt: new Date(now).toISOString(), step: 1 };
+      const draft = {
+        createdAt: now,
+        updatedAt: now,
+        _updatedAt: new Date(now).toISOString(),
+        step: 1,
+      };
       localStorage.setItem(LS.draft, JSON.stringify(draft));
     }
     this.refreshLastUpdated();
     this.router.navigate(['/submission-wizard']);
   }
-  resumeDraft() { this.router.navigate(['/submission-wizard']); }
+  resumeDraft() {
+    this.router.navigate(['/submission-wizard']);
+  }
   clearDraftOnly() {
     localStorage.removeItem(LS.draft);
     this.refreshLastUpdated();
   }
   submitProjectMock() {
-    const submission: Submission = { id: crypto.randomUUID(), status: 'EN REVUE', updatedAt: Date.now() };
+    const submission: Submission = {
+      id: crypto.randomUUID(),
+      status: 'EN REVUE',
+      updatedAt: Date.now(),
+    };
     localStorage.setItem(LS.submission, JSON.stringify(submission));
     localStorage.removeItem(LS.draft);
     this.submission.set(submission);
@@ -300,21 +363,93 @@ export class Dashboard implements OnInit, OnDestroy {
     alert('Projet soumis (mode démo).');
   }
 
-  addCollaborator() {
-    if (this.collabForm.invalid) { this.collabForm.markAllAsTouched(); return; }
-    const list = [...this.collaborators(), this.collabForm.getRawValue() as Collaborator];
-    this.collaborators.set(list);
-    localStorage.setItem(LS.collaborators, JSON.stringify(list));
-    this.collabForm.reset({ role: 'Éditeur' });
-    this.showAddCollaborator.set(false);
+  /** Charger le projet et les collaborateurs depuis le backend */
+  async loadProjectAndCollaborators() {
+    try {
+      this.loadingCollabs.set(true);
+
+      // Charger le projet de l'utilisateur
+      const projet = await this.projetService.getMyProject();
+      if (projet && projet.id) {
+        this.currentProjetId.set(projet.id);
+
+        // Charger les collaborateurs
+        const collabs = await this.projetService.getMyCollaborateurs();
+
+        // Transformer les données backend en format UI
+        const formatted: Collaborator[] = collabs.map((c: any) => ({
+          id: c.id,
+          fullName: `${c.prenom || ''} ${c.nom || ''}`.trim(),
+          nom: c.nom,
+          prenom: c.prenom,
+          email: c.email,
+          telephone: c.telephone,
+          role: c.role || 'Collaborateur',
+        }));
+
+        this.collaborators.set(formatted);
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des collaborateurs:', error);
+      // Fallback sur localStorage si le backend échoue
+      try {
+        this.collaborators.set(JSON.parse(localStorage.getItem(LS.collaborators) || '[]'));
+      } catch {
+        /* noop */
+      }
+    } finally {
+      this.loadingCollabs.set(false);
+    }
+  }
+
+  async addCollaborator() {
+    if (this.collabForm.invalid) {
+      this.collabForm.markAllAsTouched();
+      return;
+    }
+
+    const projetId = this.currentProjetId();
+    if (!projetId) {
+      alert('Aucun projet trouvé. Veuillez d\'abord créer un projet.');
+      return;
+    }
+
+    try {
+      const formValue = this.collabForm.getRawValue();
+      const [prenom, ...nomParts] = (formValue.fullName || '').trim().split(' ');
+      const nom = nomParts.join(' ');
+
+      const collaborateurData = {
+        nom: nom || prenom, // Si pas de nom, utiliser prenom comme nom
+        prenom: nom ? prenom : '', // Si pas de nom, prenom est vide
+        email: formValue.email || '',
+        telephone: '',
+        role: formValue.role || 'Collaborateur',
+      };
+
+      // Appel backend
+      const result = await this.projetService.addCollaborateur(projetId, collaborateurData);
+
+      // Recharger la liste des collaborateurs
+      await this.loadProjectAndCollaborators();
+
+      // Reset formulaire
+      this.collabForm.reset({ role: 'Éditeur' });
+      this.showAddCollaborator.set(false);
+
+      console.log('✅ Collaborateur ajouté:', result);
+    } catch (error: any) {
+      console.error('❌ Erreur lors de l\'ajout du collaborateur:', error);
+      alert(error?.response?.data?.message || 'Erreur lors de l\'ajout du collaborateur');
+    }
   }
 
   projectName(): string {
     try {
       const d = JSON.parse(localStorage.getItem(LS.draft) || 'null');
       return d?.data?.titre?.trim?.() || d?.title || '';
-    } catch { return ''; }
+    } catch {
+      return '';
+    }
   }
-
-
 }

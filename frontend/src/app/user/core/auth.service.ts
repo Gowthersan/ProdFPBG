@@ -1,12 +1,11 @@
 // app/user/core/auth.service.ts
-// Auth avec backend API + EmailJS pour OTP
+// Auth avec backend API (emails envoyés via Nodemailer backend)
 
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { EmailjsService } from '../../services/email/emailjs.service';
 
 const LS = {
   token: 'fpbg.token',
@@ -46,7 +45,6 @@ export interface RegisterPayload {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
-  private emailService = inject(EmailjsService);
   private apiUrl = environment.urlServer + '/api/auth';
 
   // === LOGIN : via backend API ===
@@ -77,7 +75,7 @@ export class AuthService {
     );
   }
 
-  // === REGISTER : appel backend pour générer OTP et envoyer via EmailJS ===
+  // === REGISTER : appel backend pour générer et envoyer OTP via Nodemailer ===
   registerOrganisation(data: {
     orgName: string;
     orgType: string;
@@ -90,7 +88,7 @@ export class AuthService {
     phone: string;
     email: string;
     password: string;
-  }): Observable<{ email: string; otp: string; userName: string }> {
+  }): Observable<{ email: string }> {
     // Préparer les données au format backend
     const payload = {
       email: data.email,
@@ -108,12 +106,8 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/register/organisation`, payload).pipe(
       map((response) => {
         console.log('✅ Backend response:', response);
-        // Le backend retourne { email, otp, userName }
-        // Envoyer l'OTP via EmailJS
-        this.emailService.sendOtpEmail(response.email, response.userName, response.otp)
-          .then(() => console.log('✅ OTP envoyé via EmailJS'))
-          .catch((err) => console.error('❌ Erreur envoi EmailJS:', err));
-
+        // Le backend retourne { email, message }
+        // L'email OTP est envoyé automatiquement par le backend via Nodemailer
         return response;
       }),
       catchError((error) => {
@@ -125,7 +119,7 @@ export class AuthService {
   }
 
   // === VERIFY OTP : vérifier via backend ===
-  verifyOtp(email: string, otp: string): Observable<void> {
+  verifyOtp(email: string, otp: string): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/verify-otp`, { email, otp }, { withCredentials: true }).pipe(
       map((response) => {
         const user = response.user;
@@ -144,6 +138,9 @@ export class AuthService {
 
         localStorage.setItem(LS.token, response.token);
         localStorage.setItem(LS.account, JSON.stringify(account));
+
+        // ✅ Retourner la réponse complète (avec redirectTo)
+        return response;
       }),
       catchError((error) => {
         console.error('❌ Erreur verify OTP:', error);
@@ -153,10 +150,11 @@ export class AuthService {
   }
 
   // === RESEND OTP : redemander un OTP via backend ===
-  resendOtp(email: string): Observable<{ email: string; otp: string }> {
+  resendOtp(email: string): Observable<{ email: string }> {
     return this.http.post<any>(`${this.apiUrl}/resend-otp`, { email }).pipe(
       map((response) => {
         console.log('✅ OTP renvoyé:', response);
+        // L'email OTP est envoyé automatiquement par le backend via Nodemailer
         return response;
       }),
       catchError((error) => {
