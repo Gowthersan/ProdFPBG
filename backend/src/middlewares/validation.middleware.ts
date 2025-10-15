@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 // Validation des emails
 export const isValidEmail = (email: string): boolean => {
@@ -8,32 +8,32 @@ export const isValidEmail = (email: string): boolean => {
 
 // Validation des mots de passe (min 6 caractères)
 export const isValidPassword = (password: string): boolean => {
-  return password && password.length >= 6;
+  return password && password.length >= 6 ? true : false;
 };
 
 // Middleware de validation pour l'inscription
 export const validateRegister = (req: Request, res: Response, next: NextFunction) => {
-  const { email, password, username } = req.body;
+  const { email, motDePasse, nomUtilisateur } = req.body;
 
-  if (!email || !password || !username) {
+  if (!email || !motDePasse || !nomUtilisateur) {
     return res.status(400).json({
-      error: 'Email, mot de passe et nom d\'utilisateur sont requis.'
+      error: "Email, mot de passe et nom d'utilisateur sont requis."
     });
   }
 
   if (!isValidEmail(email)) {
-    return res.status(400).json({ error: 'Format d\'email invalide.' });
+    return res.status(400).json({ error: "Format d'email invalide." });
   }
 
-  if (!isValidPassword(password)) {
+  if (!isValidPassword(motDePasse)) {
     return res.status(400).json({
       error: 'Le mot de passe doit contenir au moins 6 caractères.'
     });
   }
 
-  if (username.length < 3) {
+  if (nomUtilisateur.length < 3) {
     return res.status(400).json({
-      error: 'Le nom d\'utilisateur doit contenir au moins 3 caractères.'
+      error: "Le nom d'utilisateur doit contenir au moins 3 caractères."
     });
   }
 
@@ -46,7 +46,7 @@ export const validateLogin = (req: Request, res: Response, next: NextFunction) =
 
   if (!username || !password) {
     return res.status(400).json({
-      error: 'Nom d\'utilisateur et mot de passe sont requis.'
+      error: "Nom d'utilisateur et mot de passe sont requis."
     });
   }
 
@@ -77,7 +77,7 @@ export const validateOrganisation = (req: Request, res: Response, next: NextFunc
   }
 
   if (!isValidEmail(email)) {
-    return res.status(400).json({ error: 'Format d\'email invalide.' });
+    return res.status(400).json({ error: "Format d'email invalide." });
   }
 
   if (!isValidPassword(password)) {

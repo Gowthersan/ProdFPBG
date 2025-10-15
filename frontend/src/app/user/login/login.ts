@@ -46,12 +46,15 @@ export class Login {
 
   submit() {
     this.error.set(null);
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     this.loading.set(true);
-    const { email, password } = this.form.value as { email: string; password: string };
+    const { email, motDePasse } = this.form.value as { email: string; motDePasse: string };
 
-    this.auth.login({ username: email, password }).subscribe({
+    this.auth.login({ email: email, motDePasse }).subscribe({
       next: () => {
         this.loading.set(false);
         // Aller au dashboard
@@ -63,7 +66,7 @@ export class Login {
       error: () => {
         this.loading.set(false);
         this.error.set('Email ou mot de passe incorrect.');
-      }
+      },
     });
   }
 }

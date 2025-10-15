@@ -1,12 +1,11 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe, NgClass, JsonPipe } from '@angular/common';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
-import { AuthService } from '../../core/auth.service';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { Aprojetv1 } from '../../services/aprojetv1';
+import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { environDev } from '../../../environments/environment.development';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
 import { ProjetFormDTO } from '../../model/projetFormdto';
+import { Aprojetv1 } from '../../services/aprojetv1';
 
 type ProjectStatus = 'BROUILLON' | 'SOUMIS' | 'EN_REVUE' | 'ACCEPTE' | 'REJETE';
 type BudgetCategory = 'ACTIVITES_TERRAIN' | 'INVESTISSEMENTS' | 'FONCTIONNEMENT';
@@ -32,8 +31,6 @@ const ADMIN_DATA_KEY = 'fpbg_admin_records';
     CommonModule,
     ReactiveFormsModule,
     DatePipe,
-    NgClass,
-    JsonPipe,
     HttpClientModule,
     RouterLink,
     RouterLinkActive,
@@ -87,7 +84,7 @@ export class Dashboard implements OnInit {
     return this.records().filter((r) => {
       return (
         (r.project?.title || '').toLowerCase().includes(query) ||
-        (r.applicant?.orgName || '').toLowerCase().includes(query) ||
+        (r.applicant?.nom_organisation || '').toLowerCase().includes(query) ||
         (r.applicant?.contactPerson || '').toLowerCase().includes(query) ||
         (r.status || '').toLowerCase().includes(query)
       );

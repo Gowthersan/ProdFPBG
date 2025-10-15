@@ -1,7 +1,6 @@
 import express from 'express';
 import { ProjetController } from '../controllers/projet.controller.js';
 import { authMiddleware, optionalAuthMiddleware } from '../middlewares/auth.middleware.js';
-import { upload, handleMulterError } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -15,14 +14,14 @@ router.get('/:id', optionalAuthMiddleware, ProjetController.getProjetById);
 router.post(
   '/submit',
   authMiddleware,
-  upload.any(),  // Accepte n'importe quel fichier
-  handleMulterError,
+  // upload.any(),  // Accepte n'importe quel fichier
+  // handleMulterError,
   ProjetController.submitProject
 );
-router.get('/my-project', authMiddleware, ProjetController.getMyProject);  // Récupérer le projet de l'utilisateur
-router.get('/my-collaborateurs', authMiddleware, ProjetController.getMyCollaborateurs);  // Liste des collaborateurs de l'utilisateur
-router.post('/:projetId/collaborateurs', authMiddleware, ProjetController.addCollaborateur);  // Ajouter un collaborateur
-router.delete('/collaborateurs/:collaborateurId', authMiddleware, ProjetController.deleteCollaborateur);  // Supprimer un collaborateur
+router.get('/my-project', authMiddleware, ProjetController.getMyProject); // Récupérer le projet de l'utilisateur
+router.get('/my-collaborateurs', authMiddleware, ProjetController.getMyCollaborateurs); // Liste des collaborateurs de l'utilisateur
+router.post('/:projetId/collaborateurs', authMiddleware, ProjetController.addCollaborateur); // Ajouter un collaborateur
+router.delete('/collaborateurs/:collaborateurId', authMiddleware, ProjetController.deleteCollaborateur); // Supprimer un collaborateur
 router.post('/createProjet', authMiddleware, ProjetController.createProjet);
 router.get('/user', authMiddleware, ProjetController.getProjetByUser);
 router.put('/:id', authMiddleware, ProjetController.updateProjet);

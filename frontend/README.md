@@ -37,6 +37,7 @@ Le FPBG (Fonds de Préservation de la Biodiversité au Gabon) est une organisati
 ### 🎨 Captures d'écran
 
 La plateforme propose un design moderne avec :
+
 - Page d'accueil attractive avec hero section
 - Processus de soumission en 4 étapes
 - Section partenaires (FPBG & Obligations Bleues)
@@ -120,27 +121,27 @@ La plateforme propose un design moderne avec :
 
 ### Frontend
 
-| Technologie | Version | Usage |
-|------------|---------|--------|
-| **Angular** | 20.3 | Framework principal |
-| **TypeScript** | 5.9 | Langage de développement |
-| **Tailwind CSS** | 3.4 | Framework CSS utility-first |
-| **Angular Material** | 20.2 | Composants UI |
-| **RxJS** | 7.8 | Gestion de la réactivité |
-| **SweetAlert2** | 11.24 | Notifications et modales |
-| **Angular CDK** | 20.2 | Utilities Angular |
+| Technologie          | Version | Usage                       |
+| -------------------- | ------- | --------------------------- |
+| **Angular**          | 20.3    | Framework principal         |
+| **TypeScript**       | 5.9     | Langage de développement    |
+| **Tailwind CSS**     | 3.4     | Framework CSS utility-first |
+| **Angular Material** | 20.2    | Composants UI               |
+| **RxJS**             | 7.8     | Gestion de la réactivité    |
+| **SweetAlert2**      | 11.24   | Notifications et modales    |
+| **Angular CDK**      | 20.2    | Utilities Angular           |
 
 ### Backend (En développement)
 
-| Technologie | Usage prévu |
-|------------|-------------|
-| **Node.js + TypeScript** | Runtime & langage backend |
-| **Express** | Framework web |
-| **PostgreSQL / MongoDB** | Base de données |
-| **Prisma / TypeORM** | ORM |
-| **JWT** | Authentification |
-| **Nodemailer** | Envoi d'emails (OTP) |
-| **WhatsApp Business API** | Chatbot support |
+| Technologie               | Usage prévu               |
+| ------------------------- | ------------------------- |
+| **Node.js + TypeScript**  | Runtime & langage backend |
+| **Express**               | Framework web             |
+| **PostgreSQL / MongoDB**  | Base de données           |
+| **Prisma / TypeORM**      | ORM                       |
+| **JWT**                   | Authentification          |
+| **Nodemailer**            | Envoi d'emails (OTP)      |
+| **WhatsApp Business API** | Chatbot support           |
 
 ### DevOps & Outils
 
@@ -192,7 +193,7 @@ export const environment = {
   production: false,
   apiUrl: 'http://localhost:3000/api',
   whatsappNumber: '+241XXXXXXXXX',
-  enableDebugMode: true
+  enableDebugMode: true,
 };
 ```
 
@@ -203,7 +204,7 @@ export const environment = {
   production: true,
   apiUrl: 'https://api.fpbg.org/api',
   whatsappNumber: '+241XXXXXXXXX',
-  enableDebugMode: false
+  enableDebugMode: false,
 };
 ```
 
@@ -215,19 +216,17 @@ Le projet utilise Tailwind CSS. Configuration dans `tailwind.config.js` :
 
 ```javascript
 module.exports = {
-  content: [
-    "./src/**/*.{html,ts}",
-  ],
+  content: ['./src/**/*.{html,ts}'],
   theme: {
     extend: {
       colors: {
         'fpbg-green': '#16a34a',
         'fpbg-blue': '#0284c7',
-      }
+      },
     },
   },
   plugins: [],
-}
+};
 ```
 
 ### Angular Material
@@ -240,12 +239,14 @@ Configuration du thème dans `src/styles.scss` :
 
 $fpbg-primary: mat.define-palette(mat.$green-palette);
 $fpbg-accent: mat.define-palette(mat.$blue-palette);
-$fpbg-theme: mat.define-light-theme((
-  color: (
-    primary: $fpbg-primary,
-    accent: $fpbg-accent,
+$fpbg-theme: mat.define-light-theme(
+  (
+    color: (
+      primary: $fpbg-primary,
+      accent: $fpbg-accent,
+    ),
   )
-));
+);
 
 @include mat.all-component-themes($fpbg-theme);
 ```
@@ -318,7 +319,7 @@ front-fpbg/
 │   │   │   ├── core/                 # Services core (auth, guards)
 │   │   │   ├── dashboard/            # Dashboard utilisateur
 │   │   │   ├── form/                 # Formulaires de soumission
-│   │   │   │   ├── submission-wizard/  # Wizard multi-étapes
+│   │   │   │   ├── soumission/  # Wizard multi-étapes
 │   │   │   │   └── recap/            # Récap avant soumission
 │   │   │   ├── home/                 # Page d'accueil
 │   │   │   ├── login/                # Connexion
@@ -359,6 +360,7 @@ front-fpbg/
 ### Détail des modules clés
 
 #### 🏠 Module Home (`user/home/`)
+
 - Page d'accueil publique
 - Hero section avec appel à l'action
 - Statistiques (200M budget, 1ère édition 2025, 4 étapes)
@@ -369,6 +371,7 @@ front-fpbg/
 - Formulaire de contact
 
 #### 📝 Module Form (`user/form/`)
+
 - **Submission Wizard** : Formulaire multi-étapes
   - Étape 1 : Informations organisation
   - Étape 2 : Description projet
@@ -379,6 +382,7 @@ front-fpbg/
 - Validation progressive
 
 #### 🔐 Module Auth (`user/core/`)
+
 - **AuthService** : Gestion de l'authentification
 - **AuthGuard** : Protection des routes utilisateur
 - **UserAuthGuard** : Protection spécifique utilisateurs
@@ -387,6 +391,7 @@ front-fpbg/
 - Système OTP par email
 
 #### 🛡️ Module Admin (`admin/`)
+
 - **Dashboard** : Vue d'ensemble administrative
 - **Recap** : Liste et évaluation des projets
 - Gestion des appels à projets
@@ -433,16 +438,18 @@ backend/
 ### Endpoints API prévus
 
 #### Authentification
+
 ```typescript
-POST   /api/auth/register        // Inscription utilisateur
-POST   /api/auth/login           // Connexion
-POST   /api/auth/verify-otp      // Validation OTP
-POST   /api/auth/refresh-token   // Rafraîchir token
-POST   /api/auth/logout          // Déconnexion
-GET    /api/auth/profile         // Profil utilisateur
+POST / api / auth / register; // Inscription utilisateur
+POST / api / auth / login; // Connexion
+POST / api / auth / verify - otp; // Validation OTP
+POST / api / auth / refresh - token; // Rafraîchir token
+POST / api / auth / logout; // Déconnexion
+GET / api / auth / profile; // Profil utilisateur
 ```
 
 #### Projets
+
 ```typescript
 GET    /api/projets              // Liste projets (filtrés par user)
 POST   /api/projets              // Créer un projet
@@ -454,6 +461,7 @@ GET    /api/projets/:id/status   // Statut projet
 ```
 
 #### Appels à projets
+
 ```typescript
 GET    /api/appels               // Liste appels publics
 GET    /api/appels/:id           // Détails appel
@@ -463,6 +471,7 @@ DELETE /api/admin/appels/:id     // Supprimer appel (admin)
 ```
 
 #### Administration
+
 ```typescript
 GET    /api/admin/dashboard      // Statistiques admin
 GET    /api/admin/projets        // Tous les projets
@@ -474,6 +483,7 @@ PUT    /api/admin/users/:id      // Gérer utilisateur
 ### Modèles de données TypeScript
 
 #### User Model
+
 ```typescript
 interface FpbgUsersDto {
   id?: number;
@@ -492,6 +502,7 @@ interface FpbgUsersDto {
 ```
 
 #### Organisation Model
+
 ```typescript
 interface OrganisationDto {
   id?: number;
@@ -513,11 +524,12 @@ enum TypeOrganisation {
   ASSOCIATION = 'ASSOCIATION',
   COOPERATIVE = 'COOPERATIVE',
   ENTREPRISE = 'ENTREPRISE',
-  INSTITUTION_PUBLIQUE = 'INSTITUTION_PUBLIQUE'
+  INSTITUTION_PUBLIQUE = 'INSTITUTION_PUBLIQUE',
 }
 ```
 
 #### Projet Model
+
 ```typescript
 interface ProjetFormDto {
   id?: number;
@@ -547,7 +559,7 @@ enum StatutProjet {
   APPROUVE = 'APPROUVE',
   REJETE = 'REJETE',
   EN_COURS = 'EN_COURS',
-  TERMINE = 'TERMINE'
+  TERMINE = 'TERMINE',
 }
 ```
 
@@ -558,7 +570,7 @@ Le frontend communique avec le backend via HTTP :
 ```typescript
 // services/aprojetv1.ts
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AprojetV1Service {
   private apiUrl = environment.apiUrl;
@@ -668,7 +680,7 @@ export const environment = {
   apiUrl: 'https://api.fpbg.org/api',
   whatsappNumber: '+241XXXXXXXXX',
   enableDebugMode: false,
-  googleAnalyticsId: 'UA-XXXXXXXXX-X'
+  googleAnalyticsId: 'UA-XXXXXXXXX-X',
 };
 ```
 
@@ -685,10 +697,10 @@ ng test
 ### Tests avec couverture
 
 ```bash
-ng test --code-coverage
+ng test --code-couvertureGeographique
 ```
 
-Rapport de couverture généré dans `coverage/`
+Rapport de couverture généré dans `couvertureGeographique/`
 
 ### Tests E2E
 
@@ -715,12 +727,10 @@ describe('AuthService', () => {
   });
 
   it('should login successfully', (done) => {
-    service.login('user@example.com', 'password').subscribe(
-      response => {
-        expect(response.token).toBeDefined();
-        done();
-      }
-    );
+    service.login('user@example.com', 'password').subscribe((response) => {
+      expect(response.token).toBeDefined();
+      done();
+    });
   });
 });
 ```
@@ -745,6 +755,7 @@ git checkout -b feature/ma-nouvelle-fonctionnalite
 ### 3. Faire vos modifications
 
 Assurez-vous de suivre les conventions de code :
+
 - Utilisez Prettier pour le formatage
 - Respectez les guidelines Angular
 - Ajoutez des tests unitaires
@@ -758,6 +769,7 @@ git commit -m "feat: ajout de la fonctionnalité X"
 ```
 
 Convention de commit (Conventional Commits) :
+
 - `feat:` Nouvelle fonctionnalité
 - `fix:` Correction de bug
 - `docs:` Documentation
@@ -813,6 +825,7 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 ## 🔮 Roadmap
 
 ### Version 1.0 (Actuelle)
+
 - ✅ Page d'accueil complète
 - ✅ Authentification utilisateur
 - ✅ Formulaire de soumission multi-étapes
@@ -821,12 +834,14 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 - ✅ Support WhatsApp chatbot
 
 ### Version 1.1 (À venir)
+
 - 🔄 Application mobile iOS/Android
 - 🔄 Mode hors ligne pour l'app mobile
 - 🔄 Notifications push
 - 🔄 Exports PDF des projets
 
 ### Version 2.0 (Futur)
+
 - 📅 Système de notation et d'évaluation avancé
 - 📅 Intégration paiements en ligne
 - 📅 Module de reporting avancé
@@ -846,4 +861,4 @@ Merci à toutes les organisations et personnes qui contribuent à la conservatio
 
 **Développé avec ❤️ pour la conservation de la biodiversité au Gabon** 🇬🇦
 
-*Pour toute question ou suggestion, n'hésitez pas à ouvrir une issue sur GitHub ou à nous contacter directement.*
+_Pour toute question ou suggestion, n'hésitez pas à ouvrir une issue sur GitHub ou à nous contacter directement._

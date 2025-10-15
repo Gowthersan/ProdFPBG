@@ -27,8 +27,7 @@ export const userRoutes: Routes = [
     pathMatch: 'full',
   },
   {
-    path: 'submission-wizard',
-    loadComponent: () =>
-      import('./form/submission-wizard/submission-wizard').then((m) => m.SubmissionWizard),
+    path: 'soumission',
+    loadComponent: () => import('./form/soumission/soumission').then((m) => m.SubmissionWizard),
   },
 ];

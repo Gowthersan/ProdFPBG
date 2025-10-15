@@ -1,12 +1,18 @@
 // app/user/form/recap/recap.ts
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 type SubmissionStatus = 'BROUILLON' | 'SOUMIS' | 'EN_REVUE' | 'ACCEPTE' | 'REFUSE';
 
-interface Activity { label: string; months?: number[]; }
-interface Risk { description: string; mitigation: string; }
+interface Activity {
+  label: string;
+  months?: number[];
+}
+interface Risk {
+  description: string;
+  mitigation: string;
+}
 interface BudgetLine {
   category: 'ACTIVITES_TERRAIN' | 'INVESTISSEMENTS' | 'FONCTIONNEMENT';
   description: string;
@@ -15,20 +21,38 @@ interface BudgetLine {
   partCofinance?: number;
 }
 interface Step1 {
-  orgName: string; orgType: string; contactPerson: string;
-  geoCoverage: string; domains: string; address: string;
-  contactEmail: string; contactPhone: string;
+  nom_organisation: string;
+  type: string;
+  contactPerson: string;
+  geocouvertureGeographique: string;
+  domains: string;
+  address: string;
+  contactEmail: string;
+  contactPhone: string;
 }
 interface Step2 {
-  title: string; locationAndTarget: string; contextJustification: string;
+  title: string;
+  locationAndTarget: string;
+  contextJustification: string;
 }
 interface Step3 {
-  objectives: string; expectedResults: string; durationMonths: number;
+  objectives: string;
+  expectedResults: string;
+  durationMonths: number;
 }
-interface StateStep { projectStage: string; hasFunding: boolean; fundingDetails?: string; }
-interface SustainabilityStep { sustainability?: string; replicability?: string; }
+interface StateStep {
+  projectStage: string;
+  hasFunding: boolean;
+  fundingDetails?: string;
+}
+interface SustainabilityStep {
+  sustainability?: string;
+  replicability?: string;
+}
 interface Submission {
-  step1: Step1; step2: Step2; step3: Step3;
+  step1: Step1;
+  step2: Step2;
+  step3: Step3;
   activitiesSummary?: string;
   activities?: Activity[];
   risks?: Risk[];
@@ -40,7 +64,7 @@ interface Submission {
   updatedAt?: number;
 }
 
-const ADMIN_DATA_KEY = 'fpbg_admin_records';   // liste des dossiers "soumis" (ton wizard l’écrit)
+const ADMIN_DATA_KEY = 'fpbg_admin_records'; // liste des dossiers "soumis" (ton wizard l’écrit)
 const SUBMISSION_META_KEY = 'submission_meta'; // { id, status, updatedAt } (écrit au submit)
 const DRAFT_KEYS = ['fpbg.nc.draft', 'fpbg_submission_v2']; // brouillon (selon version)
 
@@ -56,10 +80,10 @@ export class SubmissionRecap implements OnInit, OnDestroy {
   /** ===== Démo par défaut si rien dans le LS ===== */
   private staticDemo: Submission = {
     step1: {
-      orgName: 'Association Rivière Claire',
-      orgType: 'ONG',
+      nom_organisation: 'Association Rivière Claire',
+      type: 'ONG',
       contactPerson: 'Mireille Ndong',
-      geoCoverage: 'Prov. de l’Estuaire',
+      geocouvertureGeographique: 'Prov. de l’Estuaire',
       domains: 'Conservation, ingénierie écologique, sensibilisation',
       address: 'Baie des Rois, Immeuble FGIS 2ème étage',
       contactEmail: 'contact@riviereclaire.org',
@@ -89,7 +113,10 @@ export class SubmissionRecap implements OnInit, OnDestroy {
       { label: 'Sensibilisation', months: [1, 4, 7, 10] },
     ],
     risks: [
-      { description: 'Crues exceptionnelles', mitigation: 'Fenêtre travaux + protections provisoires' },
+      {
+        description: 'Crues exceptionnelles',
+        mitigation: 'Fenêtre travaux + protections provisoires',
+      },
       { description: 'Blocages administratifs', mitigation: 'Concertation précoce autorités' },
     ],
     budgetLines: [
@@ -97,7 +124,11 @@ export class SubmissionRecap implements OnInit, OnDestroy {
       { category: 'INVESTISSEMENTS', description: 'Matériels de suivi', total: 12_000_000 },
       { category: 'FONCTIONNEMENT', description: 'Coordination & logistique', total: 6_000_000 },
     ],
-    stateStep: { projectStage: 'DEMARRAGE', hasFunding: true, fundingDetails: 'Co-fin A/B : 20 M FCFA' },
+    stateStep: {
+      projectStage: 'DEMARRAGE',
+      hasFunding: true,
+      fundingDetails: 'Co-fin A/B : 20 M FCFA',
+    },
     sustainabilityStep: {
       sustainability: 'Maintenance par comités ; convention communale.',
       replicability: 'Réplicable dans 2 bassins voisins.',
@@ -126,23 +157,38 @@ export class SubmissionRecap implements OnInit, OnDestroy {
       const p = rec.project || {};
       const s: Submission = {
         step1: p.step1 || {
-          orgName: p.orgName || '—',
-          orgType: p.orgType || '—',
+          nom_organisation: p.nom_organisation || '—',
+          type: p.type || '—',
           contactPerson: p.contact || '—',
-          geoCoverage: p.coverage || '—',
+          geocouvertureGeographique: p.couvertureGeographique || '—',
           domains: (p.domains || []).join(', ') || '—',
           address: p.address || '—',
           contactEmail: p.email || '—',
           contactPhone: p.phone || '—',
         },
-        step2: { title: p.title || '—', locationAndTarget: p.locationAndTarget || '—', contextJustification: p.contextJustification || '—' },
-        step3: { objectives: p.objectives || '—', expectedResults: p.expectedResults || '—', durationMonths: +p.durationMonths || 0 },
+        step2: {
+          title: p.title || '—',
+          locationAndTarget: p.locationAndTarget || '—',
+          contextJustification: p.contextJustification || '—',
+        },
+        step3: {
+          objectives: p.objectives || '—',
+          expectedResults: p.expectedResults || '—',
+          durationMonths: +p.durationMonths || 0,
+        },
         activitiesSummary: p.activitiesSummary || '',
         activities: p.activities || [],
         risks: p.risks || [],
         budgetLines: p.budgetLines || [],
-        stateStep: { projectStage: p.projectStage || 'CONCEPTION', hasFunding: !!p.hasFunding, fundingDetails: p.fundingDetails || '' },
-        sustainabilityStep: { sustainability: p.sustainability || '', replicability: p.replicability || '' },
+        stateStep: {
+          projectStage: p.projectStage || 'CONCEPTION',
+          hasFunding: !!p.hasFunding,
+          fundingDetails: p.fundingDetails || '',
+        },
+        sustainabilityStep: {
+          sustainability: p.sustainability || '',
+          replicability: p.replicability || '',
+        },
         attachments: rec.attachments || {},
         status: rec.status || 'SOUMIS',
         updatedAt: rec.updatedAt || Date.now(),
@@ -163,10 +209,10 @@ export class SubmissionRecap implements OnInit, OnDestroy {
         // mapping "léger" pour afficher quelque chose de propre
         const s: Submission = {
           step1: {
-            orgName: d?.orgName || '—',
-            orgType: d?.orgType || '—',
+            nom_organisation: d?.nom_organisation || '—',
+            type: d?.type || '—',
             contactPerson: d?.contact || '—',
-            geoCoverage: d?.coverage || '—',
+            geocouvertureGeographique: d?.couvertureGeographique || '—',
             domains: (d?.stepProp?.domains || []).join(', ') || '—',
             address: d?.address || '—',
             contactEmail: d?.email || '—',
@@ -200,18 +246,16 @@ export class SubmissionRecap implements OnInit, OnDestroy {
           updatedAt: d?.updatedAt || Date.now(),
         };
         return s;
-      } catch { /* continue */ }
+      } catch {
+        /* continue */
+      }
     }
     return null;
   }
 
   private loadInitial(): Submission {
     const idFromRoute = this.route.snapshot.paramMap.get('id');
-    return (
-      this.loadFromSubmitted(idFromRoute) ||
-      this.loadFromDraft() ||
-      this.staticDemo
-    );
+    return this.loadFromSubmitted(idFromRoute) || this.loadFromDraft() || this.staticDemo;
   }
 
   submission = signal<Submission | null>(this.loadInitial());
@@ -245,10 +289,19 @@ export class SubmissionRecap implements OnInit, OnDestroy {
     this.modal.set({ title, text: text || '—' });
     this.modalOpen.set(true);
   }
-  closeModal() { this.modalOpen.set(false); this.modal.set(null); }
-  private escHandler = (e: KeyboardEvent) => { if (e.key === 'Escape') this.closeModal(); };
-  ngOnInit() { document.addEventListener('keydown', this.escHandler); }
-  ngOnDestroy() { document.removeEventListener('keydown', this.escHandler); }
+  closeModal() {
+    this.modalOpen.set(false);
+    this.modal.set(null);
+  }
+  private escHandler = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') this.closeModal();
+  };
+  ngOnInit() {
+    document.addEventListener('keydown', this.escHandler);
+  }
+  ngOnDestroy() {
+    document.removeEventListener('keydown', this.escHandler);
+  }
 
   /** ===== Stepper d’affichage ===== */
   stepIndex = signal(0);
@@ -263,7 +316,9 @@ export class SubmissionRecap implements OnInit, OnDestroy {
     'Durabilité & réplication',
     'Annexes',
   ];
-  goTo = (i: number) => { if (i >= 0 && i < this.stepTitles.length) this.stepIndex.set(i); };
+  goTo = (i: number) => {
+    if (i >= 0 && i < this.stepTitles.length) this.stepIndex.set(i);
+  };
   next = () => this.goTo(this.stepIndex() + 1);
   prev = () => this.goTo(this.stepIndex() - 1);
   progress = computed(() => Math.round(((this.stepIndex() + 1) / this.stepTitles.length) * 100));

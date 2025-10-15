@@ -1,4 +1,4 @@
 export interface LoginVM {
-  username: string;
-  password: string;
+  email: string;
+  motDePasse: string;
 }

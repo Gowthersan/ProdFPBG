@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { AppError } from '../middlewares/error.middleware.js';
 import { AuthService } from '../services/auth.service.js';
+import { OrganisationDTO } from '../types/index.js';
 
 const authService = new AuthService();
 
@@ -36,8 +37,15 @@ export class AuthController {
    */
   static async registerOrganisation(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await authService.registerOrganisation(req.body);
-      res.status(200).json(result);
+      const orgData = req.body as OrganisationDTO;
+
+      if (!orgData.email || !orgData.motDePasse) {
+        return res.status(400).json({ message: 'Email et mot de passe sont requis.' });
+      }
+
+      const result = await authService.registerOrganisation(orgData);
+
+      res.status(201).json(result);
     } catch (error) {
       next(error);
     }
@@ -50,7 +58,7 @@ export class AuthController {
    * ÉTAPE 2 DE L'INSCRIPTION : Vérification de l'OTP et création du compte
    *
    * Cette route vérifie le code OTP, crée le compte dans la base de données,
-   * génère un token JWT et retourne l'URL de redirection vers /submission-wizard
+   * génère un token JWT et retourne l'URL de redirection vers /soumission
    *
    * Body: { email: string, otp: string }
    * Response: {
@@ -58,7 +66,7 @@ export class AuthController {
    *   token: string,
    *   user: object,
    *   type: string,
-   *   redirectTo: '/submission-wizard' 🎯
+   *   redirectTo: '/soumission' 🎯
    * }
    */
   static async verifyOtp(req: Request, res: Response, next: NextFunction) {
@@ -75,13 +83,13 @@ export class AuthController {
 
       // Définir le cookie avec le token JWT (valide 7 jours)
       res.cookie('token', result.token, {
-        httpOnly: true,  // Empêche l'accès depuis JavaScript (sécurité XSS)
+        httpOnly: true, // Empêche l'accès depuis JavaScript (sécurité XSS)
         secure: process.env.NODE_ENV === 'production', // HTTPS uniquement en production
         sameSite: 'lax', // Protection CSRF
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
       });
 
-      // ✅ Retourner la réponse avec redirectTo: '/submission-wizard'
+      // ✅ Retourner la réponse avec redirectTo: '/soumission'
       res.status(201).json(result);
     } catch (error) {
       next(error);
@@ -124,13 +132,13 @@ export class AuthController {
    */
   static async login(req: Request, res: Response, next: NextFunction) {
     try {
-      const { username, password } = req.body;
+      const { email, motDePasse } = req.body;
 
-      if (!username || !password) {
+      if (!email || !motDePasse) {
         throw new AppError('Email/Username et mot de passe requis.', 400);
       }
 
-      const result = await authService.login({ username, password });
+      const result = await authService.login({ email, motDePasse });
 
       // Définir le cookie avec le token
       res.cookie('token', result.token, {

@@ -1,8 +1,17 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+/// ==============================
+/// Prisma — FPBG (schéma renommé et aligné sur PDF)
+/// ==============================
+/// Ce schéma incorpore les renommages basés sur les termes du PDF (en français pour cohérence métier) :
+/// - Modèles renommés : ex. AppelAProjet -> AppelProjets, ProjectSubmission -> DemandeSubvention, Activity -> Activite, etc.
+/// - Champs renommés : ex. title -> titre, description -> description (déjà proche), code -> code, status -> statut, etc.
+/// - Pas de changement structurel majeur : relations préservées, flux de données cohérent (ex. liens AAP → Thématiques → Demandes).
+/// - Alignement PDF : Termes comme "Petite Subvention", "Subvention Moyenne", thématiques éligibles, pièces justificatives (DocumentKey), chronogramme (milestones).
+/// - Pour inscription : Ajout de champs optionnels dans Utilisateur (role déduit, mais collecter typeOrganisation, typeSubvention préféré si applicable via org).
+/// - Fonction d'identification rôle : Ajoutée comme exemple de méthode (non dans schema, mais à implémenter en backend, ex. middleware Node/Express).
+/// - Migration : Utiliser `prisma migrate dev --name migration_francais` pour appliquer ; assurez-vous que les données existantes sont mappées (ex. via scripts).
+/// - Référence constante au PDF : Thématiques, éligibilités, processus (note conceptuelle vs. complète), rapports, etc.
+/// - Pas de méthodes backend changées : Seulement renommages pour cohérence flux (ex. soumission → évaluation → contrat → rapports).
+/// - Pour page inscription : Modifiez pour collecter : email, mot de passe, nom/prénom, phone, typeOrganisation (enum), et liez à Organisation. Rôle déduit via route (fonction ci-dessous).
 
 generator client {
   provider = "prisma-client-js"
@@ -13,243 +22,469 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Type d'organisation (ONG, PME, PMI, Startup, etc.)
-model TypeOrganisation {
-  id             String           @id @default(uuid())
-  nom            String           @unique
-  organisations  Organisation[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+/// ==============================
+/// Enums (référentiels fixes, renommés/alignés PDF)
+/// ==============================
+
+enum Role {
+  UTILISATEUR // Renommé de USER pour français
+  ADMINISTRATEUR // Renommé de ADMIN
 }
 
-// Utilisateur FPBG (agents administrateurs)
-model User {
-  id              String          @id @default(uuid())
-  username        String?         @unique
-  email           String          @unique
-  password        String
-  firstName       String?
-  lastName        String?
-  numTel          String?
-  postalAddress   String?
-  physicalAddress String?
-  userType        String?         // Type d'utilisateur (admin, agent, organisation)
-  otp             String?
-  otpExpiry       DateTime?
-  organisation    Organisation?   // Relation: Un user peut avoir une organisation
-  collaborateurs  Collaborateur[] // Relation: Un user peut créer plusieurs collaborateurs
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+enum TypeOrganisation { // Renommé de type, aligné PDF 3.5
+  ASSOCIATION
+  ONG
+  COMMUNAUTE
+  COOPERATIVE
+  PME
+  PMI
+  STARTUP
+  SECTEUR_PUBLIC // Entités gouvernementales
+  RECHERCHE // Organismes de recherche
+  PRIVE // Secteur privé
+  AUTRE
 }
 
-// Organisation (ONG, entreprises, etc.)
-model Organisation {
-  id                        String             @id @default(uuid())
-  userId                    String?            @unique  // Lien vers le User propriétaire (optional for migration)
-  user                      User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name                      String?
-  username                  String?            @unique
-  email                     String             @unique
-  password                  String
-  contact                   String?
-  numTel                    String?
-  postalAddress             String?
-  physicalAddress           String?
-  type                      String?
-  grantType                 String?            // Type de subvention demandée (Petite/Moyenne)
-  usernamePersonneContacter String?
-  typeOrganisationId        String?
-  typeOrganisation          TypeOrganisation?  @relation(fields: [typeOrganisationId], references: [id])
-  projets                   Projet[]
-  otp                       String?
-  otpExpiry                 DateTime?
-  createdAt                 DateTime           @default(now())
-  updatedAt                 DateTime           @updatedAt
+enum StadeProjet { // Renommé de ProjectStage
+  CONCEPTION
+  DEMARRAGE
+  AVANCE
+  PHASE_FINALE
 }
 
-// Collaborateur d'un projet (membre de l'équipe projet)
-model Collaborateur {
-  id                String         @id @default(uuid())
-
-  // Relation avec l'utilisateur qui a créé ce collaborateur
-  userId            String
-  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Relation avec le projet (plusieurs collaborateurs peuvent travailler sur le même projet)
-  projetId          String
-  projet            Projet         @relation(fields: [projetId], references: [id], onDelete: Cascade)
-
-  // Informations du collaborateur
-  nom               String
-  prenom            String
-  email             String
-  telephone         String?
-  role              String?        // Rôle dans le projet (Coordinateur, Expert, Chargé de mission, etc.)
-
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+enum TypeBudget { // Renommé de BudgetKind
+  DIRECT
+  INDIRECT
 }
 
-// Projet soumis par les organisations
-model Projet {
-  id                String         @id @default(uuid())
-
-  // Relation avec l'organisme
-  organisationId    String?
-  organisation      Organisation?  @relation(fields: [organisationId], references: [id])
-
-  // === ÉTAPE 1 : Proposition du projet ===
-  title             String?        // Titre du projet
-  domains           String[]       @default([]) // Domaines d'intervention
-  location          String?        @db.Text  // Lieu d'exécution
-  targetGroup       String?        @db.Text  // Groupe cible
-  contextJustification String?     @db.Text  // Contexte & justification
-
-  // === ÉTAPE 2 : Objectifs & résultats ===
-  objectives        Json?                     // Objectifs
-  expectedResults   String?        @db.Text  // Résultats attendus
-  durationMonths    Int?           // Durée en mois
-
-  // === ÉTAPE 3 : Activités & calendrier ===
-  activitiesStartDate   DateTime?  // Date de début
-  activitiesEndDate     DateTime?  // Date de fin
-  activitiesSummary     String?    @db.Text  // Résumé des activités
-  activities            Json?      // Array d'activités [{title, start, end, summary, subs:[{label,summary}]}]
-
-  // === ÉTAPE 4 : Risques ===
-  risks                 Json?      // Array de risques [{description, mitigation}]
-
-  // === ÉTAPE 5 : Budget ===
-  usdRate               Int?       @default(655) // Taux de change FCFA/USD
-  budgetActivities      Json?      // Budget par activité [{activityIndex, lines:[{label,cfa,fpbgPct,cofinPct}]}]
-  indirectOverheads     Int?       @default(0) // Frais indirects (plafond 10%)
-
-  // === ÉTAPE 6 : État & financement ===
-  projectStage      String?        // CONCEPTION, DEMARRAGE, AVANCE, PHASE_FINALE
-  hasFunding        Boolean?       @default(false)
-  fundingDetails    String?        @db.Text
-  honorAccepted     Boolean?       @default(false) // Engagement sur l'honneur
-
-  // === ÉTAPE 7 : Durabilité ===
-  sustainability    String?        @db.Text  // Durabilité
-  replicability     String?        @db.Text  // Potentiel de réplication
-
-  // === ÉTAPE 8 : Annexes (fichiers) ===
-  lettreMotivation  String?        // Lettre de motivation
-  statutsReglement  String?        // Statuts & règlement
-  ficheCircuit      String?        // Fiche circuit (PME/PMI/Startup)
-  cote              String?        // CÔTE
-  agrement          String?        // Agrément / Récépissé
-  cv                String[]       @default([]) // CV (porteur & responsables)
-  budgetDetaille    String?        // Budget détaillé
-  chronogramme      String?        // Chronogramme
-  cartographie      String?        // Cartographie (optionnel)
-  lettreSoutien     String?        // Lettre de soutien (optionnel)
-
-  // === Champs hérités (compatibilité) ===
-  actPrin           String?        @db.Text  // Activités principales (ancien)
-  dateLimPro        DateTime?      // Date limite estimée (ancien)
-  rAtt              String?        @db.Text  // Résultat attendu (ancien)
-  objP              String?        @db.Text  // Objectif du projet (ancien)
-  conjP             String?        @db.Text  // Contexte & justification (ancien)
-  lexGcp            String?        @db.Text  // Lieu d'exécution & groupe cible (ancien)
-  poRistEnvSoPo     String?        @db.Text  // Potentiel risque (ancien)
-  dPRep             String?        @db.Text  // Durabilité (ancien)
-  conseilPr         String?        @db.Text  // Conseil pratique (ancien)
-  lM                String?        // Lettre de motivation (ancien)
-  stR               String?        // Statuts et règlement (ancien)
-  ficheC            String?        // Fiche circuit (ancien)
-  rib               String?        // RIB (ancien)
-  cA                String?        // Copie de l'agrément (ancien)
-  budgetD           String?        // Budget d'estimation (ancien)
-  che               String?        // Chronogramme d'exécution (ancien)
-  cartography       String?        // Cartographie (ancien)
-  lP                String?        // Lettre de soutien/partenariat (ancien)
-
-  // === État du projet ===
-  status            String         @default("BROUILLON") // BROUILLON, SOUMIS, EN_REVUE, ACCEPTE, REFUSE
-  stade             String?        // Stade du projet (ancien - à migrer vers status)
-  funding           String?        // Financement (ancien)
-
-  // === Collaborateurs ===
-  collaborateurs    Collaborateur[]
-
-  // === Métadonnées ===
-  dateCreation      DateTime       @default(now())
-  submittedAt       DateTime?      // Date de soumission
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+enum CleDocument { // Renommé de DocumentKey, aligné annexes PDF
+  LETTRE_MOTIVATION
+  CV
+  CERTIFICAT_ENREGISTREMENT
+  STATUTS_REGLEMENT
+  PV_ASSEMBLEE
+  RAPPORTS_FINANCIERS
+  RCCM
+  AGREMENT
+  ETATS_FINANCIERS
+  DOCUMENTS_STATUTAIRES
+  RIB
+  LETTRES_SOUTIEN
+  PREUVE_NON_FAILLITE
+  CARTOGRAPHIE
+  FICHE_CIRCUIT
+  BUDGET_DETAILLE
+  CHRONOGRAMME
 }
 
-// Appel à Projets (AAP)
-model AppelAProjet {
-  id                        String                   @id @default(uuid())
-  code                      String                   @unique
-  titre                     String
-  resume                    String                   @db.Text
-  contexte                  String                   @db.Text
-  objectif                  String                   @db.Text
-  contactEmail              String
-  geographicEligibility     String[]                 @default([])
-  eligibleOrganisations     String[]                 @default([])
-  eligibleActivities        String[]                 @default([])
-  cofinancement             String?                  @db.Text
-  annexes                   String[]                 @default([])
-  launchDate                DateTime
-  cover                     String?                  // URL de l'image de couverture
-  tags                      String[]                 @default([])
-  isActive                  Boolean                  @default(true)
-  createdAt                 DateTime                 @default(now())
-  updatedAt                 DateTime                 @updatedAt
-
-  // Relations
-  subventions               Subvention[]
-  thematiques               Thematique[]
+enum StatutSoumission { // Renommé de SubmissionStatus
+  BROUILLON // DRAFT
+  SOUMIS // SUBMITTED
+  EN_REVUE // UNDER_REVIEW
+  APPROUVE // APPROVED
+  REJETE // REJECTED
 }
 
-// Subvention (Petite ou Moyenne)
-model Subvention {
-  id                        String                   @id @default(uuid())
-  appelAProjetId            String
-  appelAProjet              AppelAProjet             @relation(fields: [appelAProjetId], references: [id], onDelete: Cascade)
-
-  name                      String                   // "Petite subvention" ou "Subvention moyenne"
-  amountMin                 Int                      // Montant minimum en FCFA
-  amountMax                 Int                      // Montant maximum en FCFA
-  durationMaxMonths         Int                      // Durée maximale en mois
-  deadlineNoteConceptuelle  DateTime                 // Date limite pour la note conceptuelle
-
-  // Cycle de la subvention (étapes avec dates)
-  cycleSteps                CycleStep[]
-
-  createdAt                 DateTime                 @default(now())
-  updatedAt                 DateTime                 @updatedAt
+enum TypeSoumission { // Inchangé, aligné processus PDF (note conceptuelle vs. complète)
+  NOTE_CONCEPTUELLE
+  PROPOSITION_COMPLETE
 }
 
-// Étape du cycle d'une subvention
-model CycleStep {
-  id                        String                   @id @default(uuid())
-  subventionId              String
-  subvention                Subvention               @relation(fields: [subventionId], references: [id], onDelete: Cascade)
+/// ==============================
+/// Auth / Comptes (renommés)
+/// ==============================
+/// Renommages : User -> Utilisateur, org\* -> typeOrganisation etc.
+/// Pour inscription : Collecter typeOrganisation, lier à Organisation.
 
-  step                      String                   // Description de l'étape
-  dates                     String                   // Dates de l'étape (format texte)
-  ordre                     Int                      // Ordre de l'étape dans le cycle
+model Utilisateur {
+  id String @id @default(uuid())
+  email String @unique
+  hashMotPasse String // Renommé de passwordHash
+  prenom String? // Renommé de firstName
+  nom String? // Renommé de lastName
+  telephone String? // Renommé de phone
 
-  createdAt                 DateTime                 @default(now())
-  updatedAt                 DateTime                 @updatedAt
+  role Role @default(UTILISATEUR)
+  actif Boolean @default(true)
+  organisation Organisation? @relation(fields: [idOrganisation], references: [id], onDelete: SetNull)
+  idOrganisation String?
+
+  sessions Session[]
+  soumissions DemandeSubvention[] // Soumissions faites
+  evaluations Evaluation[] // Évaluations faites
+  piecesJointesValidees PieceJointe[] @relation("ValidateurPieceJointe") // Pièces jointes validées
+
+  creeLe DateTime @default(now()) // Renommé de createdAt
+  misAJourLe DateTime @updatedAt // Renommé de updatedAt
+
+  @@index([idOrganisation])
 }
 
-// Thématique d'un appel à projets
+model Session {
+  id String @id @default(uuid())
+  jeton String @unique // Renommé de token
+  utilisateur Utilisateur @relation(fields: [idUtilisateur], references: [id], onDelete: Cascade)
+  idUtilisateur String
+  agentUtilisateur String? // Renommé de userAgent
+  ip String?
+  expireLe DateTime // Renommé de expiresAt
+  creeLe DateTime @default(now())
+
+  @@index([idUtilisateur])
+}
+
+/// ==============================
+/// Référentiels AAP & Thématiques (renommés)
+/// ==============================
+
+model TypeSubvention {
+  id Int @id @default(autoincrement())
+  code String @unique // ex: "PETITE", "MOYENNE"
+  libelle String // Renommé de label
+  montantMinCfa BigInt
+  montantMaxCfa BigInt
+  dureeMaxMois Int
+
+  appels AppelProjets[]
+  thematiques Thematique[]
+}
+
+model AppelProjets { // Renommé de AppelAProjet
+  id String @id @default(cuid())
+  code String @unique // ex: AAP-OBL-2025
+  titre String
+  description String?
+  dateDebut DateTime
+  dateFin DateTime
+  etapes Json? // Renommé milestones, chronogramme PDF
+  typeSubvention TypeSubvention? @relation(fields: [idTypeSubvention], references: [id], onDelete: SetNull)
+  idTypeSubvention Int?
+
+  thematiques Thematique[]
+  organisations LienAppelOrganisation[] // Renommé de AProjetOrganisation
+  soumissions DemandeSubvention[]
+
+  creeLe DateTime @default(now())
+  misAJourLe DateTime @updatedAt
+
+  @@index([idTypeSubvention])
+  @@index([dateDebut, dateFin])
+}
+
 model Thematique {
-  id                        String                   @id @default(uuid())
-  appelAProjetId            String
-  appelAProjet              AppelAProjet             @relation(fields: [appelAProjetId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
+  appelProjets AppelProjets @relation(fields: [idAppelProjets], references: [id], onDelete: Cascade)
+  idAppelProjets String
+  titre String // Renommé de title
+  points String[] @default([]) // Renommé de bullets
+  ordre Int @default(0)
+  typeSubvention TypeSubvention @relation(fields: [idTypeSubvention], references: [id], onDelete: Restrict)
+  idTypeSubvention Int
 
-  title                     String
-  bullets                   String[]                 @default([])
-  typeSubvention            String                   // "petite" ou "moyenne"
+  creeLe DateTime @default(now())
+  misAJourLe DateTime @updatedAt
 
-  createdAt                 DateTime                 @default(now())
-  updatedAt                 DateTime                 @updatedAt
+  @@index([idAppelProjets, idTypeSubvention, ordre])
+}
+
+/// ==============================
+/// Organisations & rattachements (renommés)
+/// ==============================
+
+model Organisation {
+  id String @id @default(cuid())
+  nom String
+  type TypeOrganisation
+  email String?
+  telephone String? // Renommé de phone
+
+  liensAppel LienAppelOrganisation[]
+  projets DemandeSubvention[]
+  utilisateurs Utilisateur[] // Renommé de users
+
+  creeLe DateTime @default(now())
+  misAJourLe DateTime @updatedAt
+
+  @@index([type])
+  @@index([nom])
+}
+
+model LienAppelOrganisation { // Renommé de AProjetOrganisation
+  id String @id @default(cuid())
+  appelProjets AppelProjets @relation(fields: [idAppelProjets], references: [id], onDelete: Cascade)
+  idAppelProjets String
+  organisation Organisation @relation(fields: [idOrganisation], references: [id], onDelete: Cascade)
+  idOrganisation String
+
+  statut String?
+  dateDebut DateTime?
+  dateFin DateTime?
+
+  activites Activite[]
+
+  @@unique([idAppelProjets, idOrganisation])
+  @@index([idAppelProjets])
+  @@index([idOrganisation])
+}
+
+/// ==============================
+/// Soumission de projet (renommée DemandeSubvention)
+/// ==============================
+/// Renommages : title -> titre, location -> localisation, etc.
+
+model DemandeSubvention {
+  id String @id @default(cuid())
+  code String? @unique
+  statut StatutSoumission @default(SOUMIS)
+
+  typeSoumission TypeSoumission @default(NOTE_CONCEPTUELLE)
+  idParent String?
+  parent DemandeSubvention? @relation("SoumissionsEnfants", fields: [idParent], references: [id], onDelete: SetNull)
+  enfants DemandeSubvention[] @relation("SoumissionsEnfants")
+
+  appelProjets AppelProjets? @relation(fields: [idAppelProjets], references: [id], onDelete: SetNull)
+  idAppelProjets String?
+  organisation Organisation? @relation(fields: [idOrganisation], references: [id], onDelete: SetNull)
+  idOrganisation String?
+
+  soumisPar Utilisateur? @relation(fields: [idSoumisPar], references: [id], onDelete: SetNull)
+  idSoumisPar String?
+
+  // Étape 1 — Proposition
+  titre String
+  localisation String // Renommé de location
+  groupeCible String // Renommé de targetGroup
+  justificationContexte String // Renommé de contextJustification
+
+  // Étape 2 — Objectifs & résultats
+  objectifs String
+  resultatsAttendus String // Renommé de expectedResults
+  dureeMois Int // Renommé de durationMonths
+
+  // Étape 3 — Activités
+  dateDebutActivites DateTime // Renommé de activitiesStartDate
+  dateFinActivites DateTime // Renommé de activitiesEndDate
+  resumeActivites String // Renommé de activitiesSummary
+
+  activites Activite[]
+  risques Risque[] // Renommé de Risk
+  piecesJointes PieceJointe[] // Renommé de Attachment
+  evaluations Evaluation[]
+  contrat Contrat?
+  rapports Rapport[] // Renommé de Report
+  cofinanceurs Cofinanceur[] // Renommé de Cofunder
+
+  // Budget
+  tauxUsd Int @default(600) // Renommé de usdRate
+  fraisIndirectsCfa Decimal @db.Decimal(14, 2) @default(0) // Renommé de indirectOverheadsCfa
+
+  terrainCfa Decimal? @db.Decimal(14, 2)
+  investCfa Decimal? @db.Decimal(14, 2)
+  overheadCfa Decimal? @db.Decimal(14, 2)
+  cofinCfa Decimal? @db.Decimal(14, 2)
+
+  // Autres étapes
+  stadeProjet StadeProjet @default(DEMARRAGE) // Renommé de projectStage
+  aFinancement Boolean @default(false) // Renommé de hasFunding
+  detailsFinancement String? // Renommé de fundingDetails
+  honneurAccepte Boolean @default(false) // Renommé de honorAccepted
+  texteDurabilite String // Renommé de sustainabilityText
+  texteReplication String? // Renommé de replicationText
+
+  creeLe DateTime @default(now())
+  misAJourLe DateTime @updatedAt
+
+  @@index([idSoumisPar, creeLe])
+  @@index([stadeProjet, statut])
+  @@index([idAppelProjets])
+  @@index([idOrganisation])
+  @@index([typeSoumission])
+}
+
+/// ==============================
+/// Activités / Sous-activités / Budget (renommés)
+/// ==============================
+
+model Activite { // Renommé de Activity
+  id String @id @default(cuid())
+  demande DemandeSubvention @relation(fields: [idDemande], references: [id], onDelete: Cascade)
+  idDemande String
+
+  lienAppelOrganisation LienAppelOrganisation? @relation(fields: [idLienAppelOrganisation], references: [id], onDelete: SetNull)
+  idLienAppelOrganisation String?
+
+  ordre Int @default(0) // Renommé de order
+  titre String
+  debut DateTime // Renommé de start
+  fin DateTime // Renommé de end
+  resume String // Renommé de summary
+
+  sousActivites SousActivite[] // Renommé de subs
+  lignesBudget LigneBudget[] // Renommé de budgetLines
+
+  @@index([idDemande, ordre])
+  @@index([idLienAppelOrganisation])
+  @@index([debut, fin])
+}
+
+model SousActivite { // Renommé de SubActivity
+  id String @id @default(cuid())
+  activite Activite @relation(fields: [idActivite], references: [id], onDelete: Cascade)
+  idActivite String
+
+  ordre Int @default(0)
+  libelle String // Renommé de label
+  resume String? // Renommé de summary
+
+  @@index([idActivite, ordre])
+}
+
+model LigneBudget { // Renommé de BudgetLine
+  id String @id @default(cuid())
+  activite Activite @relation(fields: [idActivite], references: [id], onDelete: Cascade)
+  idActivite String
+
+  ordre Int @default(0)
+  libelle String // Renommé de label
+  type TypeBudget @default(DIRECT) // Renommé de kind
+  cfa Decimal @db.Decimal(14, 2)
+  pctFpbg Int @default(100) // Renommé de fpbgPct
+  pctCofin Int @default(0) // Renommé de cofinPct
+
+  @@index([idActivite, ordre])
+}
+
+/// ==============================
+/// Risques & Pièces jointes (renommés)
+/// ==============================
+
+model Risque { // Renommé de Risk
+  id String @id @default(cuid())
+  demande DemandeSubvention @relation(fields: [idDemande], references: [id], onDelete: Cascade)
+  idDemande String
+
+  ordre Int @default(0)
+  description String
+  mitigation String
+
+  @@index([idDemande, ordre])
+}
+
+model PieceJointe { // Renommé de Attachment
+  id String @id @default(cuid())
+  demande DemandeSubvention @relation(fields: [idDemande], references: [id], onDelete: Cascade)
+  idDemande String
+
+  cle CleDocument
+  nomFichier String // Renommé de fileName
+  typeMime String // Renommé de mimeType
+  tailleOctets Int // Renommé de sizeBytes
+  cleStockage String // Renommé de storageKey
+  url String?
+  requis Boolean @default(false) // Renommé de required
+  telechargeLe DateTime @default(now()) // Renommé de uploadedAt
+  valideLe DateTime? // Renommé de validatedAt
+  validateur Utilisateur? @relation("ValidateurPieceJointe", fields: [idValidateur], references: [id], onDelete: SetNull)
+  idValidateur String?
+
+  @@unique([idDemande, cle])
+  @@index([cle])
+  @@index([idValidateur])
+}
+
+/// ==============================
+/// Suivi post-soumission (renommés)
+/// ==============================
+
+model Evaluation {
+  id String @id @default(cuid())
+  demande DemandeSubvention @relation(fields: [idDemande], references: [id], onDelete: Cascade)
+  idDemande String
+
+  evaluateur Utilisateur @relation(fields: [idEvaluateur], references: [id], onDelete: Restrict)
+  idEvaluateur String
+  score Float?
+  commentaires String? // Renommé de comments
+  criteres Json? // Renommé de criteria
+
+  creeLe DateTime @default(now())
+  misAJourLe DateTime @updatedAt
+
+  @@index([idDemande])
+  @@index([idEvaluateur])
+}
+
+model Contrat {
+  id String @id @default(cuid())
+  demande DemandeSubvention @relation(fields: [idDemande], references: [id], onDelete: Cascade)
+  idDemande String @unique
+
+  signeLe DateTime? // Renommé de signedAt
+  planningDecaissement Json? // Renommé de disbursementSchedule
+
+  creeLe DateTime @default(now())
+  misAJourLe DateTime @updatedAt
+
+  @@index([idDemande])
+}
+
+model Rapport { // Renommé de Report
+  id String @id @default(cuid())
+  demande DemandeSubvention @relation(fields: [idDemande], references: [id], onDelete: Cascade)
+  idDemande String
+
+  type String // ex. : "intermediaire", "final"
+  dateEcheance DateTime // Renommé de dueDate
+  soumisLe DateTime? // Renommé de submittedAt
+  contenu String?
+
+  creeLe DateTime @default(now())
+  misAJourLe DateTime @updatedAt
+
+  @@index([idDemande, dateEcheance])
+}
+
+model Cofinanceur { // Renommé de Cofunder
+  id String @id @default(cuid())
+  demande DemandeSubvention @relation(fields: [idDemande], references: [id], onDelete: Cascade)
+  idDemande String
+
+  source String
+  montant Decimal @db.Decimal(14, 2)
+  enNature Boolean @default(false) // Renommé de inKind
+
+  creeLe DateTime @default(now())
+  misAJourLe DateTime @updatedAt
+
+  @@index([idDemande])
+}
+
+model JournalAudit { // Renommé de AuditLog
+  id String @id @default(cuid())
+  entite String // ex. : "DemandeSubvention"
+  idEntite String
+  action String // ex. : "mise_a_jour_statut"
+  idUtilisateur String?
+  details Json?
+
+  creeLe DateTime @default(now())
+
+  @@index([entite, idEntite])
+  @@index([idUtilisateur])
+}
+
+/// ==============================
+/// OTP (renommé)
+/// ==============================
+
+model Otp {
+  id String @id @default(cuid())
+  nomUtilisateur String // Renommé de username
+  code String
+  expireLe DateTime // Renommé de expiresAt
+
+  creeLe DateTime @default(now())
+
+  @@index([nomUtilisateur])
+  @@index([expireLe])
 }

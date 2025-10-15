@@ -1,6 +1,6 @@
-import { Component, ElementRef, QueryList, ViewChildren, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Component, ElementRef, QueryList, ViewChildren, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 
 @Component({
@@ -18,7 +18,7 @@ export class Otp {
 
   email = signal<string>('');
   error = signal<string | null>(null);
-  digits = signal<string[]>(['','','','','','']);
+  digits = signal<string[]>(['', '', '', '', '', '']);
   counter = signal<number>(60);
   currentOtp = signal<string | null>(null);
   private timerId: any = null;
@@ -26,19 +26,24 @@ export class Otp {
   ngOnInit() {
     this.email.set(this.route.snapshot.queryParamMap.get('email') ?? '');
     const p = this._getPending();
-    if (!p) { this.router.navigate(['/register']); return; }
+    if (!p) {
+      this.router.navigate(['/register']);
+      return;
+    }
     this._startTimer();
   }
 
   // ===== UI handlers =====
   onInput(i: number, ev: Event) {
-    const v = (ev.target as HTMLInputElement).value.replace(/\D/g, '').slice(0,1);
-    const arr = [...this.digits()]; arr[i] = v; this.digits.set(arr);
-    if (v && i<5) this.inputs.get(i+1)?.nativeElement.focus();
+    const v = (ev.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 1);
+    const arr = [...this.digits()];
+    arr[i] = v;
+    this.digits.set(arr);
+    if (v && i < 5) this.inputs.get(i + 1)?.nativeElement.focus();
   }
-  onKeyDown(i:number, ev: KeyboardEvent) {
-    if (ev.key === 'Backspace' && !this.digits()[i] && i>0) {
-      this.inputs.get(i-1)?.nativeElement.focus();
+  onKeyDown(i: number, ev: KeyboardEvent) {
+    if (ev.key === 'Backspace' && !this.digits()[i] && i > 0) {
+      this.inputs.get(i - 1)?.nativeElement.focus();
     }
   }
 
@@ -58,13 +63,13 @@ export class Otp {
         this.counter.set(60);
         this._startTimer();
         // Mettre à jour l'expiration
-        p.expiresAt = Date.now() + 10*60*1000;
+        p.expiresAt = Date.now() + 10 * 60 * 1000;
         this._savePending(p);
       },
       error: (err) => {
         console.error('❌ Erreur resend:', err);
         this.error.set('Erreur lors du renvoi du code.');
-      }
+      },
     });
   }
 
@@ -72,8 +77,14 @@ export class Otp {
   verify() {
     const code = this.digits().join('');
     const p = this._getPending();
-    if (!p) { this.error.set('Session expirée.'); return; }
-    if (Date.now() > p.expiresAt) { this.error.set('Code expiré.'); return; }
+    if (!p) {
+      this.error.set('Session expirée.');
+      return;
+    }
+    if (Date.now() > p.expiresAt) {
+      this.error.set('Code expiré.');
+      return;
+    }
 
     this.error.set(null);
 
@@ -87,7 +98,7 @@ export class Otp {
         localStorage.removeItem('fpbg.pendingReg');
 
         // ====================================
-        // 🎯 Redirection vers /submission-wizard si le backend le spécifie
+        // 🎯 Redirection vers /soumission si le backend le spécifie
         // ====================================
         if (response && response.redirectTo) {
           console.log(`🎯 Redirection vers: ${response.redirectTo}`);
@@ -108,27 +119,35 @@ export class Otp {
         } else {
           this.error.set('Erreur lors de la vérification.');
         }
-      }
+      },
     });
   }
 
   private _goLogin(p: any) {
-    localStorage.setItem('fpbg.autofillLogin','1');
+    localStorage.setItem('fpbg.autofillLogin', '1');
     this.router.navigate(['/login'], { queryParams: { email: p.data?.email || p.email } });
   }
 
   // ===== helpers =====
   private _getPending(): any {
-    try { return JSON.parse(localStorage.getItem('fpbg.pendingReg') || ''); } catch { return null; }
+    try {
+      return JSON.parse(localStorage.getItem('fpbg.pendingReg') || '');
+    } catch {
+      return null;
+    }
   }
   private _savePending(p: any) {
     localStorage.setItem('fpbg.pendingReg', JSON.stringify(p));
   }
-  private _startTimer(){
+  private _startTimer() {
     if (this.timerId) clearInterval(this.timerId);
-    this.timerId = setInterval(()=> {
-      if (this.counter()<=0) { clearInterval(this.timerId); this.timerId = null; return; }
-      this.counter.update(v=>v-1);
+    this.timerId = setInterval(() => {
+      if (this.counter() <= 0) {
+        clearInterval(this.timerId);
+        this.timerId = null;
+        return;
+      }
+      this.counter.update((v) => v - 1);
     }, 1000);
   }
 }

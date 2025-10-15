@@ -1,10 +1,9 @@
-
-
 <!-- Fond plein écran -->
 <div class="min-h-screen grid place-items-center bg-[#1f3b52] px-4">
   <!-- Carte -->
-  <div class="w-full max-w-xl rounded-2xl bg-[#112B3C] text-white p-8 shadow-2xl border border-white/10">
-
+  <div
+    class="w-full max-w-xl rounded-2xl bg-[#112B3C] text-white p-8 shadow-2xl border border-white/10"
+  >
     <!-- Logo -->
     <div class="flex justify-center">
       <img src="assets/logo.png" alt="FPBG" class="h-14 w-auto" />
@@ -13,7 +12,6 @@
     <!-- Titre -->
     <h1 class="mt-4 text-center text-4xl font-bold">Connexion administrateur</h1>
 
-
     <!-- Formulaire -->
     <form (ngSubmit)="submit()" [formGroup]="form" class="mt-6 space-y-4">
       <!-- Nom d'utilisateur -->
@@ -21,11 +19,14 @@
         <label class="block text-sm mb-1">Nom d'utilisateur</label>
         <input
           type="text"
-          formControlName="username"
+          formControlName="email"
           placeholder="votre nom d'utilisateur"
           class="w-full rounded-lg bg-[#1f4a63] border border-white/10 text-white placeholder-white/60 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
         />
-        <p class="mt-1 text-xs text-red-400" *ngIf="form.controls.username.touched && form.controls.username.invalid">
+        <p
+          class="mt-1 text-xs text-red-400"
+          *ngIf="form.controls.email.touched && form.controls.email.invalid"
+        >
           Nom d'utilisateur invalide
         </p>
       </div>
@@ -44,7 +45,10 @@
           placeholder="votre mot de passe"
           class="w-full rounded-lg bg-[#1f4a63] border border-white/10 text-white placeholder-white/60 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
         />
-        <p class="mt-1 text-xs text-red-400" *ngIf="form.controls.password.touched && form.controls.password.invalid">
+        <p
+          class="mt-1 text-xs text-red-400"
+          *ngIf="form.controls.motDePasse.touched && form.controls.motDePasse.invalid"
+        >
           6 caractères minimum
         </p>
       </div>
@@ -52,14 +56,17 @@
       <!-- Bouton -->
       <button
         class="w-full rounded-lg bg-green-600 py-3 font-semibold hover:bg-green-700 disabled:opacity-60"
-        [disabled]="loading || form.invalid">
+        [disabled]="loading || form.invalid"
+      >
         {{ loading ? 'Connexion...' : 'Se connecter' }}
       </button>
 
       <!-- Lien bas -->
       <p class="text-center text-sm text-slate-300">
         Pas de compte ?
-        <a routerLink="/register" class="underline underline-offset-2 text-white">Créer un compte</a>
+        <a routerLink="/register" class="underline underline-offset-2 text-white"
+          >Créer un compte</a
+        >
       </p>
     </form>
   </div>

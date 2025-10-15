@@ -2,18 +2,13 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import aapRoutes from './routes/aap.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import demandeSubventionRoutes from './routes/demandeSubvention.routes.js';
 import organisationRoutes from './routes/organisation.routes.js';
 import projetRoutes from './routes/projet.routes.js';
 import { verifyEmailConfig } from './utils/mailer.js';
-
-// Configuration ESM pour __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -43,9 +38,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Servir les fichiers statiques (uploads)
-const uploadsPath = path.join(__dirname, '../uploads');
-app.use('/uploads', express.static(uploadsPath));
-console.log('📁 Fichiers statiques servis depuis:', uploadsPath);
+// const uploadsPath = path.join(__dirname, '../uploads');
+// app.use('/uploads', express.static(uploadsPath));
+// console.log('📁 Fichiers statiques servis depuis:', uploadsPath);
 
 // Route de health check
 app.get('/health', (req, res) => {
@@ -57,10 +52,11 @@ app.get('/health', (req, res) => {
 });
 
 // Routes de l'API
-app.use('/api/auth', authRoutes); // ✅ Changé de /api à /api/auth
+app.use('/api/auth', authRoutes);
 app.use('/api/aprojet-v1', projetRoutes);
 app.use('/api/organisations', organisationRoutes);
 app.use('/api/aap', aapRoutes);
+app.use('/api/demandes', demandeSubventionRoutes); // ✅ Nouvelles routes pour demandes de subvention
 
 // Middleware pour les routes non trouvées
 app.use(notFoundHandler);

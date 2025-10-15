@@ -1,20 +1,26 @@
 // app/user/dashboard/dashboard.ts
+import { CommonModule } from '@angular/common';
 import {
   Component,
-  OnInit,
-  OnDestroy,
-  HostListener,
-  ViewChild,
   ElementRef,
+  HostListener,
   inject,
+  OnDestroy,
+  OnInit,
   signal,
+  ViewChild,
 } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { DemandeSubventionService } from '../../services/api/demande-subvention.service';
+import { ProjetService } from '../../services/api/projet.service';
+import {
+  COULEURS_STATUT_SOUMISSION,
+  DemandeSubvention,
+  LABELS_STATUT_SOUMISSION,
+} from '../../types/models';
 import { AuthService } from '../core/auth.service';
 import { ToastHost } from '../ui/toast-host/toast-host';
-import { ProjetService } from '../../services/api/projet.service';
 
 type Submission = {
   id?: string;
@@ -41,7 +47,7 @@ const LS = {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgOptimizedImage, ToastHost, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, ToastHost],
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit, OnDestroy {
@@ -49,6 +55,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private router = inject(Router);
   private projetService = inject(ProjetService);
+  private demandeService = inject(DemandeSubventionService);
 
   /** === ÉTATS UI === */
   asideOpen = signal(false);
@@ -65,6 +72,11 @@ export class Dashboard implements OnInit, OnDestroy {
   /** === DONNÉES PROJET === */
   submission = signal<Submission | null>(null);
   currentProjetId = signal<string | null>(null);
+
+  /** === DONNÉES DEMANDE SUBVENTION === */
+  mesDemandes = signal<DemandeSubvention[]>([]);
+  derniereDemande = signal<DemandeSubvention | null>(null);
+  loadingDemandes = signal(false);
 
   /** === COLLABORATEURS === */
   collaborators = signal<Collaborator[]>([]);
@@ -92,7 +104,7 @@ export class Dashboard implements OnInit, OnDestroy {
     /** 2) Profil depuis AuthService (maj du nom, on préserve la photo) */
     this.auth.me().subscribe({
       next: (acc) => {
-        const fullName = [acc.firstName, acc.lastName].filter(Boolean).join(' ') || acc.login;
+        const fullName = [acc.prenom, acc.nom].filter(Boolean).join(' ') || acc.login;
         // on garde la photo déjà chargée en mémoire / LS
         const photoUrl = this.user().photoUrl || this.readPhotoFromLS() || '';
         this.user.set({ fullName, photoUrl });
@@ -110,6 +122,9 @@ export class Dashboard implements OnInit, OnDestroy {
 
     /** 4) Charger le projet et les collaborateurs depuis le backend */
     this.loadProjectAndCollaborators();
+
+    /** 5) Charger les demandes de subvention depuis le nouveau backend */
+    this.chargerDemandes();
 
     /** 5) Listeners (MAJ live date + mutli-onglets) */
     window.addEventListener('storage', this.onStorage);
@@ -299,7 +314,7 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   primaryActionClick() {
-    if (!this.hasProject() || this.isDraft()) this.router.navigate(['/submission-wizard']);
+    if (!this.hasProject() || this.isDraft()) this.router.navigate(['/soumission']);
     else this.goRecap();
     this.asideOpen.set(false);
   }
@@ -307,7 +322,7 @@ export class Dashboard implements OnInit, OnDestroy {
   scrollTo(id: string) {
     this.asideOpen.set(false);
     // 👉 Met la bonne version selon ton préfixe de module :
-    const toWizard = '/submission-wizard'; // ou '/user/submission-wizard'
+    const toWizard = '/soumission'; // ou '/user/soumission'
     const toRecap = '/form/recap/current'; // ou '/user/form/recap/current'
 
     if (!this.hasProject() || this.isDraft()) {
@@ -341,10 +356,10 @@ export class Dashboard implements OnInit, OnDestroy {
       localStorage.setItem(LS.draft, JSON.stringify(draft));
     }
     this.refreshLastUpdated();
-    this.router.navigate(['/submission-wizard']);
+    this.router.navigate(['/soumission']);
   }
   resumeDraft() {
-    this.router.navigate(['/submission-wizard']);
+    this.router.navigate(['/soumission']);
   }
   clearDraftOnly() {
     localStorage.removeItem(LS.draft);
@@ -410,7 +425,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
     const projetId = this.currentProjetId();
     if (!projetId) {
-      alert('Aucun projet trouvé. Veuillez d\'abord créer un projet.');
+      alert("Aucun projet trouvé. Veuillez d'abord créer un projet.");
       return;
     }
 
@@ -439,17 +454,100 @@ export class Dashboard implements OnInit, OnDestroy {
 
       console.log('✅ Collaborateur ajouté:', result);
     } catch (error: any) {
-      console.error('❌ Erreur lors de l\'ajout du collaborateur:', error);
-      alert(error?.response?.data?.message || 'Erreur lors de l\'ajout du collaborateur');
+      console.error("❌ Erreur lors de l'ajout du collaborateur:", error);
+      alert(error?.response?.data?.message || "Erreur lors de l'ajout du collaborateur");
     }
   }
 
   projectName(): string {
+    // Priorité 1 : Dernière demande depuis le backend
+    const demande = this.derniereDemande();
+    if (demande?.titre) {
+      return demande.titre;
+    }
+
+    // Priorité 2 : Draft localStorage (ancien système)
     try {
       const d = JSON.parse(localStorage.getItem(LS.draft) || 'null');
       return d?.data?.titre?.trim?.() || d?.title || '';
     } catch {
       return '';
     }
+  }
+
+  /**
+   * Charger les demandes de subvention depuis le nouveau backend
+   */
+  chargerDemandes() {
+    this.loadingDemandes.set(true);
+    this.demandeService.obtenirMesDemandes().subscribe({
+      next: (response) => {
+        this.mesDemandes.set(response.data);
+
+        // Prendre la dernière demande
+        if (response.data.length > 0) {
+          const derniere = response.data[0];
+          this.derniereDemande.set(derniere);
+
+          // Mettre à jour les données du dashboard
+          const submission: Submission = {
+            id: derniere.id,
+            status: this.mapStatutToOldFormat(derniere.statut),
+            updatedAt: new Date(derniere.misAJourLe).getTime(),
+          };
+          this.submission.set(submission);
+          localStorage.setItem(LS.submission, JSON.stringify(submission));
+          this.refreshLastUpdated();
+        }
+
+        this.loadingDemandes.set(false);
+      },
+      error: (err) => {
+        console.error('❌ Erreur chargement demandes:', err);
+        this.loadingDemandes.set(false);
+      },
+    });
+  }
+
+  /**
+   * Mapper le nouveau format de statut vers l'ancien
+   */
+  private mapStatutToOldFormat(statut: string): 'BROUILLON' | 'EN REVUE' | 'ACCEPTE' | 'REJETE' {
+    const mapping: Record<string, 'BROUILLON' | 'EN REVUE' | 'ACCEPTE' | 'REJETE'> = {
+      BROUILLON: 'BROUILLON',
+      SOUMIS: 'EN REVUE',
+      EN_REVUE: 'EN REVUE',
+      APPROUVE: 'ACCEPTE',
+      REJETE: 'REJETE',
+    };
+    return mapping[statut] || 'BROUILLON';
+  }
+
+  /**
+   * Obtenir le label du statut en français
+   */
+  statutLabel(): string {
+    const demande = this.derniereDemande();
+    if (demande) {
+      return (
+        LABELS_STATUT_SOUMISSION[demande.statut as keyof typeof LABELS_STATUT_SOUMISSION] ||
+        demande.statut
+      );
+    }
+    return this.status();
+  }
+
+  /**
+   * Obtenir la classe CSS du statut
+   */
+  statutCssClass(): string {
+    const demande = this.derniereDemande();
+    if (demande) {
+      return (
+        COULEURS_STATUT_SOUMISSION[demande.statut as keyof typeof COULEURS_STATUT_SOUMISSION] ||
+        this.statusClass()
+      );
+    }
+    return this.statusClass();
   }
 }

@@ -1,4 +1,4 @@
-// submission-wizard.ts
+// soumission.ts
 // ============================================================================
 // FPBG – Wizard de soumission (Standalone Angular Component)
 // Organisation & commentaires pour faciliter l’intégration backend ultérieure.
@@ -111,10 +111,10 @@ function fileConstraints() {
 }
 
 @Component({
-  selector: 'app-submission-wizard',
+  selector: 'app-soumission',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './submission-wizard.html',
+  templateUrl: './soumission.html',
 })
 export class SubmissionWizard {
   /* ==============================
@@ -126,7 +126,7 @@ export class SubmissionWizard {
   private http = inject(HttpClient);
 
   // Type d'organisation de l'utilisateur connecté
-  userOrgType: string = '';
+  usertype: string = '';
   userAccount: any = null;
 
   // État des documents (pour l'interface de sélection/upload)
@@ -202,7 +202,7 @@ export class SubmissionWizard {
   }
 
   //calcul de la taille mot
-  // Dans submission-wizard.ts (dans la classe)
+  // Dans soumission.ts (dans la classe)
   countWords(v: any): number {
     const t = ('' + (v ?? '')).trim();
     return t ? t.split(/\s+/).length : 0;
@@ -821,13 +821,13 @@ export class SubmissionWizard {
     let specific: Array<{ key: string; label: string; required: boolean }> = [];
 
     // Normaliser le type d'organisation (enlever accents, espaces, etc.)
-    const orgType = this.userOrgType?.toLowerCase().trim() || '';
+    const type = this.usertype?.toLowerCase().trim() || '';
 
     if (
-      orgType.includes('association') ||
-      orgType.includes('ong') ||
-      orgType.includes('communaut') ||
-      orgType.includes('coopérative')
+      type.includes('association') ||
+      type.includes('ong') ||
+      type.includes('communaut') ||
+      type.includes('coopérative')
     ) {
       // 🏢 Association / ONG / Communautés / Coopératives
       specific = [
@@ -841,11 +841,11 @@ export class SubmissionWizard {
         },
       ];
     } else if (
-      orgType.includes('pme') ||
-      orgType.includes('pmi') ||
-      orgType.includes('startup') ||
-      orgType.includes('secteur privé') ||
-      orgType.includes('privé')
+      type.includes('pme') ||
+      type.includes('pmi') ||
+      type.includes('startup') ||
+      type.includes('secteur privé') ||
+      type.includes('privé')
     ) {
       // 💼 PME / PMI / Startup / Secteur privé
       specific = [
@@ -858,11 +858,11 @@ export class SubmissionWizard {
         },
       ];
     } else if (
-      orgType.includes('gouvernement') ||
-      orgType.includes('public') ||
-      orgType.includes('recherche') ||
-      orgType.includes('entités gouvernementales') ||
-      orgType.includes('organismes de recherche')
+      type.includes('gouvernement') ||
+      type.includes('public') ||
+      type.includes('recherche') ||
+      type.includes('entités gouvernementales') ||
+      type.includes('organismes de recherche')
     ) {
       // 🏛 Secteur public / Organismes de recherche
       specific = [
@@ -893,8 +893,8 @@ export class SubmissionWizard {
       const accountData = localStorage.getItem('fpbg.account');
       if (accountData) {
         this.userAccount = JSON.parse(accountData);
-        this.userOrgType = this.userAccount?.orgType || '';
-        console.log("📋 Type d'organisation détecté:", this.userOrgType);
+        this.usertype = this.userAccount?.type || '';
+        console.log("📋 Type d'organisation détecté:", this.usertype);
         this.updateAttachmentsValidators();
       }
     } catch (error) {

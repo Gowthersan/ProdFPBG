@@ -1,10 +1,10 @@
 // app/user/core/auth.service.ts
 // Auth avec backend API (emails envoyés via Nodemailer backend)
 
-import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { Observable, of, throwError } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 const LS = {
@@ -14,32 +14,32 @@ const LS = {
 };
 
 export interface Account {
-  login: string;            // <= ici: le NOM (contact), pas l'email
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  position?: string;
-  orgName?: string;
-  orgType?: string;
-  coverage?: string;
+  login: string; // <= ici: le NOM (personneContact), pas l'email
+  prenom?: string;
+  nom?: string;
+  telephone?: string;
+  fonction?: string;
+  nom_organisation?: string;
+  typeUtilisateur?: string;
+  motDePasse?: string;
   email?: string;
   authorities: string[];
 }
 
 export interface LoginPayload {
-  username: string;         // <= NOM (Personne de contact)
-  password: string;
+  email: string; // <= NOM (Personne de personneContact)
+  motDePasse: string;
 }
 
 export interface RegisterPayload {
   email: string;
-  password: string;
+  motDePasse: string;
   phone?: string;
-  contact?: string;         // "Nom Prénom" (sert d'identifiant de connexion)
-  position?: string;
-  orgName?: string;
-  orgType?: string;
-  coverage?: string;
+  personneContact?: string; // "Nom Prénom" (sert d'identifiant de connexion)
+  fonction?: string;
+  nom_organisation?: string;
+  type?: string;
+  couvertureGeographique?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -53,16 +53,16 @@ export class AuthService {
       map((response) => {
         const user = response.user;
         const account: Account = {
-          login: user.username || user.contact || user.name,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          phone: user.numTel || user.phone,
-          position: user.position,
-          orgName: user.orgName || user.name,
-          orgType: user.orgType || user.type,
-          coverage: user.coverage,
+          login: user.nomUtilisateur || user.personneContact || user.name,
+          prenom: user.prenom,
+          nom: user.nom,
+          telephone: user.telephone,
+          fonction: user.fonction,
+          nom_organisation: user.nom_organisation || user.name,
+          typeUtilisateur: user.typeUtilisateur,
+          motDePasse: user.motDePasse,
           email: user.email,
-          authorities: ['ROLE_USER'],
+          authorities: ['UTILISATEUR'],
         };
 
         localStorage.setItem(LS.token, response.token);
@@ -77,30 +77,32 @@ export class AuthService {
 
   // === REGISTER : appel backend pour générer et envoyer OTP via Nodemailer ===
   registerOrganisation(data: {
-    orgName: string;
-    orgType: string;
-    coverage: string;
-    grantType: string;
-    orgEmail: string;
-    orgPhone: string;
-    contact: string;
-    position: string;
-    phone: string;
+    nom_organisation: string;
+    type: string;
+    couvertureGeographique: string;
+    typeSubvention: string;
     email: string;
-    password: string;
+    telephone: string;
+    personneContact: string;
+    fonction: string;
+    telephoneContact: string;
+    // email: string;
+    motDePasse: string;
+    adressePostale?: string;
+    adressePhysique?: string;
   }): Observable<{ email: string }> {
     // Préparer les données au format backend
     const payload = {
       email: data.email,
-      username: data.contact, // username = nom de contact
-      password: data.password,
-      name: data.orgName,
-      type: data.orgType,
-      grantType: data.grantType,
-      contact: data.contact,
-      numTel: data.phone,
-      postalAddress: null,
-      physicalAddress: null,
+      personneContact: data.personneContact, // username = nom de personneContact
+      motDePasse: data.motDePasse,
+      nom_organisation: data.nom_organisation,
+      type: data.type,
+      typeSubvention: data.typeSubvention,
+      telephone: data.telephone,
+      telephoneContact: data.telephoneContact,
+      postalAddress: data.adressePostale || null,
+      adressePhysique: data.adressePhysique || null,
     };
 
     return this.http.post<any>(`${this.apiUrl}/register/organisation`, payload).pipe(
@@ -120,33 +122,35 @@ export class AuthService {
 
   // === VERIFY OTP : vérifier via backend ===
   verifyOtp(email: string, otp: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/verify-otp`, { email, otp }, { withCredentials: true }).pipe(
-      map((response) => {
-        const user = response.user;
-        const account: Account = {
-          login: user.username || user.contact || user.name,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          phone: user.numTel || user.phone,
-          position: user.position,
-          orgName: user.orgName || user.name,
-          orgType: user.orgType || user.type,
-          coverage: user.coverage,
-          email: user.email,
-          authorities: ['ROLE_USER'],
-        };
+    return this.http
+      .post<any>(`${this.apiUrl}/verify-otp`, { email, otp }, { withCredentials: true })
+      .pipe(
+        map((response) => {
+          const user = response.user;
+          const account: Account = {
+            login: user.nomUtilisateur || user.personneContact || user.nom,
+            prenom: user.prenom,
+            nom: user.nom,
+            telephone: user.telephoneContact || user.telephone,
+            fonction: user.fonction,
+            nom_organisation: user.nom_organisation || user.nom,
+            typeUtilisateur: user.type,
+            motDePasse: user.motDePasse,
+            email: user.email,
+            authorities: ['ROLE_USER'],
+          };
 
-        localStorage.setItem(LS.token, response.token);
-        localStorage.setItem(LS.account, JSON.stringify(account));
+          localStorage.setItem(LS.token, response.token);
+          localStorage.setItem(LS.account, JSON.stringify(account));
 
-        // ✅ Retourner la réponse complète (avec redirectTo)
-        return response;
-      }),
-      catchError((error) => {
-        console.error('❌ Erreur verify OTP:', error);
-        return throwError(() => new Error(error?.error?.message || 'OTP_INVALID'));
-      })
-    );
+          // ✅ Retourner la réponse complète (avec redirectTo)
+          return response;
+        }),
+        catchError((error) => {
+          console.error('❌ Erreur verify OTP:', error);
+          return throwError(() => new Error(error?.error?.message || 'OTP_INVALID'));
+        })
+      );
   }
 
   // === RESEND OTP : redemander un OTP via backend ===
@@ -169,23 +173,23 @@ export class AuthService {
     const users = this._getUsers();
 
     // contrôle de doublons (email et nom de connexion)
-    if (users.some(u => this._norm(u.username) === this._norm(p.contact || ''))) {
+    if (users.some((u) => this._norm(u.nomUtilisateur) === this._norm(p.personneContact || ''))) {
       return throwError(() => new Error('USERNAME_TAKEN')); // nom déjà utilisé
     }
-    if (users.some(u => this._norm(u.email) === this._norm(p.email))) {
-      return throwError(() => new Error('EMAIL_TAKEN'));    // email déjà utilisé
+    if (users.some((u) => this._norm(u.email) === this._norm(p.email))) {
+      return throwError(() => new Error('EMAIL_TAKEN')); // email déjà utilisé
     }
 
     users.push({
-      username: p.contact,            // <= identifiant de connexion = NOM
-      contact: p.contact,
+      nomUtilisateur: p.personneContact, // <= identifiant de connexion = NOM
+      personneContact: p.personneContact,
       email: p.email,
-      password: p.password,
-      phone: p.phone,
-      position: p.position,
-      orgName: p.orgName,
-      orgType: p.orgType,
-      coverage: p.coverage,
+      motDePasse: p.motDePasse,
+      telephone: p.phone,
+      fonction: p.fonction,
+      nom_organisation: p.nom_organisation,
+      type: p.type,
+      couvertureGeographique: p.couvertureGeographique,
     });
 
     localStorage.setItem(LS.users, JSON.stringify(users));
@@ -212,8 +216,11 @@ export class AuthService {
 
   // === helpers ===
   private _getUsers(): any[] {
-    try { return JSON.parse(localStorage.getItem(LS.users) || '[]'); }
-    catch { return []; }
+    try {
+      return JSON.parse(localStorage.getItem(LS.users) || '[]');
+    } catch {
+      return [];
+    }
   }
   private _norm(v: string | undefined | null): string {
     return (v || '').trim().toLowerCase().replace(/\s+/g, ' ');

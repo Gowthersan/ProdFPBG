@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SubmissionWizard } from './submission-wizard';
+import { SubmissionWizard } from './soumission';
 
 describe('SubmissionWizard', () => {
   let component: SubmissionWizard;

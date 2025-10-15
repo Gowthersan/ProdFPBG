@@ -1,6 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 
@@ -21,7 +28,7 @@ export class Registration {
   public error = signal<string | null>(null);
 
   // listes
-  public orgTypes = [
+  public type = [
     'Secteur privé (PME, PMI, Startups)',
     'ONG et Associations',
     'Coopératives communautaires',
@@ -29,26 +36,28 @@ export class Registration {
     'Entités gouvernementales',
     'Organismes de recherche',
   ];
-  public coverages = ['Estuaire', 'Ogooué Maritime', 'Nyanga'];
-  public grantTypes = ['Petite subvention', 'Moyenne subvention']; // ⬅️ AJOUT
+  public couvertureGeographique = ['Estuaire', 'Ogooué Maritime', 'Nyanga'];
+  public typeSubvention = ['Petite subvention', 'Moyenne subvention']; // ⬅️ AJOUT
 
   // form commun aux 2 étapes
   public form = this.fb.group({
     // ÉTAPE 1 — organisme
-    orgName: ['', Validators.required],
-    orgType: ['', Validators.required],
-    coverage: ['', Validators.required],
-    grantType: ['', Validators.required], // ⬅️ AJOUT
-    orgEmail: ['', [Validators.required, Validators.email]],
-    orgPhone: ['', [Validators.required, gabonPhoneValidator()]],
+    nom_organisation: ['', Validators.required],
+    type: ['', Validators.required],
+    couvertureGeographique: ['', Validators.required],
+    typeSubvention: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
+    telephone: ['', [Validators.required, gabonPhoneValidator()]],
 
     // ÉTAPE 2 — demandeur + credentials
-    contact: ['', Validators.required],
-    position: [''],
-    phone: ['', [Validators.required, gabonPhoneValidator()]],
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-    confirm: ['', [Validators.required, Validators.minLength(6)]],
+    prenom: ['', Validators.required],
+    nom: ['', Validators.required],
+    personneContact: ['', Validators.required],
+    fonction: [''],
+    telephoneContact: ['', [Validators.required, gabonPhoneValidator()]],
+    // email: ['', [Validators.required, Validators.email]],
+    motDePasse: ['', [Validators.required, Validators.minLength(6)]],
+    confirmMotDePasse: ['', [Validators.required, Validators.minLength(6)]],
   });
 
   // passage étape 1 -> 2
@@ -57,16 +66,16 @@ export class Registration {
 
     // Contrôles réellement présents à l'étape 1
     const step1Ctrls = [
-      this.form.controls.orgName,
-      this.form.controls.orgType,
-      this.form.controls.coverage,
-      this.form.controls.orgEmail,
-      this.form.controls.orgPhone,
+      this.form.controls.nom_organisation,
+      this.form.controls.type,
+      this.form.controls.couvertureGeographique,
+      this.form.controls.email,
+      this.form.controls.telephone,
     ];
 
-    // Si grantType existe SUR LE FORMULAIRE, on le valide, sinon on l’ignore
-    const grantTypeCtrl = this.form.get('grantType');
-    if (grantTypeCtrl) step1Ctrls.push(grantTypeCtrl as any);
+    // Si typeSubvention existe SUR LE FORMULAIRE, on le valide, sinon on l’ignore
+    const typeSubventionCtrl = this.form.get('typeSubvention');
+    if (typeSubventionCtrl) step1Ctrls.push(typeSubventionCtrl as any);
 
     const invalid = step1Ctrls.some((c) => c.invalid);
     if (invalid) {
@@ -77,10 +86,10 @@ export class Registration {
 
     // Préremplissage de l’étape 2 si vide
     if (!this.form.controls.email.value) {
-      this.form.controls.email.setValue(this.form.controls.orgEmail.value as string);
+      this.form.controls.email.setValue(this.form.controls.email.value as string);
     }
-    if (!this.form.controls.phone.value) {
-      this.form.controls.phone.setValue(this.form.controls.orgPhone.value as string);
+    if (!this.form.controls.telephoneContact.value) {
+      this.form.controls.telephoneContact.setValue(this.form.controls.telephone.value as string);
     }
 
     this.step.set(2);
@@ -95,7 +104,7 @@ export class Registration {
       this.error.set('Veuillez compléter tous les champs requis.');
       return;
     }
-    if (this.form.value.password !== this.form.value.confirm) {
+    if (this.form.value.motDePasse !== this.form.value.confirmMotDePasse) {
       this.error.set('Les mots de passe ne correspondent pas.');
       return;
     }
@@ -103,17 +112,21 @@ export class Registration {
     this.loading.set(true);
 
     const data = {
-      orgName: this.form.value.orgName!,
-      orgType: this.form.value.orgType!,
-      coverage: this.form.value.coverage!,
-      grantType: this.form.value.grantType!,
-      orgEmail: this.form.value.orgEmail!,
-      orgPhone: this.form.value.orgPhone!,
-      contact: this.form.value.contact!,
-      position: this.form.value.position || '',
-      phone: this.form.value.phone!,
+      // Organisation
+      nom_organisation: this.form.value.nom_organisation!,
+      type: this.form.value.type!,
+      couvertureGeographique: this.form.value.couvertureGeographique!,
+      typeSubvention: this.form.value.typeSubvention!,
       email: this.form.value.email!,
-      password: this.form.value.password!,
+      telephone: this.form.value.telephone!,
+      // Utilisateur
+      prenom: this.form.value.prenom!,
+      nom: this.form.value.nom!,
+      personneContact: this.form.value.personneContact!,
+      fonction: this.form.value.fonction || '',
+      telephoneContact: this.form.value.telephoneContact!,
+      // email: this.form.value.email!,
+      motDePasse: this.form.value.motDePasse!,
     };
 
     // ====================================
@@ -140,13 +153,13 @@ export class Registration {
       error: (err) => {
         this.loading.set(false);
         console.error('❌ Erreur registration:', err);
-        const msg = err.message || 'Erreur lors de l\'inscription.';
+        const msg = err.message || "Erreur lors de l'inscription.";
         if (msg.includes('déjà utilisé') || msg.includes('TAKEN')) {
-          this.error.set('Cet email ou nom d\'utilisateur est déjà utilisé.');
+          this.error.set("Cet email ou nom d'utilisateur est déjà utilisé.");
         } else {
-          this.error.set('Erreur lors de l\'inscription. Veuillez réessayer.');
+          this.error.set("Erreur lors de l'inscription. Veuillez réessayer.");
         }
-      }
+      },
     });
   }
 }

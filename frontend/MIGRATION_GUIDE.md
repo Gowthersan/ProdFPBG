@@ -25,6 +25,7 @@ Ces fichiers font correctement des appels HTTP au backend :
 **Fichier : `src/app/user/login/login.ts`**
 
 #### ❌ AVANT (avec service local)
+
 ```typescript
 import { AuthService } from '../core/auth.service'; // LOCAL - MAUVAIS
 
@@ -34,11 +35,12 @@ this.auth.login({ username: contact, password }).subscribe({
   },
   error: () => {
     this.error.set('Identifiants incorrects.');
-  }
+  },
 });
 ```
 
 #### ✅ APRÈS (avec service backend)
+
 ```typescript
 import { Authentifcationservice } from '../../services/auth/authentifcationservice'; // BACKEND - BON
 
@@ -77,10 +79,10 @@ onSubmit() {
   const orgData = {
     email: this.form.value.email,
     password: this.form.value.password,
-    name: this.form.value.orgName,
+    name: this.form.value.nom_organisation,
     contact: this.form.value.contact,
     numTel: this.form.value.phone,
-    type: this.form.value.orgType,
+    type: this.form.value.type,
     typeOrganisationId: this.form.value.typeOrganisationId
   };
 
@@ -195,16 +197,19 @@ export const authGuard = () => {
 ## 🧪 Tests à effectuer
 
 ### Test 1 : Inscription
+
 1. Remplir le formulaire d'inscription
 2. Cliquer sur "S'inscrire"
 3. Vérifier que vous recevez un email avec le code OTP
 
 ### Test 2 : Vérification OTP
+
 1. Copier le code OTP de l'email
 2. Le coller dans le formulaire OTP
 3. Vérifier la redirection vers le login
 
 ### Test 3 : Connexion
+
 1. Se connecter avec les identifiants
 2. Vérifier la redirection vers le dashboard
 3. Vérifier que le token est dans les cookies/localStorage
@@ -214,6 +219,7 @@ export const authGuard = () => {
 ## 🎯 Résultat attendu
 
 Après cette migration :
+
 - ✅ Toute la logique d'authentification est côté backend
 - ✅ Les OTP sont générés et envoyés par email depuis le backend
 - ✅ Les tokens JWT sont sécurisés dans des cookies HttpOnly

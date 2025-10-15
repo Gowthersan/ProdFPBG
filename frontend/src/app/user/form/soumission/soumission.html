@@ -1,4 +1,4 @@
-<!-- submission-wizard.html (organisé) -->
+<!-- soumission.html (organisé) -->
 <div class="min-h-screen p-4 bg-slate-50 md:p-6">
   <!-- HEADER -->
   <header class="bg-white border-b border-slate-200">
@@ -1187,9 +1187,9 @@
           <h2 class="text-[20px] leading-6 font-semibold text-slate-900 mb-4">Annexes</h2>
 
           <!-- Affichage du type d'organisation -->
-          <div *ngIf="userOrgType" class="p-3 border rounded-lg bg-emerald-50 border-emerald-200">
+          <div *ngIf="usertype" class="p-3 border rounded-lg bg-emerald-50 border-emerald-200">
             <p class="text-sm font-medium text-emerald-800">
-              📋 Type d'organisation : <strong>{{ userOrgType }}</strong>
+              📋 Type d'organisation : <strong>{{ usertype }}</strong>
             </p>
             <p class="mt-1 text-xs text-emerald-700">
               Les documents requis ci-dessous sont adaptés à votre type d'organisation.
@@ -1772,7 +1772,8 @@
                   Total : {{ getUploadedDocuments().length }} document(s) téléversé(s)
                 </p>
                 <p class="text-xs text-slate-500">
-                  Documents obligatoires : {{ getUploadedRequiredCount() }} / {{ getTotalRequiredCount() }}
+                  Documents obligatoires : {{ getUploadedRequiredCount() }} /
+                  {{ getTotalRequiredCount() }}
                 </p>
               </div>
             </div>

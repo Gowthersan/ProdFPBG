@@ -15,12 +15,12 @@ const __dirname = path.dirname(__filename);
  * Configuration depuis les variables d'environnement (.env)
  */
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "mail.singcloud.ga",
-  port: parseInt(process.env.SMTP_PORT || "465"),
+  host: process.env.SMTP_HOST || 'mail.singcloud.ga',
+  port: parseInt(process.env.SMTP_PORT || '465'),
   secure: true, // SSL/TLS pour port 465
   auth: {
-    user: process.env.SMTP_USER || "no-reply-fpbg@singcloud.ga",
-    pass: process.env.SMTP_PASS || "",
+    user: process.env.SMTP_USER || 'no-reply-fpbg@singcloud.ga',
+    pass: process.env.SMTP_PASS || ''
   },
   tls: {
     rejectUnauthorized: false, // Accepter les certificats auto-signés
@@ -108,7 +108,7 @@ function replaceTemplateVariables(template: string, variables: Record<string, st
 export async function sendOTPEmail(to: string, otpCode: string, userName: string = 'Utilisateur'): Promise<void> {
   // Toujours afficher l'OTP dans les logs
   console.log('\n' + '═'.repeat(60));
-  console.log('📧 ENVOI D\'EMAIL OTP');
+  console.log("📧 ENVOI D'EMAIL OTP");
   console.log('═'.repeat(60));
   console.log(`📧 Destinataire : ${to}`);
   console.log(`👤 Nom          : ${userName}`);
@@ -144,21 +144,21 @@ export async function sendOTPEmail(to: string, otpCode: string, userName: string
     console.log('✅ Variables du template remplacées');
 
     // Envoyer l'email
-    console.log('📨 Envoi de l\'email via SMTP...');
+    console.log("📨 Envoi de l'email via SMTP...");
     const info = await transporter.sendMail({
       from: '"FPBG Support" <no-reply-fpbg@singcloud.ga>',
       to,
       subject: 'Code de vérification FPBG',
-      html: htmlContent,
+      html: htmlContent
     });
 
-    console.log("✅ Email OTP envoyé avec succès :", info.messageId);
+    console.log('✅ Email OTP envoyé avec succès :', info.messageId);
   } catch (error: any) {
     console.error("❌ Erreur détaillée d'envoi d'email OTP :");
-    console.error("   Message:", error.message);
-    console.error("   Code:", error.code);
-    console.error("   Command:", error.command);
-    console.error("   Erreur complète:", error);
+    console.error('   Message:', error.message);
+    console.error('   Code:', error.code);
+    console.error('   Command:', error.command);
+    console.error('   Erreur complète:', error);
     throw new Error("Impossible d'envoyer l'email de vérification");
   }
 }
@@ -179,10 +179,10 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
       from: '"FPBG Support" <no-reply-fpbg@singcloud.ga>',
       to,
       subject,
-      html: htmlContent,
+      html: htmlContent
     });
 
-    console.log("✅ Email envoyé :", info.messageId);
+    console.log('✅ Email envoyé :', info.messageId);
   } catch (error) {
     console.error("❌ Erreur d'envoi d'email :", error);
     throw new Error("Erreur lors de l'envoi de l'email");
@@ -198,10 +198,6 @@ export async function sendMail(to: string, subject: string, htmlContent: string)
 export async function verifyEmailConfig(): Promise<boolean> {
   try {
     console.log('🔍 Vérification de la configuration SMTP...');
-    console.log('   Host:', transporter.options.host);
-    console.log('   Port:', transporter.options.port);
-    console.log('   Secure:', transporter.options.secure);
-    console.log('   User:', transporter.options.auth?.user);
 
     await transporter.verify();
     console.log('✅ Configuration Nodemailer valide - Connexion SMTP réussie');

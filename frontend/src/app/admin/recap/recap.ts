@@ -1,16 +1,22 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Aprojetv1 } from '../../services/aprojetv1';
+import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { ProjetFormDTO } from '../../model/projetFormdto';
-import { Observable, take } from 'rxjs';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { take } from 'rxjs';
 import Swal from 'sweetalert2';
+import { ProjetFormDTO } from '../../model/projetFormdto';
+import { Aprojetv1 } from '../../services/aprojetv1';
 // --- Types existants inchangés ---
 type SubmissionStatus = 'BROUILLON' | 'SOUMIS' | 'EN_REVUE' | 'ACCEPTE' | 'REFUSE';
 
-interface Activity { label: string; months?: number[]; }
-interface Risk { description: string; mitigation: string; }
+interface Activity {
+  label: string;
+  months?: number[];
+}
+interface Risk {
+  description: string;
+  mitigation: string;
+}
 interface BudgetLine {
   category: 'ACTIVITES_TERRAIN' | 'INVESTISSEMENTS' | 'FONCTIONNEMENT';
   description: string;
@@ -19,20 +25,38 @@ interface BudgetLine {
   partCofinance?: number;
 }
 interface Step1 {
-  orgName: string; orgType: string; contactPerson: string;
-  geoCoverage: string; domains: string; address: string;
-  contactEmail: string; contactPhone: string;
+  nom_organisation: string;
+  type: string;
+  contactPerson: string;
+  geocouvertureGeographique: string;
+  domains: string;
+  address: string;
+  contactEmail: string;
+  contactPhone: string;
 }
 interface Step2 {
-  title: string; locationAndTarget: string; contextJustification: string;
+  title: string;
+  locationAndTarget: string;
+  contextJustification: string;
 }
 interface Step3 {
-  objectives: string; expectedResults: string; durationMonths: number;
+  objectives: string;
+  expectedResults: string;
+  durationMonths: number;
 }
-interface StateStep { projectStage: string; hasFunding: boolean; fundingDetails?: string; }
-interface SustainabilityStep { sustainability?: string; replicability?: string; }
+interface StateStep {
+  projectStage: string;
+  hasFunding: boolean;
+  fundingDetails?: string;
+}
+interface SustainabilityStep {
+  sustainability?: string;
+  replicability?: string;
+}
 interface Submission {
-  step1: Step1; step2: Step2; step3: Step3;
+  step1: Step1;
+  step2: Step2;
+  step3: Step3;
   activitiesSummary?: string;
   activities?: Activity[];
   risks?: Risk[];
@@ -41,32 +65,32 @@ interface Submission {
   sustainabilityStep?: SustainabilityStep;
   attachments?: Record<string, string>; // nom -> filename/url
   status?: SubmissionStatus;
-  updatedAt?: number;  // timestamp
+  updatedAt?: number; // timestamp
 }
 
 @Component({
   selector: 'app-submission-recap',
   standalone: true,
-  imports: [CommonModule, RouterLink, DatePipe, HttpClientModule],
+  imports: [CommonModule, HttpClientModule],
   templateUrl: './recap.html',
-  providers: [Aprojetv1]
+  providers: [Aprojetv1],
 })
 export class SubmissionRecap implements OnInit, OnDestroy {
   id!: number;
   projets!: ProjetFormDTO;
   private router = inject(Router);
-  constructor(private route: ActivatedRoute) { }
+  constructor(private route: ActivatedRoute) {}
   // ---------- Démo : données statiques si rien dans le localStorage ----------
   private staticDemo: Submission = {
     step1: {
-      orgName: 'Association Rivière Claire',
-      orgType: 'ONG',
+      nom_organisation: 'Association Rivière Claire',
+      type: 'ONG',
       contactPerson: 'Mireille Ndong',
-      geoCoverage: 'Prov. de l’Estuaire',
+      geocouvertureGeographique: 'Prov. de l’Estuaire',
       domains: 'Conservation, ingénierie écologique, sensibilisation',
       address: 'Baie des Rois, Immeuble FGIS 2ème étage',
       contactEmail: 'contact@riviereclaire.org',
-      contactPhone: '+241 06 00 00 00'
+      contactPhone: '+241 06 00 00 00',
     },
     step2: {
       title: 'Restauration de 3 km de berges pour la résilience climatique',
@@ -74,7 +98,7 @@ export class SubmissionRecap implements OnInit, OnDestroy {
         'Zones d’intervention : rivières Nkomi et Komo (communes X et Y). Groupes cibles : 6 villages riverains (~2 300 hab.), pêcheurs artisanaux, comités de gestion locaux.',
       contextJustification:
         'Érosion accélérée, turbidité élevée, perte d’habitats aquatiques. Causes : déboisement des ripisylves, pression agricole, crues extrêmes. ' +
-        'Le projet propose fascines et enrochements végétalisés, replantation d’espèces indigènes, suivi hydrologique et sensibilisation communautaire.'
+        'Le projet propose fascines et enrochements végétalisés, replantation d’espèces indigènes, suivi hydrologique et sensibilisation communautaire.',
     },
     step3: {
       objectives:
@@ -82,7 +106,7 @@ export class SubmissionRecap implements OnInit, OnDestroy {
         'Obj.2 Améliorer la qualité de l’eau ; Obj.3 Renforcer la gouvernance locale et la participation.',
       expectedResults:
         '3 km de berges traitées ; 18 000 plants indigènes ; 6 comités formés ; amélioration mesurable de la turbidité.',
-      durationMonths: 12
+      durationMonths: 12,
     },
     activitiesSummary:
       'Cartographie fine, plan d’ingénierie écologique, travaux de stabilisation, replantation, suivi qualité eau, ' +
@@ -95,29 +119,48 @@ export class SubmissionRecap implements OnInit, OnDestroy {
       { label: 'Sensibilisation communautaire', months: [1, 4, 7, 10] },
     ],
     risks: [
-      { description: 'Crues exceptionnelles', mitigation: 'Fenêtre de travaux adaptée + protections temporaires' },
-      { description: 'Blocages administratifs', mitigation: 'Concertation précoce avec autorités locales' }
+      {
+        description: 'Crues exceptionnelles',
+        mitigation: 'Fenêtre de travaux adaptée + protections temporaires',
+      },
+      {
+        description: 'Blocages administratifs',
+        mitigation: 'Concertation précoce avec autorités locales',
+      },
     ],
     budgetLines: [
-      { category: 'ACTIVITES_TERRAIN', description: 'Travaux d’ingénierie écologique', total: 55000000 },
-      { category: 'INVESTISSEMENTS', description: 'Matériels de suivi hydrologique', total: 12000000 },
-      { category: 'FONCTIONNEMENT', description: 'Coordination & logistique', total: 6000000 }
+      {
+        category: 'ACTIVITES_TERRAIN',
+        description: 'Travaux d’ingénierie écologique',
+        total: 55000000,
+      },
+      {
+        category: 'INVESTISSEMENTS',
+        description: 'Matériels de suivi hydrologique',
+        total: 12000000,
+      },
+      { category: 'FONCTIONNEMENT', description: 'Coordination & logistique', total: 6000000 },
     ],
-    stateStep: { projectStage: 'DEMARRAGE', hasFunding: true, fundingDetails: 'Co-finance Bailleurs A/B : 20 M FCFA, accord de principe' },
+    stateStep: {
+      projectStage: 'DEMARRAGE',
+      hasFunding: true,
+      fundingDetails: 'Co-finance Bailleurs A/B : 20 M FCFA, accord de principe',
+    },
     sustainabilityStep: {
-      sustainability: 'Maintenance confiée aux comités ; convention communale ; transfert de compétences.',
-      replicability: 'Modèle réplicable dans 2 bassins voisins (conditions : coût/ha, matériaux, capacité locale).'
+      sustainability:
+        'Maintenance confiée aux comités ; convention communale ; transfert de compétences.',
+      replicability:
+        'Modèle réplicable dans 2 bassins voisins (conditions : coût/ha, matériaux, capacité locale).',
     },
     attachments: {
       LETTRE_MOTIVATION: 'Lettre_RiviereClaire.pdf',
       STATUTS_REGLEMENT: 'Statuts_ONG.pdf',
-      BUDGET_DETAILLE: 'Budget_detaille.xlsx'
+      BUDGET_DETAILLE: 'Budget_detaille.xlsx',
     },
     status: 'BROUILLON',
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
   };
   private aprojetv1 = inject(Aprojetv1);
-
 
   // --------- Charger le dossier depuis le localStorage (fallback multi-clés) ----------
   private load(): Submission | null {
@@ -125,7 +168,11 @@ export class SubmissionRecap implements OnInit, OnDestroy {
     for (const k of keys) {
       const raw = localStorage.getItem(k);
       if (raw) {
-        try { return JSON.parse(raw) as Submission; } catch { /* ignore */ }
+        try {
+          return JSON.parse(raw) as Submission;
+        } catch {
+          /* ignore */
+        }
       }
     }
     return null;
@@ -136,17 +183,20 @@ export class SubmissionRecap implements OnInit, OnDestroy {
   // --------- Utilitaires d’affichage existants (inchangés) -----------
   status = computed<SubmissionStatus | null>(() => this.submission()?.status ?? null);
 
-  budgetTotal = computed(() => (this.submission()?.budgetLines ?? [])
-    .reduce((s, b) => s + (+b.total || 0), 0));
+  budgetTotal = computed(() =>
+    (this.submission()?.budgetLines ?? []).reduce((s, b) => s + (+b.total || 0), 0)
+  );
 
-  budgetFonct = computed(() => (this.submission()?.budgetLines ?? [])
-    .filter(b => b.category === 'FONCTIONNEMENT')
-    .reduce((s, b) => s + (+b.total || 0), 0));
+  budgetFonct = computed(() =>
+    (this.submission()?.budgetLines ?? [])
+      .filter((b) => b.category === 'FONCTIONNEMENT')
+      .reduce((s, b) => s + (+b.total || 0), 0)
+  );
 
   budgetWarn = computed(() => {
     const tot = this.budgetTotal() || 0;
     const fct = this.budgetFonct() || 0;
-    return tot > 0 && fct / tot > 0.10;
+    return tot > 0 && fct / tot > 0.1;
   });
 
   short(text?: string, n = 220) {
@@ -162,16 +212,23 @@ export class SubmissionRecap implements OnInit, OnDestroy {
     this.modal.set({ title, text: text || '—' });
     this.modalOpen.set(true);
   }
-  closeModal() { this.modalOpen.set(false); this.modal.set(null); }
+  closeModal() {
+    this.modalOpen.set(false);
+    this.modal.set(null);
+  }
 
-  private escHandler = (e: KeyboardEvent) => { if (e.key === 'Escape') this.closeModal(); };
+  private escHandler = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') this.closeModal();
+  };
   ngOnInit() {
     document.addEventListener('keydown', this.escHandler);
     this.id = Number(this.route.snapshot.paramMap.get('id'));
     //console.log('ID du projet :', this.id);
     this.getRecap(this.id);
   }
-  ngOnDestroy() { document.removeEventListener('keydown', this.escHandler); }
+  ngOnDestroy() {
+    document.removeEventListener('keydown', this.escHandler);
+  }
 
   // --------- Nouveau : Stepper d’AFFICHAGE (ne change pas la logique) ----------
   stepIndex = signal(0);
@@ -184,9 +241,11 @@ export class SubmissionRecap implements OnInit, OnDestroy {
     'Budget estimatif',
     'État & financement',
     'Durabilité & réplication',
-    'Annexes'
+    'Annexes',
   ];
-  goTo = (i: number) => { if (i >= 0 && i < this.stepTitles.length) this.stepIndex.set(i); };
+  goTo = (i: number) => {
+    if (i >= 0 && i < this.stepTitles.length) this.stepIndex.set(i);
+  };
   next = () => this.goTo(this.stepIndex() + 1);
   prev = () => this.goTo(this.stepIndex() - 1);
   progress = computed(() => Math.round(((this.stepIndex() + 1) / this.stepTitles.length) * 100));
@@ -211,21 +270,26 @@ export class SubmissionRecap implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Erreur lors de la récupération du récapitulatif:', error);
-        }
+        },
       });
     } else {
-      this.aprojetv1.getProjetByUser().pipe(take(1)).subscribe((data) => {
-        this.projets = data;
-        console.log(this.projets);
-      }, err => {
-        console.error(err);
-      })
+      this.aprojetv1
+        .getProjetByUser()
+        .pipe(take(1))
+        .subscribe(
+          (data) => {
+            this.projets = data;
+            console.log(this.projets);
+          },
+          (err) => {
+            console.error(err);
+          }
+        );
     }
-
   }
 
   showFile(pathFile: File) {
-    this.aprojetv1.showFile(pathFile).subscribe(blob => {
+    this.aprojetv1.showFile(pathFile).subscribe((blob) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -244,14 +308,13 @@ export class SubmissionRecap implements OnInit, OnDestroy {
       timer: 7000,
       timerProgressBar: false,
       iconColor: '#00e8b6',
-      color: '#06417d'
-    })
+      color: '#06417d',
+    });
 
     Toast.fire({
       icon: 'success',
-      title: message
-    })
-
+      title: message,
+    });
   }
   redirectionUserOradmin() {
     this.id = Number(this.route.snapshot.paramMap.get('id'));

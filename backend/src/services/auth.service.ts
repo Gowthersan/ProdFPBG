@@ -1,9 +1,8 @@
-import { Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/db.js';
 import { AppError } from '../middlewares/error.middleware.js';
-import { FpbgUsersDTO, JwtPayload, LoginVM, OrganisationDTO } from '../types/index.js';
+import { JwtPayload, LoginVM, OrganisationDTO, UtilisateurDTO } from '../types/index.js';
 import { generateOtp } from '../utils/generateOtp.js';
 import { sendOTPEmail } from '../utils/mailer.js';
 
@@ -30,15 +29,15 @@ export class AuthService {
    * INSCRIPTION - Étape 1 : Enregistrer un agent FPBG et envoyer l'OTP
    * Cette méthode génère un code OTP et l'envoie par email à l'utilisateur
    */
-  async registerAgentFpbg(userData: FpbgUsersDTO) {
-    const { email, username, password } = userData;
+  async registerAgentFpbg(userData: UtilisateurDTO) {
+    const { email, nomUtilisateur, motDePasse } = userData;
 
     // ====================================
     // 1. Vérifier si l'utilisateur existe déjà
     // ====================================
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await prisma.utilisateur.findFirst({
       where: {
-        OR: [{ email }, ...(username ? [{ username }] : [])]
+        OR: [{ email }]
       }
     });
 
@@ -49,7 +48,7 @@ export class AuthService {
     // ====================================
     // 2. Hasher le mot de passe pour la sécurité
     // ====================================
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(motDePasse, 12);
 
     // ====================================
     // 3. Générer le code OTP (6 chiffres, valide 5 minutes)
@@ -61,7 +60,7 @@ export class AuthService {
     // 4. Stocker temporairement les données d'inscription
     // ====================================
     pendingRegistrations[email] = {
-      registrationData: { ...userData, password: hashedPassword },
+      registrationData: { ...userData, motDePasse: hashedPassword },
       otp,
       otpExpiry,
       type: 'user'
@@ -73,7 +72,7 @@ export class AuthService {
     console.log(`📧 OTP généré pour ${email}: ${otp}`);
 
     try {
-      await sendOTPEmail(email, otp, userData.firstName || userData.username || 'Utilisateur');
+      await sendOTPEmail(email, otp, userData.prenom || userData.nomUtilisateur || 'Utilisateur');
       console.log(`✅ Email OTP envoyé à ${email}`);
     } catch (error: any) {
       console.error(`❌ Erreur envoi email à ${email}:`, error.message);
@@ -91,22 +90,26 @@ export class AuthService {
    * Cette méthode génère un code OTP et l'envoie par email à l'organisation
    */
   async registerOrganisation(orgData: OrganisationDTO) {
-    const { email, username, password } = orgData;
+    const { email, motDePasse, ...otherData } = orgData;
 
     // ====================================
-    // 1. Vérifier si l'email existe déjà (User ou Organisation)
+    // 1. Vérifier si l'email existe déjà (Utilisateur ou Organisation)
     // ====================================
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    const existingOrg = await prisma.organisation.findUnique({ where: { email } });
+    const existingUser = await prisma.utilisateur.findUnique({ where: { email } });
+    const existingOrg = await prisma.organisation.findFirst({ where: { email } });
 
     if (existingUser || existingOrg) {
       throw new AppError('Cet email est déjà utilisé.', 409);
     }
 
     // ====================================
-    // 2. Hasher le mot de passe pour la sécurité
+    // 2. Valider et hasher le mot de passe
     // ====================================
-    const hashedPassword = await bcrypt.hash(password, 12);
+    if (!motDePasse || typeof motDePasse !== 'string' || motDePasse.trim() === '') {
+      throw new AppError('Un mot de passe valide est requis.', 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(motDePasse, 6); // Supprimez l'opérateur !
 
     // ====================================
     // 3. Générer le code OTP (6 chiffres, valide 5 minutes)
@@ -130,7 +133,7 @@ export class AuthService {
     console.log(`📧 OTP généré pour ${email}: ${otp}`);
 
     try {
-      await sendOTPEmail(email, otp, orgData.name || orgData.contact || 'Organisation');
+      await sendOTPEmail(email, otp, orgData.nom_organisation || orgData.personneContact || 'Organisation');
       console.log(`✅ Email OTP envoyé à ${email}`);
     } catch (error: any) {
       console.error(`❌ Erreur envoi email à ${email}:`, error.message);
@@ -180,19 +183,14 @@ export class AuthService {
         // ====================================
         // 4a. UTILISATEUR : Créer le compte utilisateur
         // ====================================
-        const user = await prisma.user.create({
+        const user = await prisma.utilisateur.create({
           data: {
             email: registrationData.email,
-            username: registrationData.username,
-            password: registrationData.password,
-            firstName: registrationData.firstName ?? null,
-            lastName: registrationData.lastName ?? null,
-            numTel: registrationData.numTel ?? null,
-            postalAddress: registrationData.postalAddress ?? null,
-            physicalAddress: registrationData.physicalAddress ?? null,
-            userType: registrationData.userType || 'agent',
-            otp: null,
-            otpExpiry: null
+            hashMotPasse: registrationData.motDePasse,
+            prenom: registrationData.prenom ?? null,
+            nom: registrationData.nom ?? null,
+            telephone: registrationData.telephone ?? null,
+            role: 'UTILISATEUR'
           }
         });
 
@@ -205,10 +203,10 @@ export class AuthService {
         const token = this.generateToken({
           userId: user.id,
           email: user.email,
-          userType: user.userType || 'agent'
+          userType: 'user'
         });
 
-        const { password: _, ...userWithoutPassword } = user;
+        const { hashMotPasse: _, ...userWithoutPassword } = user;
 
         // ====================================
         // 6. Retourner les données avec le chemin de redirection
@@ -218,69 +216,53 @@ export class AuthService {
           token,
           user: userWithoutPassword,
           type: 'user',
-          redirectTo: '/submission-wizard' // 🎯 Redirection vers submission-wizard
+          redirectTo: '/soumission' // 🎯 Redirection vers soumission
         };
       } else {
         // ====================================
         // 4b. ORGANISATION : Créer User → Organisation → TypeOrganisation
         // ====================================
         const result = await prisma.$transaction(async (tx) => {
-          // ÉTAPE 1: Créer le User en premier
-          const user = await tx.user.create({
+          // ÉTAPE 1: Créer l'Utilisateur en premier
+          const user = await tx.utilisateur.create({
             data: {
               email: registrationData.email,
-              username: registrationData.username ?? null,
-              password: registrationData.password,
-              firstName: registrationData.contact ?? null, // Contact = prénom+nom
-              lastName: null,
-              numTel: registrationData.numTel ?? null,
-              postalAddress: registrationData.postalAddress ?? null,
-              physicalAddress: registrationData.physicalAddress ?? null,
-              userType: 'organisation',
-              otp: null,
-              otpExpiry: null
+              hashMotPasse: registrationData.password,
+              prenom: registrationData.prenom ?? registrationData.personneContact ?? null,
+              nom: registrationData.nom ?? null,
+              telephone: registrationData.telephone ?? registrationData.telephoneContact ?? null,
+              role: 'UTILISATEUR'
             }
           });
 
-          // ÉTAPE 2: Trouver ou créer le TypeOrganisation
-          let typeOrganisation = null;
-          if (registrationData.type) {
-            // Chercher si le type existe déjà
-            typeOrganisation = await tx.typeOrganisation.findUnique({
-              where: { nom: registrationData.type }
-            });
-
-            // Si le type n'existe pas, le créer automatiquement
-            if (!typeOrganisation) {
-              typeOrganisation = await tx.typeOrganisation.create({
-                data: { nom: registrationData.type }
-              });
-              console.log(`✅ TypeOrganisation créé: ${typeOrganisation.nom}`);
-            }
-          }
+          // ÉTAPE 2: Mapper le type d'organisation vers l'enum TypeOrganisation
+          const mapTypeOrganisation = (type: string): any => {
+            const mapping: Record<string, string> = {
+              'Secteur privé (PME, PMI, Startups)': 'PRIVE',
+              'ONG et Associations': 'ONG',
+              'Coopératives communautaires': 'COOPERATIVE',
+              'Communautés organisées': 'COMMUNAUTE',
+              'Entités gouvernementales': 'SECTEUR_PUBLIC',
+              'Organismes de recherche': 'RECHERCHE'
+            };
+            return mapping[type] || 'AUTRE';
+          };
 
           // ÉTAPE 3: Créer l'Organisation liée
+          const type = registrationData.type;
           const organisation = await tx.organisation.create({
             data: {
-              userId: user.id, // 🔗 Lien vers le User créé
+              nom: registrationData.nom_organisation ?? registrationData.type ?? 'Organisation',
+              type: mapTypeOrganisation(type),
               email: registrationData.email,
-              password: registrationData.password,
-              name: registrationData.name ?? null,
-              username: registrationData.username ?? null,
-              contact: registrationData.contact ?? null,
-              numTel: registrationData.numTel ?? null,
-              postalAddress: registrationData.postalAddress ?? null,
-              physicalAddress: registrationData.physicalAddress ?? null,
-              type: registrationData.type ?? null,
-              grantType: registrationData.grantType ?? null,
-              usernamePersonneContacter: registrationData.usernamePersonneContacter ?? null,
-              typeOrganisationId: typeOrganisation?.id ?? null, // 🔗 Lien vers TypeOrganisation
-              otp: null,
-              otpExpiry: null
+              telephone: registrationData.telephone ?? registrationData.telephoneContact ?? null,
+              utilisateurs: {
+                connect: { id: user.id } // 🔗 Lier l'utilisateur à l'organisation
+              }
             }
           });
 
-          return { user, organisation, typeOrganisation };
+          return { user, organisation };
         });
 
         // Supprimer les données temporaires
@@ -295,7 +277,7 @@ export class AuthService {
           userType: 'organisation'
         });
 
-        const { password: _, ...orgWithoutPassword } = result.organisation;
+        const { hashMotPasse: _, ...userWithoutPassword } = result.user;
 
         // ====================================
         // 6. Retourner les données avec le chemin de redirection
@@ -304,11 +286,11 @@ export class AuthService {
           message: 'Compte vérifié avec succès !',
           token,
           user: {
-            ...orgWithoutPassword,
-            typeOrganisation: result.typeOrganisation
+            ...userWithoutPassword,
+            organisation: result.organisation
           },
           type: 'organisation',
-          redirectTo: '/submission-wizard' // 🎯 Redirection vers submission-wizard
+          redirectTo: '/soumission' // 🎯 Redirection vers soumission
         };
       }
     } catch (error: any) {
@@ -321,48 +303,39 @@ export class AuthService {
    * CONNEXION - Authentification avec email + mot de passe uniquement
    */
   async login(loginData: LoginVM) {
-    const { username, password } = loginData;
+    const { email, motDePasse } = loginData;
 
     // Le username est maintenant toujours un EMAIL
     // On cherche d'abord parmi les utilisateurs (par email uniquement)
-    const user = await prisma.user.findUnique({
-      where: { email: username },
+    const user = await prisma.utilisateur.findUnique({
+      where: { email: email },
       include: {
-        organisation: {
-          include: {
-            typeOrganisation: true
-          }
-        }
+        organisation: true
       }
     });
 
     if (user) {
       // Vérifier le mot de passe
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const isPasswordValid = await bcrypt.compare(motDePasse, user.hashMotPasse);
 
       if (!isPasswordValid) {
         throw new AppError('Email ou mot de passe incorrect.', 401);
       }
 
-      // Vérifier que le compte est vérifié (pas d'OTP en attente)
-      if (user.otp !== null) {
-        throw new AppError("Votre compte n'est pas encore vérifié. Veuillez vérifier votre email.", 403);
-      }
-
-      // Générer le token JWT avec l'ID du USER
+      // Générer le token JWT avec l'ID de l'utilisateur
       const token = this.generateToken({
         userId: user.id,
         email: user.email,
-        userType: user.userType || 'agent'
+        userType: user.organisation ? 'organisation' : 'user'
       });
 
-      const { password: _, otp: __, otpExpiry: ___, ...userWithoutSensitiveData } = user;
+      const { hashMotPasse: _, ...userWithoutSensitiveData } = user;
 
       return {
         message: 'Connexion réussie.',
         token,
         user: userWithoutSensitiveData,
-        type: user.userType || 'user'
+        type: user.organisation ? 'organisation' : 'user'
       };
     }
 
@@ -373,23 +346,19 @@ export class AuthService {
    * Vérifier si l'utilisateur est authentifié
    */
   async isAuthenticated(userId: string) {
-    // Chercher l'utilisateur avec son organisation et typeOrganisation
-    const user = await prisma.user.findUnique({
+    // Chercher l'utilisateur avec son organisation
+    const user = await prisma.utilisateur.findUnique({
       where: { id: userId },
       include: {
-        organisation: {
-          include: {
-            typeOrganisation: true
-          }
-        }
+        organisation: true
       }
     });
 
     if (user) {
-      const { password: _, otp: __, otpExpiry: ___, ...userWithoutPassword } = user;
+      const { hashMotPasse: _, ...userWithoutPassword } = user;
       return {
         user: userWithoutPassword,
-        type: user.userType || 'user'
+        type: user.organisation ? 'organisation' : 'user'
       };
     }
 
@@ -449,9 +418,10 @@ export class AuthService {
     console.log(`📧 Nouveau OTP généré pour ${email}: ${otp}`);
 
     try {
-      const userName = pending.type === 'user'
-        ? (pending.registrationData.firstName || pending.registrationData.username || 'Utilisateur')
-        : (pending.registrationData.name || pending.registrationData.contact || 'Organisation');
+      const userName =
+        pending.type === 'user'
+          ? pending.registrationData.prenom || pending.registrationData.nomUtilisateur || 'Utilisateur'
+          : pending.registrationData.nom || pending.registrationData.personneContact || 'Organisation';
 
       await sendOTPEmail(email, otp, userName);
       console.log(`✅ Nouvel email OTP envoyé à ${email}`);

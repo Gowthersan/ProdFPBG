@@ -1,6 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { JwtPayload } from '../types/index.js';
+
+import { PrismaClient } from '@prisma/client';
 
 // Étendre l'interface Request pour inclure user
 declare global {
@@ -15,7 +17,7 @@ declare global {
 const getJwtSecret = (): string => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error('JWT_SECRET n\'est pas défini dans les variables d\'environnement');
+    throw new Error("JWT_SECRET n'est pas défini dans les variables d'environnement");
   }
   return secret;
 };
@@ -64,4 +66,76 @@ export const adminMiddleware = (req: Request, res: Response, next: NextFunction)
   }
 
   next();
+};
+
+// Interface pour inclure user dans la requête authentifiée
+// Interface pour inclure user dans la requête authentifiée
+interface AuthRequest extends Request {
+  user: {
+    userId: string;
+    role: 'UTILISATEUR' | 'ADMINISTRATEUR';
+    email: string;
+  }; // Explicitement optionnel avec undefined
+}
+
+const prisma = new PrismaClient();
+
+// Clé secrète JWT (à stocker dans .env pour sécurité)
+const JWT_SECRET = process.env.JWT_SECRET!;
+
+export const authenticate: RequestHandler = async (req, res, next) => {
+  try {
+    // 1. Récupérer le token depuis les headers
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Aucun token fourni ou format invalide.' });
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    // 2. Vérifier et décoder le token JWT
+    const decoded = jwt.verify(token!, JWT_SECRET) as unknown as { userId: string; role?: string };
+
+    // Validation runtime pour userId
+    if (!decoded.userId) {
+      return res.status(401).json({ message: 'Token invalide : userId manquant.' });
+    }
+
+    // 3. Récupérer les infos utilisateur depuis la DB
+    const utilisateur = await prisma.utilisateur.findUnique({
+      where: { id: decoded.userId }
+    });
+
+    if (!utilisateur || !utilisateur.actif) {
+      return res.status(401).json({ message: 'Utilisateur non trouvé ou inactif.' });
+    }
+
+    // 4. Valider et déduire le rôle
+    let role: 'UTILISATEUR' | 'ADMINISTRATEUR';
+    if (utilisateur.role === 'UTILISATEUR' || utilisateur.role === 'ADMINISTRATEUR') {
+      role = utilisateur.role;
+    } else {
+      throw new Error('Rôle utilisateur invalide.');
+    }
+
+    const chemin = req.path.toLowerCase();
+    if (chemin.startsWith('/admin')) {
+      role = 'ADMINISTRATEUR';
+    }
+
+    // 5. Ajouter les infos utilisateur à la requête
+    (req as AuthRequest).user = {
+      userId: utilisateur.id,
+      role: role,
+      email: utilisateur.email
+    };
+
+    // 6. Passer au prochain middleware/route
+    next();
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ message: 'Token invalide ou expiré.' });
+    }
+    next(error);
+  }
 };

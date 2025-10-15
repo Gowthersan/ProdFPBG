@@ -59,13 +59,13 @@
       <div>
         <label class="block mb-1 text-sm text-slate-300">Nom de l’organisation</label>
         <input
-          formControlName="orgName"
+          formControlName="nom_organisation"
           class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
           placeholder="Association d’agriculture"
         />
         <p
           class="mt-1 text-xs text-red-300"
-          *ngIf="form.get('orgName')?.touched && form.get('orgName')?.invalid"
+          *ngIf="form.get('nom_organisation')?.touched && form.get('nom_organisation')?.invalid"
         >
           Nom de l’organisation requis.
         </p>
@@ -75,15 +75,15 @@
       <div>
         <label class="block mb-1 text-sm text-slate-300">Type d’organisation</label>
         <select
-          formControlName="orgType"
+          formControlName="type"
           class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
         >
           <option value="">-- Sélectionner --</option>
-          <option *ngFor="let t of orgTypes" [value]="t">{{ t }}</option>
+          <option *ngFor="let t of type" [value]="t">{{ t }}</option>
         </select>
         <p
           class="mt-1 text-xs text-red-300"
-          *ngIf="form.get('orgType')?.touched && form.get('orgType')?.invalid"
+          *ngIf="form.get('type')?.touched && form.get('type')?.invalid"
         >
           Type d’organisation requis.
         </p>
@@ -93,15 +93,18 @@
       <div>
         <label class="block mb-1 text-sm text-slate-300">Couverture géographique</label>
         <select
-          formControlName="coverage"
+          formControlName="couvertureGeographique"
           class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
         >
           <option value="">-- Sélectionner --</option>
-          <option *ngFor="let c of coverages" [value]="c">{{ c }}</option>
+          <option *ngFor="let c of couvertureGeographique" [value]="c">{{ c }}</option>
         </select>
         <p
           class="mt-1 text-xs text-red-300"
-          *ngIf="form.get('coverage')?.touched && form.get('coverage')?.invalid"
+          *ngIf="
+            form.get('couvertureGeographique')?.touched &&
+            form.get('couvertureGeographique')?.invalid
+          "
         >
           Couverture requise.
         </p>
@@ -117,7 +120,7 @@
             <input
               type="radio"
               class="accent-green-600"
-              formControlName="grantType"
+              formControlName="typeSubvention"
               value="Petite subvention"
             />
             <span>Petite subvention</span>
@@ -128,7 +131,7 @@
             <input
               type="radio"
               class="accent-green-600"
-              formControlName="grantType"
+              formControlName="typeSubvention"
               value="Moyenne subvention"
             />
             <span>Moyenne subvention</span>
@@ -136,7 +139,7 @@
         </div>
         <p
           class="mt-1 text-xs text-red-300"
-          *ngIf="form.get('grantType')?.touched && form.get('grantType')?.invalid"
+          *ngIf="form.get('typeSubvention')?.touched && form.get('typeSubvention')?.invalid"
         >
           Choisissez un type de subvention.
         </p>
@@ -148,13 +151,13 @@
           <label class="block mb-1 text-sm text-slate-300">Email de contact</label>
           <input
             type="email"
-            formControlName="orgEmail"
+            formControlName="email"
             class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
             placeholder="fpbg@gmail.com"
           />
           <p
             class="mt-1 text-xs text-red-300"
-            *ngIf="form.get('orgEmail')?.touched && form.get('orgEmail')?.invalid"
+            *ngIf="form.get('email')?.touched && form.get('email')?.invalid"
           >
             Email valide requis.
           </p>
@@ -162,19 +165,19 @@
         <div>
           <label class="block mb-1 text-sm text-slate-300">Téléphone</label>
           <input
-            formControlName="orgPhone"
+            formControlName="telephone"
             class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
             placeholder="0XX XX XX XX ou +241XXXXXXXX"
           />
           <p
             class="mt-1 text-xs text-red-300"
-            *ngIf="form.get('orgPhone')?.touched && form.get('orgPhone')?.hasError('required')"
+            *ngIf="form.get('telephone')?.touched && form.get('telephone')?.hasError('required')"
           >
             Téléphone requis.
           </p>
           <p
             class="mt-1 text-xs text-red-300"
-            *ngIf="form.get('orgPhone')?.touched && form.get('orgPhone')?.hasError('gabonPhone')"
+            *ngIf="form.get('telephone')?.touched && form.get('telephone')?.hasError('gabonPhone')"
           >
             Format invalide. Utilisez 0XX XX XX XX (ex. 061 23 45 67) ou +241XXXXXXXX.
           </p>
@@ -197,17 +200,49 @@
     <form *ngIf="step() === 2" class="grid gap-4 mt-6" [formGroup]="form" (ngSubmit)="submit()">
       <!-- <h2 class="text-lg font-semibold text-center">Informations sur le Demandeur</h2> -->
 
+      <!-- Prénom & Nom -->
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <label class="block mb-1 text-sm text-slate-300">Prénom</label>
+          <input
+            formControlName="prenom"
+            class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
+            placeholder="Jean"
+          />
+          <p
+            class="mt-1 text-xs text-red-300"
+            *ngIf="form.get('prenom')?.touched && form.get('prenom')?.invalid"
+          >
+            Prénom requis.
+          </p>
+        </div>
+        <div>
+          <label class="block mb-1 text-sm text-slate-300">Nom</label>
+          <input
+            formControlName="nom"
+            class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
+            placeholder="Dupont"
+          />
+          <p
+            class="mt-1 text-xs text-red-300"
+            *ngIf="form.get('nom')?.touched && form.get('nom')?.invalid"
+          >
+            Nom requis.
+          </p>
+        </div>
+      </div>
+
       <!-- Contact -->
       <div>
         <label class="block mb-1 text-sm text-slate-300">Personne de contact</label>
         <input
-          formControlName="contact"
+          formControlName="personneContact"
           class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
           placeholder="Nom Prénom"
         />
         <p
           class="mt-1 text-xs text-red-300"
-          *ngIf="form.get('contact')?.touched && form.get('contact')?.invalid"
+          *ngIf="form.get('personneContact')?.touched && form.get('personneContact')?.invalid"
         >
           Nom du contact requis.
         </p>
@@ -217,7 +252,7 @@
       <div>
         <label class="block mb-1 text-sm text-slate-300">Fonction</label>
         <input
-          formControlName="position"
+          formControlName="fonction"
           class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
           placeholder="Responsable projet"
         />
@@ -228,19 +263,19 @@
         <div>
           <label class="block mb-1 text-sm text-slate-300">Téléphone</label>
           <input
-            formControlName="phone"
+            formControlName="telephone"
             class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
             placeholder="0XX XX XX XX ou +241XXXXXXXX"
           />
           <p
             class="mt-1 text-xs text-red-300"
-            *ngIf="form.get('phone')?.touched && form.get('phone')?.hasError('required')"
+            *ngIf="form.get('telephone')?.touched && form.get('telephone')?.hasError('required')"
           >
             Téléphone requis.
           </p>
           <p
             class="mt-1 text-xs text-red-300"
-            *ngIf="form.get('phone')?.touched && form.get('phone')?.hasError('gabonPhone')"
+            *ngIf="form.get('telephone')?.touched && form.get('telephone')?.hasError('gabonPhone')"
           >
             Format invalide. Utilisez 0XX XX XX XX (ex. 061 23 45 67) ou +241XXXXXXXX.
           </p>
@@ -268,13 +303,13 @@
           <label class="block mb-1 text-sm text-slate-300">Mot de passe</label>
           <input
             type="password"
-            formControlName="password"
+            formControlName="motDePasse"
             class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
             placeholder="********"
           />
           <p
             class="mt-1 text-xs text-red-300"
-            *ngIf="form.get('password')?.touched && form.get('password')?.invalid"
+            *ngIf="form.get('motDePasse')?.touched && form.get('motDePasse')?.invalid"
           >
             Mot de passe requis (6 caractères minimum).
           </p>
@@ -283,15 +318,16 @@
           <label class="block mb-1 text-sm text-slate-300">Confirmer le mot de passe</label>
           <input
             type="password"
-            formControlName="confirm"
+            formControlName="confirmMotDePasse"
             class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
             placeholder="********"
           />
           <p
             class="mt-1 text-xs text-red-300"
             *ngIf="
-              form.get('confirm')?.touched &&
-              (form.get('confirm')?.invalid || form.value.password !== form.value.confirm)
+              form.get('confirmMotDePasse')?.touched &&
+              (form.get('confirmMotDePasse')?.invalid ||
+                form.value.motDePasse !== form.value.confirmMotDePasse)
             "
           >
             Confirmation invalide : les mots de passe doivent correspondre.
