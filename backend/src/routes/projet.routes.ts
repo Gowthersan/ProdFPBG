@@ -1,5 +1,6 @@
 import express from 'express';
 import { ProjetController } from '../controllers/projet.controller.js';
+import { handleMulterError, upload } from '../middleware/upload.js';
 import { authMiddleware, optionalAuthMiddleware } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
@@ -14,8 +15,8 @@ router.get('/:id', optionalAuthMiddleware, ProjetController.getProjetById);
 router.post(
   '/submit',
   authMiddleware,
-  // upload.any(),  // Accepte n'importe quel fichier
-  // handleMulterError,
+  upload.any(), // Accepte n'importe quel fichier
+  handleMulterError,
   ProjetController.submitProject
 );
 router.get('/my-project', authMiddleware, ProjetController.getMyProject); // Récupérer le projet de l'utilisateur
