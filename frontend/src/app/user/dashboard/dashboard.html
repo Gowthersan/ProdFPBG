@@ -235,5 +235,99 @@
         </ul>
       </div>
     </section>
+
+    <!-- Mes Projets Soumis -->
+    <section class="mt-8">
+      <div class="flex items-center gap-2 mb-4">
+        <svg class="h-6 w-6 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <path d="M14 2v6h6"></path>
+          <path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path>
+        </svg>
+        <h2 class="text-lg font-semibold">Mes Projets Soumis</h2>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loadingDemandes()" class="flex justify-center items-center py-8">
+        <svg class="animate-spin h-8 w-8 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+
+      <!-- Aucun projet -->
+      <div *ngIf="!loadingDemandes() && mesDemandes().length === 0" class="text-center py-12 bg-white rounded-2xl border border-slate-200">
+        <svg class="h-16 w-16 mx-auto text-slate-300 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <path d="M14 2v6h6"></path>
+        </svg>
+        <p class="text-slate-500 mb-4">Vous n'avez pas encore soumis de projet</p>
+        <button (click)="startProject()" class="inline-flex items-center gap-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14m-7-7h14"></path>
+          </svg>
+          Créer mon premier projet
+        </button>
+      </div>
+
+      <!-- Liste des projets -->
+      <div *ngIf="!loadingDemandes() && mesDemandes().length > 0" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div *ngFor="let demande of mesDemandes()"
+             class="rounded-2xl bg-white border border-slate-200 p-5 hover:shadow-md transition-shadow cursor-pointer"
+             (click)="router.navigate(['/form/recap', demande.id])">
+          <!-- En-tête avec statut -->
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex-1">
+              <h3 class="font-semibold text-slate-900 mb-1 line-clamp-2">{{ demande.titre }}</h3>
+              <p class="text-xs text-slate-500">{{ demande.creeLe | date:'dd/MM/yyyy à HH:mm' }}</p>
+            </div>
+            <span class="ml-2 rounded-full px-2 py-1 text-xs font-medium whitespace-nowrap" [ngClass]="statutCssClass(demande)">
+              {{ statutLabel(demande) }}
+            </span>
+          </div>
+
+          <!-- Informations -->
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center gap-2 text-slate-600">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span class="truncate">{{ demande.localisation }}</span>
+            </div>
+
+            <div class="flex items-center gap-2 text-slate-600" *ngIf="demande.dureeMois">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Durée : {{ demande.dureeMois }} mois</span>
+            </div>
+
+            <div class="flex items-center gap-2 text-slate-600">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span>{{ demande.groupeCible }}</span>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-xs text-slate-500">Mis à jour : {{ demande.misAJourLe | date:'dd/MM/yy' }}</span>
+            <button class="text-emerald-600 hover:text-emerald-700 text-sm font-medium flex items-center gap-1">
+              Voir détails
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14m-7-7 7 7-7 7"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 </div>

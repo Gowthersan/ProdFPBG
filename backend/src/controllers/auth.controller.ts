@@ -128,17 +128,23 @@ export class AuthController {
   /**
    * POST /api/auth/login
    * Connexion avec email/username + mot de passe uniquement
-   * Body: { username: string (email ou username), password: string }
+   * Body: { email: string, motDePasse: string }
    */
   static async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, motDePasse } = req.body;
+
+      console.log('📝 [LOGIN] Tentative de connexion pour:', email);
 
       if (!email || !motDePasse) {
         throw new AppError('Email/Username et mot de passe requis.', 400);
       }
 
       const result = await authService.login({ email, motDePasse });
+
+      console.log('✅ [LOGIN] Connexion réussie pour:', email);
+      console.log('✅ [LOGIN] Type utilisateur:', result.type);
+      console.log('✅ [LOGIN] Token généré:', result.token.substring(0, 20) + '...');
 
       // Définir le cookie avec le token
       res.cookie('token', result.token, {
@@ -148,8 +154,11 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
       });
 
+      console.log('✅ [LOGIN] Cookie défini, envoi de la réponse');
+
       res.json(result);
     } catch (error) {
+      console.error('❌ [LOGIN] Erreur:', error);
       next(error);
     }
   }

@@ -331,11 +331,26 @@ export class AuthService {
 
       const { hashMotPasse: _, ...userWithoutSensitiveData } = user;
 
+      // ✅ Déterminer la redirection en fonction du rôle
+      let redirectTo = '/dashboard'; // Par défaut
+      if (user.role === 'ADMINISTRATEUR') {
+        redirectTo = '/admin/dashboard';
+      }
+
+      console.log('✅ [AUTH SERVICE] Login réussi:', {
+        email: user.email,
+        role: user.role,
+        type: user.organisation ? 'organisation' : 'user',
+        redirectTo
+      });
+
       return {
         message: 'Connexion réussie.',
         token,
         user: userWithoutSensitiveData,
-        type: user.organisation ? 'organisation' : 'user'
+        type: user.organisation ? 'organisation' : 'user',
+        role: user.role, // ✅ Ajouter le rôle dans la réponse
+        redirectTo // ✅ Ajouter la redirection basée sur le rôle
       };
     }
 

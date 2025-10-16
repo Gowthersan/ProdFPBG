@@ -1,5 +1,8 @@
-import { Injectable } from '@angular/core';
-import instance from './axios-instance';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { environDev } from '../../../environments/environment.development';
 
 export interface Subvention {
   id?: string;
@@ -52,79 +55,83 @@ export interface AAP {
   providedIn: 'root'
 })
 export class AAPService {
-  private readonly baseUrl = '/api/aap';
+  private http = inject(HttpClient);
+  private readonly baseUrl = `${environDev.urlServer}/api/aap`;
 
   /**
    * Récupérer tous les appels à projets
    */
-  async getAllAAPs(includeInactive: boolean = false): Promise<AAP[]> {
-    const response = await instance.get(this.baseUrl, {
-      params: { includeInactive }
+  getAllAAPs(includeInactive: boolean = false): Observable<AAP[]> {
+    return this.http.get<AAP[]>(this.baseUrl, {
+      params: { includeInactive: includeInactive.toString() }
     });
-    return response.data;
   }
 
   /**
    * Récupérer un appel à projets par ID
    */
-  async getAAPById(id: string): Promise<AAP> {
-    const response = await instance.get(`${this.baseUrl}/${id}`);
-    return response.data;
+  getAAPById(id: string): Observable<AAP> {
+    return this.http.get<AAP>(`${this.baseUrl}/${id}`);
   }
 
   /**
    * Récupérer un appel à projets par code
    */
-  async getAAPByCode(code: string): Promise<AAP> {
-    const response = await instance.get(`${this.baseUrl}/code/${code}`);
-    return response.data;
+  getAAPByCode(code: string): Observable<AAP> {
+    return this.http.get<AAP>(`${this.baseUrl}/code/${code}`);
   }
 
   /**
    * Créer un nouvel appel à projets (admin only)
    */
-  async createAAP(aapData: AAP): Promise<AAP> {
-    const response = await instance.post(this.baseUrl, aapData);
-    return response.data.aap;
+  createAAP(aapData: AAP): Observable<AAP> {
+    return this.http.post<{ aap: AAP }>(this.baseUrl, aapData)
+      .pipe(
+        map(response => response.aap)
+      );
   }
 
   /**
    * Mettre à jour un appel à projets (admin only)
    */
-  async updateAAP(id: string, aapData: Partial<AAP>): Promise<AAP> {
-    const response = await instance.put(`${this.baseUrl}/${id}`, aapData);
-    return response.data.aap;
+  updateAAP(id: string, aapData: Partial<AAP>): Observable<AAP> {
+    return this.http.put<{ aap: AAP }>(`${this.baseUrl}/${id}`, aapData)
+      .pipe(
+        map(response => response.aap)
+      );
   }
 
   /**
    * Activer/Désactiver un appel à projets (admin only)
    */
-  async toggleAAPStatus(id: string): Promise<AAP> {
-    const response = await instance.patch(`${this.baseUrl}/${id}/toggle`);
-    return response.data.aap;
+  toggleAAPStatus(id: string): Observable<AAP> {
+    return this.http.patch<{ aap: AAP }>(`${this.baseUrl}/${id}/toggle`, {})
+      .pipe(
+        map(response => response.aap)
+      );
   }
 
   /**
    * Supprimer un appel à projets (admin only)
    */
-  async deleteAAP(id: string): Promise<{ message: string }> {
-    const response = await instance.delete(`${this.baseUrl}/${id}`);
-    return response.data;
+  deleteAAP(id: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/${id}`);
   }
 
   /**
    * Récupérer tous les types d'organisations
    */
-  async getAllTypeOrganisations(): Promise<any[]> {
-    const response = await instance.get(`${this.baseUrl}/types/organisations`);
-    return response.data;
+  getAllTypeOrganisations(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/types/organisations`);
   }
 
   /**
    * Créer un type d'organisation (admin only)
    */
-  async createTypeOrganisation(nom: string): Promise<any> {
-    const response = await instance.post(`${this.baseUrl}/types/organisations`, { nom });
-    return response.data.type;
+  createTypeOrganisation(nom: string): Observable<any> {
+    return this.http.post<{ type: any }>(`${this.baseUrl}/types/organisations`, { nom })
+      .pipe(
+        map(response => response.type)
+      );
   }
 }

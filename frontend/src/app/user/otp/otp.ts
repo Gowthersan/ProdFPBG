@@ -94,20 +94,32 @@ export class Otp {
     this.auth.verifyOtp(p.email, code).subscribe({
       next: (response: any) => {
         console.log('✅ OTP vérifié, compte créé - Réponse complète:', response);
-        console.log('🔍 redirectTo =', response?.redirectTo);
+        console.log('🔍 Token:', response?.token ? 'présent' : 'absent');
+        console.log('🔍 redirectTo:', response?.redirectTo);
+
+        // Nettoyer le localStorage
         localStorage.removeItem('fpbg.pendingReg');
+        localStorage.removeItem('onboarding_done'); // Supprimer ce flag obsolète
 
         // ====================================
-        // 🎯 Redirection vers /soumission si le backend le spécifie
+        // 🎯 Le token est déjà stocké par auth.service.verifyOtp()
+        // 🎯 Redirection vers /soumission (par défaut)
         // ====================================
-        if (response && response.redirectTo) {
-          console.log(`🎯 Redirection vers: ${response.redirectTo}`);
-          this.router.navigate([response.redirectTo]);
-        } else {
-          console.warn('⚠️ Pas de redirectTo dans la réponse, redirection par défaut vers login');
-          // Par défaut, rediriger vers login
-          this._goLogin(p);
-        }
+        const redirectUrl = response?.redirectTo || '/soumission';
+        console.log(`🎯 Redirection vers: ${redirectUrl}`);
+
+        // Petit délai pour s'assurer que le token est bien stocké
+        setTimeout(() => {
+          this.router.navigate([redirectUrl]).then((success) => {
+            if (success) {
+              console.log('✅ Navigation réussie vers', redirectUrl);
+            } else {
+              console.error('❌ Échec de la navigation vers', redirectUrl);
+              // Fallback : essayer /dashboard
+              this.router.navigate(['/dashboard']);
+            }
+          });
+        }, 100);
       },
       error: (err) => {
         console.error('❌ Erreur verify OTP:', err);

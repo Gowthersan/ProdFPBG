@@ -67,7 +67,7 @@ export class OrganisationController {
       const organisation = await organisationService.updateOrganisation(
         id,
         req.body,
-        req.user.userId,
+        req.user.userId!,  // Le '!' indique que nous savons qu'il est défini grâce à la vérification au-dessus
         isAdmin
       );
 

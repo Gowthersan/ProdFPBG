@@ -1,5 +1,8 @@
-import { Injectable } from '@angular/core';
-import instance from './axios-instance';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { environDev } from '../../../environments/environment.development';
 
 export interface Projet {
   id?: string;
@@ -44,12 +47,13 @@ export interface PaginatedResponse<T> {
   providedIn: 'root'
 })
 export class ProjetService {
-  private readonly baseUrl = '/api/aprojet-v1';
+  private http = inject(HttpClient);
+  private readonly baseUrl = `${environDev.urlServer}/api/aprojet-v1`;
 
   /**
    * Créer un nouveau projet
    */
-  async createProjet(projetData: Partial<Projet>, files?: any): Promise<Projet> {
+  createProjet(projetData: Partial<Projet>, files?: any): Observable<Projet> {
     const formData = new FormData();
 
     // Ajouter les données du projet
@@ -78,122 +82,107 @@ export class ProjetService {
       });
     }
 
-    const response = await instance.post(`${this.baseUrl}/createProjet`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    return response.data.projet;
+    return this.http.post<{ projet: Projet }>(`${this.baseUrl}/createProjet`, formData)
+      .pipe(
+        map(response => response.projet)
+      );
   }
 
   /**
    * Récupérer tous les projets avec pagination
    */
-  async getAllProjets(page: number = 0, size: number = 10, eagerload: boolean = false): Promise<PaginatedResponse<Projet>> {
-    const response = await instance.get(this.baseUrl, {
-      params: { page, size, eagerload }
+  getAllProjets(page: number = 0, size: number = 10, eagerload: boolean = false): Observable<PaginatedResponse<Projet>> {
+    return this.http.get<PaginatedResponse<Projet>>(this.baseUrl, {
+      params: { page: page.toString(), size: size.toString(), eagerload: eagerload.toString() }
     });
-    return response.data;
   }
 
   /**
    * Récupérer tous les projets sans pagination
    */
-  async getAllProjetsNoPage(): Promise<Projet[]> {
-    const response = await instance.get(`${this.baseUrl}/all`);
-    return response.data;
+  getAllProjetsNoPage(): Observable<Projet[]> {
+    return this.http.get<Projet[]>(`${this.baseUrl}/all`);
   }
 
   /**
    * Récupérer un projet par ID
    */
-  async getProjetById(id: string): Promise<Projet> {
-    const response = await instance.get(`${this.baseUrl}/${id}`);
-    return response.data;
+  getProjetById(id: string): Observable<Projet> {
+    return this.http.get<Projet>(`${this.baseUrl}/${id}`);
   }
 
   /**
    * Récupérer le projet de l'utilisateur connecté
    */
-  async getProjetByUser(): Promise<Projet> {
-    const response = await instance.get(`${this.baseUrl}/user`);
-    return response.data;
+  getProjetByUser(): Observable<Projet> {
+    return this.http.get<Projet>(`${this.baseUrl}/user`);
   }
 
   /**
    * Mettre à jour un projet
    */
-  async updateProjet(id: string, projetData: Partial<Projet>): Promise<Projet> {
-    const response = await instance.put(`${this.baseUrl}/${id}`, projetData);
-    return response.data.projet;
+  updateProjet(id: string, projetData: Partial<Projet>): Observable<Projet> {
+    return this.http.put<{ projet: Projet }>(`${this.baseUrl}/${id}`, projetData)
+      .pipe(
+        map(response => response.projet)
+      );
   }
 
   /**
    * Mise à jour partielle d'un projet
    */
-  async partialUpdateProjet(id: string, projetData: Partial<Projet>): Promise<Projet> {
-    const response = await instance.patch(`${this.baseUrl}/${id}`, projetData);
-    return response.data.projet;
+  partialUpdateProjet(id: string, projetData: Partial<Projet>): Observable<Projet> {
+    return this.http.patch<{ projet: Projet }>(`${this.baseUrl}/${id}`, projetData)
+      .pipe(
+        map(response => response.projet)
+      );
   }
 
   /**
    * Supprimer un projet
    */
-  async deleteProjet(id: string): Promise<{ message: string }> {
-    const response = await instance.delete(`${this.baseUrl}/${id}`);
-    return response.data;
+  deleteProjet(id: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/${id}`);
   }
 
   /**
    * Soumettre un projet complet depuis le wizard
    */
-  async submitProject(projectData: any): Promise<any> {
-    const response = await instance.post(`${this.baseUrl}/submit`, projectData);
-    return response.data;
+  submitProject(projectData: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/submit`, projectData);
   }
 
   /**
    * Récupérer le projet de l'utilisateur connecté
    */
-  async getMyProject(): Promise<Projet | null> {
-    try {
-      const response = await instance.get(`${this.baseUrl}/my-project`);
-      return response.data;
-    } catch (error: any) {
-      if (error?.response?.status === 404) {
-        return null;
-      }
-      throw error;
-    }
+  getMyProject(): Observable<Projet | null> {
+    return this.http.get<Projet>(`${this.baseUrl}/my-project`);
   }
 
   /**
    * Récupérer tous les collaborateurs de l'utilisateur
    */
-  async getMyCollaborateurs(): Promise<any[]> {
-    const response = await instance.get(`${this.baseUrl}/my-collaborateurs`);
-    return response.data;
+  getMyCollaborateurs(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/my-collaborateurs`);
   }
 
   /**
    * Ajouter un collaborateur à un projet
    */
-  async addCollaborateur(projetId: string, collaborateurData: {
+  addCollaborateur(projetId: string, collaborateurData: {
     nom: string;
     prenom: string;
     email: string;
     telephone?: string;
     role?: string;
-  }): Promise<any> {
-    const response = await instance.post(`${this.baseUrl}/${projetId}/collaborateurs`, collaborateurData);
-    return response.data;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/${projetId}/collaborateurs`, collaborateurData);
   }
 
   /**
    * Supprimer un collaborateur
    */
-  async deleteCollaborateur(collaborateurId: string): Promise<{ message: string }> {
-    const response = await instance.delete(`${this.baseUrl}/collaborateurs/${collaborateurId}`);
-    return response.data;
+  deleteCollaborateur(collaborateurId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/collaborateurs/${collaborateurId}`);
   }
 }

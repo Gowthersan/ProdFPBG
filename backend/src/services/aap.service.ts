@@ -8,7 +8,7 @@ export class AAPService {
   async createAAP(data: any) {
     const { subventions, thematiques, ...aapData } = data;
 
-    const aap = await prisma.appelAProjet.create({
+    const aap = await prisma.appelProjets.create({
       data: {
         ...aapData,
         launchDate: new Date(aapData.launchDate),
@@ -57,7 +57,7 @@ export class AAPService {
    * Récupérer tous les appels à projets actifs
    */
   async getAllAAPs(includeInactive: boolean = false) {
-    const aaps = await prisma.appelAProjet.findMany({
+    const aaps = await prisma.appelProjets.findMany({
       where: includeInactive ? {} : { isActive: true },
       include: {
         subventions: {
@@ -83,7 +83,7 @@ export class AAPService {
    * Récupérer un appel à projets par ID
    */
   async getAAPById(id: string) {
-    const aap = await prisma.appelAProjet.findUnique({
+    const aap = await prisma.appelProjets.findUnique({
       where: { id },
       include: {
         subventions: {
@@ -110,7 +110,7 @@ export class AAPService {
    * Récupérer un appel à projets par code
    */
   async getAAPByCode(code: string) {
-    const aap = await prisma.appelAProjet.findUnique({
+    const aap = await prisma.appelProjets.findUnique({
       where: { code },
       include: {
         subventions: {
@@ -137,7 +137,7 @@ export class AAPService {
    * Mettre à jour un appel à projets
    */
   async updateAAP(id: string, data: any) {
-    const existingAAP = await prisma.appelAProjet.findUnique({
+    const existingAAP = await prisma.appelProjets.findUnique({
       where: { id }
     });
 
@@ -148,7 +148,7 @@ export class AAPService {
     const { subventions, thematiques, ...aapData } = data;
 
     // Mettre à jour l'AAP
-    const updatedAAP = await prisma.appelAProjet.update({
+    const updatedAAP = await prisma.appelProjets.update({
       where: { id },
       data: {
         ...aapData,
@@ -175,7 +175,7 @@ export class AAPService {
    * Activer/Désactiver un appel à projets
    */
   async toggleAAPStatus(id: string) {
-    const aap = await prisma.appelAProjet.findUnique({
+    const aap = await prisma.appelProjets.findUnique({
       where: { id }
     });
 
@@ -183,7 +183,7 @@ export class AAPService {
       throw new AppError('Appel à projets non trouvé.', 404);
     }
 
-    const updatedAAP = await prisma.appelAProjet.update({
+    const updatedAAP = await prisma.appelProjets.update({
       where: { id },
       data: {
         isActive: !aap.isActive
@@ -197,7 +197,7 @@ export class AAPService {
    * Supprimer un appel à projets
    */
   async deleteAAP(id: string) {
-    const aap = await prisma.appelAProjet.findUnique({
+    const aap = await prisma.appelProjets.findUnique({
       where: { id }
     });
 
@@ -206,7 +206,7 @@ export class AAPService {
     }
 
     // Supprimer l'AAP (cascade delete pour subventions et thématiques)
-    await prisma.appelAProjet.delete({
+    await prisma.appelProjets.delete({
       where: { id }
     });
 
@@ -214,26 +214,18 @@ export class AAPService {
   }
 
   /**
-   * Récupérer les types d'organisations
+   * Récupérer les types d'organisations (enum)
    */
   async getAllTypeOrganisations() {
-    const types = await prisma.typeOrganisation.findMany({
-      orderBy: {
-        nom: 'asc'
-      }
-    });
-
-    return types;
-  }
-
-  /**
-   * Créer un type d'organisation
-   */
-  async createTypeOrganisation(nom: string) {
-    const type = await prisma.typeOrganisation.create({
-      data: { nom }
-    });
-
-    return type;
+    // TypeOrganisation est un enum, retournons les valeurs possibles
+    return [
+      'ASSOCIATION',
+      'ONG',
+      'COMMUNAUTE',
+      'COOPERATIVE',
+      'ENTREPRISE',
+      'GROUPEMENT',
+      'AUTRE'
+    ];
   }
 }

@@ -53,7 +53,7 @@ const LS = {
 export class Dashboard implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
-  private router = inject(Router);
+  public router = inject(Router); // Public pour l'utiliser dans le template
   private projetService = inject(ProjetService);
   private demandeService = inject(DemandeSubventionService);
 
@@ -187,7 +187,7 @@ export class Dashboard implements OnInit, OnDestroy {
         const sub = JSON.parse(subRaw) as Submission;
         if (typeof sub?.updatedAt === 'number') return sub.updatedAt;
       }
-    } catch {}
+    } catch { }
     try {
       const d = JSON.parse(localStorage.getItem(LS.draft) || 'null');
       if (typeof d?.updatedAt === 'number') return d.updatedAt;
@@ -199,7 +199,7 @@ export class Dashboard implements OnInit, OnDestroy {
         const t = Date.parse(d._updatedAt);
         if (!Number.isNaN(t)) return t;
       }
-    } catch {}
+    } catch { }
     return null;
   }
   private refreshLastUpdated() {
@@ -270,7 +270,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private savePhotoToLS(dataUrl: string) {
     try {
       localStorage.setItem(LS.photo, dataUrl);
-    } catch {}
+    } catch { }
   }
 
   // ---------- Divers UI ----------
@@ -379,42 +379,51 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   /** Charger le projet et les collaborateurs depuis le backend */
-  async loadProjectAndCollaborators() {
-    try {
-      this.loadingCollabs.set(true);
+  loadProjectAndCollaborators() {
+    this.loadingCollabs.set(true);
 
-      // Charger le projet de l'utilisateur
-      const projet = await this.projetService.getMyProject();
-      if (projet && projet.id) {
-        this.currentProjetId.set(projet.id);
+    // Charger le projet de l'utilisateur
+    this.projetService.getMyProject().subscribe({
+      next: (projet) => {
+        if (projet && projet.id) {
+          this.currentProjetId.set(projet.id);
 
-        // Charger les collaborateurs
-        const collabs = await this.projetService.getMyCollaborateurs();
+          // Charger les collaborateurs
+          this.projetService.getMyCollaborateurs().subscribe({
+            next: (collabs) => {
 
-        // Transformer les données backend en format UI
-        const formatted: Collaborator[] = collabs.map((c: any) => ({
-          id: c.id,
-          fullName: `${c.prenom || ''} ${c.nom || ''}`.trim(),
-          nom: c.nom,
-          prenom: c.prenom,
-          email: c.email,
-          telephone: c.telephone,
-          role: c.role || 'Collaborateur',
-        }));
+              // Transformer les données backend en format UI
+              const formatted: Collaborator[] = collabs.map((c: any) => ({
+                id: c.id,
+                fullName: `${c.prenom || ''} ${c.nom || ''}`.trim(),
+                nom: c.nom,
+                prenom: c.prenom,
+                email: c.email,
+                telephone: c.telephone,
+                role: c.role || 'Collaborateur',
+              }));
 
-        this.collaborators.set(formatted);
+              this.collaborators.set(formatted);
+            },
+            error: (error) => {
+              console.error('❌ Erreur lors du chargement des collaborateurs:', error);
+              // Fallback sur localStorage si le backend échoue
+              try {
+                this.collaborators.set(JSON.parse(localStorage.getItem(LS.collaborators) || '[]'));
+              } catch {
+                /* noop */
+              }
+            }
+          });
+        }
+      },
+      error: (error) => {
+        console.error('❌ Erreur lors du chargement du projet:', error);
+      },
+      complete: () => {
+        this.loadingCollabs.set(false);
       }
-    } catch (error) {
-      console.error('❌ Erreur lors du chargement des collaborateurs:', error);
-      // Fallback sur localStorage si le backend échoue
-      try {
-        this.collaborators.set(JSON.parse(localStorage.getItem(LS.collaborators) || '[]'));
-      } catch {
-        /* noop */
-      }
-    } finally {
-      this.loadingCollabs.set(false);
-    }
+    });
   }
 
   async addCollaborator() {
@@ -526,12 +535,12 @@ export class Dashboard implements OnInit, OnDestroy {
   /**
    * Obtenir le label du statut en français
    */
-  statutLabel(): string {
-    const demande = this.derniereDemande();
-    if (demande) {
+  statutLabel(demande?: DemandeSubvention): string {
+    const d = demande || this.derniereDemande();
+    if (d) {
       return (
-        LABELS_STATUT_SOUMISSION[demande.statut as keyof typeof LABELS_STATUT_SOUMISSION] ||
-        demande.statut
+        LABELS_STATUT_SOUMISSION[d.statut as keyof typeof LABELS_STATUT_SOUMISSION] ||
+        d.statut
       );
     }
     return this.status();
@@ -540,11 +549,11 @@ export class Dashboard implements OnInit, OnDestroy {
   /**
    * Obtenir la classe CSS du statut
    */
-  statutCssClass(): string {
-    const demande = this.derniereDemande();
-    if (demande) {
+  statutCssClass(demande?: DemandeSubvention): string {
+    const d = demande || this.derniereDemande();
+    if (d) {
       return (
-        COULEURS_STATUT_SOUMISSION[demande.statut as keyof typeof COULEURS_STATUT_SOUMISSION] ||
+        COULEURS_STATUT_SOUMISSION[d.statut as keyof typeof COULEURS_STATUT_SOUMISSION] ||
         this.statusClass()
       );
     }

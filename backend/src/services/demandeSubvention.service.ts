@@ -1,6 +1,85 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../config/db.js';
 import { AppError } from '../middlewares/error.middleware.js';
 import { DemandeSubventionDTO } from '../types/index.js';
+
+/**
+ * Interface pour les données du formulaire frontend
+ */
+interface FrontendProjectData {
+  // Étape 1 - Proposition
+  title: string;
+  domains: string[];
+  location: string;
+  targetGroup: string;
+  contextJustification: string;
+
+  // Étape 2 - Objectifs
+  objectives: string;
+  expectedResults: string;
+  durationMonths: number;
+
+  // Étape 3 - Activités
+  activitiesStartDate: string;
+  activitiesEndDate: string;
+  activitiesSummary: string;
+  activities: Array<{
+    title: string;
+    start: string;
+    end: string;
+    summary: string;
+    subs?: Array<{
+      label: string;
+      summary?: string;
+    }>;
+    budget?: {
+      lines: Array<{
+        label: string;
+        cfa: number;
+        fpbgPct: number;
+        cofinPct: number;
+      }>;
+    };
+  }>;
+
+  // Étape 4 - Risques
+  risks: Array<{
+    description: string;
+    mitigation: string;
+  }>;
+
+  // Étape 5 - Budget
+  usdRate: number;
+  budgetActivities: Array<{
+    activityIndex: number;
+    lines: Array<{
+      label: string;
+      cfa: number;
+      fpbgPct: number;
+      cofinPct: number;
+    }>;
+  }>;
+  indirectOverheads: number;
+
+  // Étape 6 - État
+  projectStage: 'CONCEPTION' | 'DEMARRAGE' | 'AVANCE' | 'PHASE_FINALE';
+  hasFunding: boolean;
+  fundingDetails?: string;
+  honorAccepted: boolean;
+
+  // Étape 7 - Durabilité
+  sustainability: string;
+  replicability?: string;
+
+  // Collaborateurs (optionnel)
+  collaborateurs?: Array<{
+    nom: string;
+    prenom: string;
+    email: string;
+    telephone?: string;
+    role?: string;
+  }>;
+}
 
 /**
  * Service pour gérer les demandes de subvention
@@ -8,81 +87,419 @@ import { DemandeSubventionDTO } from '../types/index.js';
  */
 export class DemandeSubventionService {
   /**
-   * Créer une nouvelle demande de subvention
+   * ========================================
+   * MÉTHODE PRINCIPALE : Soumettre un projet complet
+   * ========================================
+   * Cette méthode transforme les données du formulaire frontend
+   * en structure Prisma compatible avec les relations imbriquées
    */
-  async creer(data: DemandeSubventionDTO, idUtilisateur: string) {
+  async soumettre(
+    data: FrontendProjectData,
+    files: { [fieldname: string]: Express.Multer.File[] },
+    attachmentsIndex: any[],
+    idUtilisateur: string
+  ) {
     try {
-      // Vérifier que l'utilisateur existe
+      console.log('🔄 Début de la soumission du projet...');
+
+      // 1️⃣ Vérifier que l'utilisateur existe et récupérer son organisation
       const utilisateur = await prisma.utilisateur.findUnique({
         where: { id: idUtilisateur },
-        include: { organisation: true }
+        include: { organisation: true },
       });
 
       if (!utilisateur) {
         throw new AppError('Utilisateur non trouvé.', 404);
       }
 
-      // Créer la demande de subvention
-      const demande = await prisma.demandeSubvention.create({
-        data: {
-          // Métadonnées
-          statut: (data.statut as any) || 'BROUILLON',
-          typeSoumission: (data.typeSoumission as any) || 'NOTE_CONCEPTUELLE',
+      if (!utilisateur.idOrganisation) {
+        throw new AppError('Aucune organisation associée à cet utilisateur.', 400);
+      }
 
-          // Relations
-          idSoumisPar: idUtilisateur,
-          idOrganisation: utilisateur.idOrganisation ?? data.idOrganisation ?? null,
-          idAppelProjets: data.idAppelProjets ?? null,
+      console.log('✅ Utilisateur vérifié:', utilisateur.email);
+      console.log('✅ Organisation:', utilisateur.organisation?.nom);
 
-          // Étape 1 — Proposition
-          titre: data.titre ?? '',
-          localisation: data.localisation!,
-          groupeCible: data.groupeCible!,
-          justificationContexte: data.justificationContexte!,
+      // 2️⃣ Utiliser une transaction Prisma pour garantir l'intégrité des données
+      const demande = await prisma.$transaction(async (tx) => {
+        // ========================================
+        // A) Créer la demande principale
+        // ========================================
+        const nouveleDemande = await tx.demandeSubvention.create({
+          data: {
+            // Métadonnées
+            statut: 'SOUMIS',
+            typeSoumission: 'NOTE_CONCEPTUELLE',
 
-          // Étape 2 — Objectifs & résultats
-          objectifs: data.objectifs!,
-          resultatsAttendus: data.resultatsAttendus!,
-          dureeMois: data.dureeMois!,
+            // Relations
+            idSoumisPar: idUtilisateur,
+            idOrganisation: utilisateur.idOrganisation!,
+            idAppelProjets: null, // TODO: lier à un AAP si nécessaire
 
-          // Étape 3 — Activités
-          dateDebutActivites: new Date(data.dateDebutActivites!),
-          dateFinActivites: new Date(data.dateFinActivites!),
-          resumeActivites: data.resumeActivites!,
+            // ========================================
+            // Étape 1 - Proposition
+            // ========================================
+            titre: data.title,
+            domaines: data.domains || [],
+            localisation: data.location,
+            groupeCible: data.targetGroup,
+            justificationContexte: data.contextJustification,
 
-          // Budget
-          tauxUsd: data.tauxUsd ?? 600,
-          fraisIndirectsCfa: data.fraisIndirectsCfa ?? 0,
-          terrainCfa: data.terrainCfa ?? null,
-          investCfa: data.investCfa ?? null,
-          overheadCfa: data.overheadCfa ?? null,
-          cofinCfa: data.cofinCfa ?? null,
+            // ========================================
+            // Étape 2 - Objectifs & résultats
+            // ========================================
+            objectifs: data.objectives,
+            resultatsAttendus: data.expectedResults,
+            dureeMois: data.durationMonths,
 
-          // Autres
-          stadeProjet: (data.stadeProjet as any) || 'DEMARRAGE',
-          aFinancement: data.aFinancement ?? false,
-          detailsFinancement: data.detailsFinancement ?? null,
-          honneurAccepte: data.honneurAccepte ?? false,
-          texteDurabilite: data.texteDurabilite!,
-          texteReplication: data.texteReplication ?? null
-        },
-        include: {
-          organisation: true,
-          soumisPar: {
-            select: {
-              id: true,
-              email: true,
-              prenom: true,
-              nom: true
-            }
+            // ========================================
+            // Étape 3 - Activités (dates et résumé uniquement)
+            // ========================================
+            dateDebutActivites: new Date(data.activitiesStartDate),
+            dateFinActivites: new Date(data.activitiesEndDate),
+            resumeActivites: data.activitiesSummary,
+
+            // ========================================
+            // Étape 5 - Budget
+            // ========================================
+            tauxUsd: data.usdRate || 655,
+            fraisIndirectsCfa: new Prisma.Decimal(data.indirectOverheads || 0),
+
+            // ========================================
+            // Étape 6 - État & financement
+            // ========================================
+            stadeProjet: data.projectStage,
+            aFinancement: data.hasFunding,
+            detailsFinancement: data.fundingDetails || null,
+            honneurAccepte: data.honorAccepted,
+
+            // ========================================
+            // Étape 7 - Durabilité
+            // ========================================
+            texteDurabilite: data.sustainability,
+            texteReplication: data.replicability || data.sustainability,
           },
-          appelProjets: {
-            include: {
-              typeSubvention: true
+        });
+
+        console.log('✅ Demande créée avec ID:', nouveleDemande.id);
+
+        // ========================================
+        // B) Créer les activités avec relations imbriquées
+        // ========================================
+        if (data.activities && data.activities.length > 0) {
+          for (let i = 0; i < data.activities.length; i++) {
+            const act = data.activities[i];
+
+            // Vérifier que l'activité existe
+            if (!act) {
+              console.warn(`⚠️ Activité ${i} manquante`);
+              continue;
+            }
+
+            // Créer l'activité principale
+            const activiteCreee = await tx.activite.create({
+              data: {
+                idDemande: nouveleDemande.id,
+                ordre: i,
+                titre: act.title,
+                debut: new Date(act.start),
+                fin: new Date(act.end),
+                resume: act.summary,
+              },
+            });
+
+            console.log(`  ✅ Activité ${i + 1} créée:`, act.title);
+
+            // Créer les sous-activités si présentes
+            if (act.subs && act.subs.length > 0) {
+              for (let j = 0; j < act.subs.length; j++) {
+                const sub = act.subs[j];
+
+                // Vérifier que la sous-activité existe
+                if (!sub) {
+                  console.warn(`⚠️ Sous-activité ${j} manquante`);
+                  continue;
+                }
+
+                await tx.sousActivite.create({
+                  data: {
+                    idActivite: activiteCreee.id,
+                    ordre: j,
+                    libelle: sub.label,
+                    resume: sub.summary || null,
+                  },
+                });
+              }
+              console.log(`    ✅ ${act.subs.length} sous-activité(s) créée(s)`);
+            }
+
+            // Créer les lignes de budget si présentes
+            if (act.budget && act.budget.lines && act.budget.lines.length > 0) {
+              for (let k = 0; k < act.budget.lines.length; k++) {
+                const line = act.budget.lines[k];
+
+                // Vérifier que la ligne de budget existe
+                if (!line) {
+                  console.warn(`⚠️ Ligne de budget ${k} manquante`);
+                  continue;
+                }
+
+                await tx.ligneBudget.create({
+                  data: {
+                    idActivite: activiteCreee.id,
+                    ordre: k,
+                    libelle: line.label,
+                    type: 'DIRECT',
+                    cfa: new Prisma.Decimal(line.cfa),
+                    pctFpbg: line.fpbgPct,
+                    pctCofin: line.cofinPct,
+                  },
+                });
+              }
+              console.log(`    ✅ ${act.budget.lines.length} ligne(s) de budget créée(s)`);
             }
           }
         }
+
+        // ========================================
+        // C) Créer les risques
+        // ========================================
+        if (data.risks && data.risks.length > 0) {
+          for (let i = 0; i < data.risks.length; i++) {
+            const risk = data.risks[i];
+
+            // Vérifier que le risque existe
+            if (!risk) {
+              console.warn(`⚠️ Risque ${i} manquant`);
+              continue;
+            }
+
+            await tx.risque.create({
+              data: {
+                idDemande: nouveleDemande.id,
+                ordre: i,
+                description: risk.description,
+                mitigation: risk.mitigation,
+              },
+            });
+          }
+          console.log(`✅ ${data.risks.length} risque(s) créé(s)`);
+        }
+
+        // ========================================
+        // D) Créer les pièces jointes
+        // ========================================
+        if (files && Object.keys(files).length > 0) {
+          for (const [fieldName, fileArray] of Object.entries(files)) {
+            if (fileArray && fileArray.length > 0) {
+              const file = fileArray[0];
+
+              // Vérifier que le fichier existe
+              if (!file) {
+                console.warn(`⚠️ Fichier manquant pour le champ: ${fieldName}`);
+                continue;
+              }
+
+              // Extraire la clé du document (ex: "attachment_LETTRE_MOTIVATION" -> "LETTRE_MOTIVATION")
+              const documentKey = fieldName.replace('attachment_', '');
+
+              // Vérifier que la clé est valide (existe dans l'enum CleDocument)
+              const validKeys = [
+                'LETTRE_MOTIVATION',
+                'CV',
+                'CERTIFICAT_ENREGISTREMENT',
+                'STATUTS_REGLEMENT',
+                'PV_ASSEMBLEE',
+                'RAPPORTS_FINANCIERS',
+                'RCCM',
+                'AGREMENT',
+                'ETATS_FINANCIERS',
+                'DOCUMENTS_STATUTAIRES',
+                'RIB',
+                'LETTRES_SOUTIEN',
+                'PREUVE_NON_FAILLITE',
+                'CARTOGRAPHIE',
+                'FICHE_CIRCUIT',
+                'BUDGET_DETAILLE',
+                'CHRONOGRAMME',
+              ];
+
+              if (!validKeys.includes(documentKey)) {
+                console.warn(`⚠️ Clé de document invalide: ${documentKey}`);
+                continue;
+              }
+
+              // Trouver les métadonnées dans attachmentsIndex
+              const metadata = attachmentsIndex.find((att) => att.key === documentKey);
+
+              await tx.pieceJointe.create({
+                data: {
+                  idDemande: nouveleDemande.id,
+                  cle: documentKey as any,
+                  nomFichier: file.originalname,
+                  typeMime: file.mimetype,
+                  tailleOctets: file.size,
+                  cleStockage: file.path, // Chemin complet sur le serveur
+                  url: `/uploads/projets/${file.filename}`, // URL publique
+                  requis: metadata?.required || false,
+                },
+              });
+            }
+          }
+          console.log(`✅ ${Object.keys(files).length} pièce(s) jointe(s) uploadée(s)`);
+        }
+
+        // ========================================
+        // E) Gérer les cofinanceurs (collaborateurs)
+        // ========================================
+        if (data.collaborateurs && data.collaborateurs.length > 0) {
+          for (const collab of data.collaborateurs) {
+            await tx.cofinanceur.create({
+              data: {
+                idDemande: nouveleDemande.id,
+                source: `${collab.prenom} ${collab.nom} (${collab.email})`,
+                montant: new Prisma.Decimal(0), // Montant à définir plus tard
+                enNature: false,
+              },
+            });
+          }
+          console.log(`✅ ${data.collaborateurs.length} collaborateur(s) enregistré(s)`);
+        }
+
+        // Retourner la demande complète avec toutes les relations
+        return tx.demandeSubvention.findUnique({
+          where: { id: nouveleDemande.id },
+          include: {
+            organisation: true,
+            soumisPar: {
+              select: {
+                id: true,
+                email: true,
+                prenom: true,
+                nom: true,
+              },
+            },
+            activites: {
+              include: {
+                sousActivites: true,
+                lignesBudget: true,
+              },
+              orderBy: { ordre: 'asc' },
+            },
+            risques: {
+              orderBy: { ordre: 'asc' },
+            },
+            piecesJointes: true,
+            cofinanceurs: true,
+          },
+        });
       });
+
+      console.log('🎉 Projet soumis avec succès !');
+      return demande;
+    } catch (error: any) {
+      console.error('❌ Erreur lors de la soumission:', error);
+
+      // Si c'est une erreur Prisma, la rendre plus lisible
+      if (error.code) {
+        if (error.code === 'P2002') {
+          throw new AppError('Un doublon a été détecté (contrainte unique violée).', 400);
+        }
+        if (error.code === 'P2003') {
+          throw new AppError('Référence invalide (clé étrangère).', 400);
+        }
+      }
+
+      throw new AppError('Erreur lors de la soumission du projet: ' + error.message, error.statusCode || 500);
+    }
+  }
+
+  /**
+   * ========================================
+   * MÉTHODES CRUD CLASSIQUES (inchangées)
+   * ========================================
+   */
+
+  /**
+   * Créer une nouvelle demande de subvention (brouillon)
+   */
+  async creer(data: DemandeSubventionDTO, idUtilisateur: string) {
+    try {
+      // Exécuter l'ensemble dans une transaction avec timeout de 15 secondes
+      const demande = await prisma.$transaction(
+        async (tx) => {
+          // Vérifier que l'utilisateur existe
+          const utilisateur = await tx.utilisateur.findUnique({
+            where: { id: idUtilisateur },
+            include: { organisation: true },
+          });
+
+          if (!utilisateur) {
+            throw new AppError('Utilisateur non trouvé.', 404);
+          }
+
+          // Créer la demande de subvention
+          const demandeCree = await tx.demandeSubvention.create({
+            data: {
+              // Métadonnées
+              statut: (data.statut as any) || 'BROUILLON',
+              typeSoumission: (data.typeSoumission as any) || 'NOTE_CONCEPTUELLE',
+
+              // Relations
+              idSoumisPar: idUtilisateur,
+              idOrganisation: utilisateur.idOrganisation ?? data.idOrganisation ?? null,
+              idAppelProjets: data.idAppelProjets ?? null,
+
+              // Étape 1 – Proposition
+              titre: data.titre ?? '',
+              domaines: [], // Sera rempli lors de la soumission complète
+              localisation: data.localisation!,
+              groupeCible: data.groupeCible!,
+              justificationContexte: data.justificationContexte!,
+
+              // Étape 2 – Objectifs & résultats
+              objectifs: data.objectifs!,
+              resultatsAttendus: data.resultatsAttendus!,
+              dureeMois: data.dureeMois!,
+
+              // Étape 3 – Activités
+              dateDebutActivites: new Date(data.dateDebutActivites!),
+              dateFinActivites: new Date(data.dateFinActivites!),
+              resumeActivites: data.resumeActivites!,
+
+              // Budget
+              tauxUsd: data.tauxUsd ?? 655,
+              fraisIndirectsCfa: new Prisma.Decimal(data.fraisIndirectsCfa ?? 0),
+
+              // Autres
+              stadeProjet: (data.stadeProjet as any) || 'DEMARRAGE',
+              aFinancement: data.aFinancement ?? false,
+              detailsFinancement: data.detailsFinancement ?? null,
+              honneurAccepte: data.honneurAccepte ?? false,
+              texteDurabilite: data.texteDurabilite!,
+              texteReplication: data.texteReplication ?? null,
+            },
+            include: {
+              organisation: true,
+              soumisPar: {
+                select: {
+                  id: true,
+                  email: true,
+                  prenom: true,
+                  nom: true,
+                },
+              },
+              appelProjets: {
+                include: {
+                  typeSubvention: true,
+                },
+              },
+            },
+          });
+
+          return demandeCree;
+        },
+        { timeout: 25000 }
+      );
 
       return demande;
     } catch (error: any) {
@@ -125,18 +542,18 @@ export class DemandeSubventionService {
               id: true,
               email: true,
               prenom: true,
-              nom: true
-            }
+              nom: true,
+            },
           },
           appelProjets: {
             include: {
-              typeSubvention: true
-            }
-          }
+              typeSubvention: true,
+            },
+          },
         },
         orderBy: {
-          creeLe: 'desc'
-        }
+          creeLe: 'desc',
+        },
       });
 
       return demandes;
@@ -157,21 +574,21 @@ export class DemandeSubventionService {
           organisation: true,
           appelProjets: {
             include: {
-              typeSubvention: true
-            }
+              typeSubvention: true,
+            },
           },
           activites: {
             include: {
               sousActivites: true,
-              lignesBudget: true
-            }
+              lignesBudget: true,
+            },
           },
           risques: true,
-          piecesJointes: true
+          piecesJointes: true,
         },
         orderBy: {
-          creeLe: 'desc'
-        }
+          creeLe: 'desc',
+        },
       });
 
       return demandes;
@@ -195,24 +612,24 @@ export class DemandeSubventionService {
               id: true,
               email: true,
               prenom: true,
-              nom: true
-            }
+              nom: true,
+            },
           },
           appelProjets: {
             include: {
               typeSubvention: true,
-              thematiques: true
-            }
+              thematiques: true,
+            },
           },
           activites: {
             include: {
               sousActivites: true,
-              lignesBudget: true
+              lignesBudget: true,
             },
-            orderBy: { ordre: 'asc' }
+            orderBy: { ordre: 'asc' },
           },
           risques: {
-            orderBy: { ordre: 'asc' }
+            orderBy: { ordre: 'asc' },
           },
           piecesJointes: true,
           evaluations: {
@@ -222,17 +639,17 @@ export class DemandeSubventionService {
                   id: true,
                   email: true,
                   prenom: true,
-                  nom: true
-                }
-              }
-            }
+                  nom: true,
+                },
+              },
+            },
           },
           contrat: true,
           rapports: {
-            orderBy: { dateEcheance: 'asc' }
+            orderBy: { dateEcheance: 'asc' },
           },
-          cofinanceurs: true
-        }
+          cofinanceurs: true,
+        },
       });
 
       if (!demande) {
@@ -243,7 +660,7 @@ export class DemandeSubventionService {
       if (idUtilisateur && demande.idSoumisPar !== idUtilisateur) {
         // Vérifier si l'utilisateur est admin
         const utilisateur = await prisma.utilisateur.findUnique({
-          where: { id: idUtilisateur }
+          where: { id: idUtilisateur },
         });
 
         if (!utilisateur || utilisateur.role !== 'ADMINISTRATEUR') {
@@ -266,7 +683,7 @@ export class DemandeSubventionService {
     try {
       // Vérifier que la demande existe et appartient à l'utilisateur
       const demandeExistante = await prisma.demandeSubvention.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!demandeExistante) {
@@ -308,15 +725,15 @@ export class DemandeSubventionService {
               id: true,
               email: true,
               prenom: true,
-              nom: true
-            }
+              nom: true,
+            },
           },
           appelProjets: {
             include: {
-              typeSubvention: true
-            }
-          }
-        }
+              typeSubvention: true,
+            },
+          },
+        },
       });
 
       return demande;
@@ -334,7 +751,7 @@ export class DemandeSubventionService {
     try {
       // Vérifier que la demande existe et appartient à l'utilisateur
       const demande = await prisma.demandeSubvention.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!demande) {
@@ -347,7 +764,7 @@ export class DemandeSubventionService {
 
       // Supprimer la demande (cascade delete sur les relations)
       await prisma.demandeSubvention.delete({
-        where: { id }
+        where: { id },
       });
 
       return { message: 'Demande supprimée avec succès.' };
@@ -367,18 +784,18 @@ export class DemandeSubventionService {
 
       const parStatut = await prisma.demandeSubvention.groupBy({
         by: ['statut'],
-        _count: true
+        _count: true,
       });
 
       const parTypeSoumission = await prisma.demandeSubvention.groupBy({
         by: ['typeSoumission'],
-        _count: true
+        _count: true,
       });
 
       const demandesRecentes = await prisma.demandeSubvention.findMany({
         take: 5,
         orderBy: {
-          creeLe: 'desc'
+          creeLe: 'desc',
         },
         include: {
           organisation: true,
@@ -387,23 +804,23 @@ export class DemandeSubventionService {
               id: true,
               email: true,
               prenom: true,
-              nom: true
-            }
-          }
-        }
+              nom: true,
+            },
+          },
+        },
       });
 
       return {
         total,
         parStatut: parStatut.map((s) => ({
           statut: s.statut,
-          nombre: s._count
+          nombre: s._count,
         })),
         parTypeSoumission: parTypeSoumission.map((t) => ({
           type: t.typeSoumission,
-          nombre: t._count
+          nombre: t._count,
         })),
-        demandesRecentes
+        demandesRecentes,
       };
     } catch (error: any) {
       console.error('Erreur statistiques:', error);
@@ -418,7 +835,7 @@ export class DemandeSubventionService {
     try {
       // Vérifier que l'utilisateur est admin
       const admin = await prisma.utilisateur.findUnique({
-        where: { id: idAdmin }
+        where: { id: idAdmin },
       });
 
       if (!admin || admin.role !== 'ADMINISTRATEUR') {
@@ -436,10 +853,10 @@ export class DemandeSubventionService {
               id: true,
               email: true,
               prenom: true,
-              nom: true
-            }
-          }
-        }
+              nom: true,
+            },
+          },
+        },
       });
 
       // Logger l'action dans le journal d'audit
@@ -450,10 +867,9 @@ export class DemandeSubventionService {
           action: 'changement_statut',
           idUtilisateur: idAdmin,
           details: {
-            ancienStatut: nouveauStatut,
-            nouveauStatut: nouveauStatut
-          }
-        }
+            nouveauStatut: nouveauStatut,
+          },
+        },
       });
 
       return demande;

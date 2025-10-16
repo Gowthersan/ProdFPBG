@@ -1,23 +1,28 @@
-// app/admin.admin.routes.ts
+// app/admin/admin.routes.ts
 import { Routes } from '@angular/router';
+import { adminGuard } from '../core/admin.guard';
 
-// @ts-ignore
 export const adminRoutes: Routes = [
-  { path: 'login', loadComponent: () => import('./login/login').then((m) => m.Login) },
+  // Route de login (pas de guard)
+  {
+    path: 'login',
+    loadComponent: () => import('./login/login').then((m) => m.Login)
+  },
 
-  // tes composants existants côté user :
+  // Routes protégées par authentification admin (token + rôle ADMINISTRATEUR)
   {
     path: 'dashboard',
     loadComponent: () => import('./dashboard/dashboard').then((m) => m.Dashboard),
+    canActivate: [adminGuard] // ✅ Vérifie token + rôle ADMINISTRATEUR
   },
   {
     path: 'form/recap/:id',
     loadComponent: () => import('./recap/recap').then((m) => m.SubmissionRecap),
+    canActivate: [adminGuard]
   },
   {
-    path: 'form/recap', // fallback si pas d'id -> "current"
+    path: 'form/recap',
     redirectTo: 'form/recap/current',
-    pathMatch: 'full',
-  },
-  // { path: 'soumission', loadComponent: () => import('./form/soumission/soumission').then(m => m.SubmissionWizard) },
+    pathMatch: 'full'
+  }
 ];

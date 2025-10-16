@@ -226,7 +226,8 @@ export interface ReponseAuthDTO {
   token: string;
   user: any;
   type: 'user' | 'organisation' | 'utilisateur';
-  redirectTo?: string;
+  role?: 'UTILISATEUR' | 'ADMINISTRATEUR'; // ✅ Rôle de l'utilisateur
+  redirectTo?: string; // ✅ URL de redirection basée sur le rôle
 }
 
 export interface ReponseSuccesDTO {

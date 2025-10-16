@@ -1,33 +1,30 @@
 // app/user/core/auth.guard.ts
 import { inject } from '@angular/core';
-import { CanMatchFn, Router, UrlSegment } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from './auth.service';
 
-export const authGuard: CanMatchFn = (route, segments: UrlSegment[]) => {
+/**
+ * Guard d'authentification simplifié et robuste
+ *
+ * Vérifie si l'utilisateur est authentifié (token + account présents)
+ * Si non authentifié, redirige vers /login
+ *
+ * Note : La validation du token avec le backend se fait via l'intercepteur HTTP
+ * qui gère automatiquement les tokens expirés (401) et déconnecte l'utilisateur
+ */
+export const authGuard: CanActivateFn = (route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  // 1) Non connecté → on renvoie au login
+  console.log('🔐 [AUTH GUARD] Vérification accès:', state.url);
+
+  // Vérifier si l'utilisateur a un token ET un compte local
   if (!auth.isAuthenticated()) {
-    router.navigate(['/login']);
+    console.log('🚫 [AUTH GUARD] Non authentifié → redirection /login');
+    router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
     return false;
   }
 
-  // 2) Logique d’onboarding (flag localStorage)
-  const path = segments.map((s) => s.path).join('/');
-  const onboardingDone = localStorage.getItem('onboarding_done') === '1';
-
-  // Empêcher d'entrer sur dashboard si onboarding non fini
-  if (path === 'dashboard' && !onboardingDone) {
-    router.navigate(['/form']); // ou '/user/form' selon ton parent route
-    return false;
-  }
-
-  // Empêcher d'entrer sur form si onboarding déjà fini
-  if ((path === 'form' || path === 'soumission') && onboardingDone) {
-    router.navigate(['/dashboard']);
-    return false;
-  }
-
+  console.log('✅ [AUTH GUARD] Accès autorisé : utilisateur authentifié');
   return true;
 };

@@ -153,9 +153,12 @@ export class Registration {
       error: (err) => {
         this.loading.set(false);
         console.error('❌ Erreur registration:', err);
-        const msg = err.message || "Erreur lors de l'inscription.";
-        if (msg.includes('déjà utilisé') || msg.includes('TAKEN')) {
-          this.error.set("Cet email ou nom d'utilisateur est déjà utilisé.");
+
+        // Gestion des erreurs spécifiques
+        if (err.status === 409) {
+          this.error.set("Cet email est déjà utilisé.");
+        } else if (err.status === 400) {
+          this.error.set("Données invalides. Vérifiez vos informations.");
         } else {
           this.error.set("Erreur lors de l'inscription. Veuillez réessayer.");
         }

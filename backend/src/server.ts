@@ -2,6 +2,8 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import aapRoutes from './routes/aap.routes.js';
 import authRoutes from './routes/auth.routes.js';
@@ -14,6 +16,10 @@ import { verifyEmailConfig } from './utils/mailer.js';
 dotenv.config();
 
 const app = express();
+
+// Configuration pour __dirname en mode ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuration CORS - Permissive pour le développement
 app.use(
@@ -28,7 +34,8 @@ app.use(
         callback(new Error('Not allowed by CORS'));
       }
     },
-    credentials: true // Permet l'envoi de cookies
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Permet l'envoi de cookies
   })
 );
 
@@ -37,17 +44,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Servir les fichiers statiques (uploads)
-// const uploadsPath = path.join(__dirname, '../uploads');
-// app.use('/uploads', express.static(uploadsPath));
-// console.log('📁 Fichiers statiques servis depuis:', uploadsPath);
+// ✅ Servir les fichiers statiques (uploads)
+const uploadsPath = path.join(__dirname, '../uploads');
+app.use('/uploads', express.static(uploadsPath));
+console.log('📁 Fichiers statiques servis depuis:', uploadsPath);
 
 // Route de health check
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
     message: 'FPBG Backend API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 

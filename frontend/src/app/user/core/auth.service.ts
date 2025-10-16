@@ -48,7 +48,7 @@ export class AuthService {
   private apiUrl = environment.urlServer + '/api/auth';
 
   // === LOGIN : via backend API ===
-  login(p: LoginPayload): Observable<void> {
+  login(p: LoginPayload): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/login`, p, { withCredentials: true }).pipe(
       map((response) => {
         const user = response.user;
@@ -65,8 +65,24 @@ export class AuthService {
           authorities: ['UTILISATEUR'],
         };
 
+        // ✅ Stocker dans les deux clés pour compatibilité avec l'intercepteur
         localStorage.setItem(LS.token, response.token);
+        localStorage.setItem('token', response.token); // Pour l'intercepteur
         localStorage.setItem(LS.account, JSON.stringify(account));
+
+        // Stocker aussi les infos utilisateur standard
+        if (user) {
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+        if (response.type) {
+          localStorage.setItem('userType', response.type);
+        }
+        if (user.role) {
+          localStorage.setItem('role', user.role);
+        }
+
+        // ✅ IMPORTANT : Retourner la réponse complète pour permettre la redirection
+        return response;
       }),
       catchError((error) => {
         console.error('❌ Erreur login:', error);
@@ -140,8 +156,21 @@ export class AuthService {
             authorities: ['ROLE_USER'],
           };
 
+          // ✅ Stocker dans les deux clés pour compatibilité avec l'intercepteur
           localStorage.setItem(LS.token, response.token);
+          localStorage.setItem('token', response.token); // Pour l'intercepteur
           localStorage.setItem(LS.account, JSON.stringify(account));
+
+          // Stocker aussi les infos utilisateur standard
+          if (user) {
+            localStorage.setItem('user', JSON.stringify(user));
+          }
+          if (response.type) {
+            localStorage.setItem('userType', response.type);
+          }
+          if (user.role) {
+            localStorage.setItem('role', user.role);
+          }
 
           // ✅ Retourner la réponse complète (avec redirectTo)
           return response;
@@ -204,13 +233,22 @@ export class AuthService {
     return of(JSON.parse(raw) as Account);
   }
 
+  /**
+   * Vérifie si l'utilisateur est authentifié localement
+   * On vérifie la présence du token dans l'une des deux clés possibles
+   */
   isAuthenticated(): boolean {
-    return !!localStorage.getItem(LS.token) && !!localStorage.getItem(LS.account);
+    const token = localStorage.getItem(LS.token) || localStorage.getItem('token');
+    return !!token;
   }
 
   logout(): Observable<void> {
     localStorage.removeItem(LS.token);
+    localStorage.removeItem('token'); // Nettoyer aussi l'autre clé
     localStorage.removeItem(LS.account);
+    localStorage.removeItem('user');
+    localStorage.removeItem('role');
+    localStorage.removeItem('userType');
     return of(void 0);
   }
 

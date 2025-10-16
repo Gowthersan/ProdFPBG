@@ -131,11 +131,12 @@ export const environDev = {
 };
 ```
 
-### 2. Instance Axios
-Tous les services utilisent l'instance axios configurée dans `axios-instance.ts` qui :
+### 2. HttpClient Angular
+Tous les services utilisent le HttpClient d'Angular qui :
 - Envoie les cookies automatiquement (`withCredentials: true`)
 - Utilise l'URL de base du serveur backend
 - Configure les headers JSON
+- Gère les Observables pour la réactivité
 
 ### 3. Intercepteur HTTP
 L'intercepteur `CookieInterceptor` est déjà configuré pour :

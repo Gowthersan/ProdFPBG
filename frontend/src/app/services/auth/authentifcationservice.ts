@@ -17,9 +17,10 @@ export class Authentifcationservice {
 
   /**
    * Authentifie un utilisateur (login)
+   * ✅ CORRECTION : Route corrigée vers /api/auth/login
    */
   login(loginVM: LoginVM): Observable<HttpResponse<any>> {
-    return this.http.post(`${this.ApiUrl}${this.baseUrl}/login`, loginVM, {
+    return this.http.post(`${this.ApiUrl}${this.baseUrl}/auth/login`, loginVM, {
       observe: 'response',
       withCredentials: true // permet d'inclure les cookies JWT
     });

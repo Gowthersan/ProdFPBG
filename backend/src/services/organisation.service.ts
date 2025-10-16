@@ -9,10 +9,9 @@ export class OrganisationService {
     const organisation = await prisma.organisation.findUnique({
       where: { id: userId },
       include: {
-        typeOrganisation: true,
-        projets: {
+        demandesSubvention: {
           orderBy: {
-            createdAt: 'desc'
+            creeLe: 'desc'
           },
           take: 10
         }
@@ -23,10 +22,8 @@ export class OrganisationService {
       throw new AppError('Organisation non trouvée.', 404);
     }
 
-    // Retourner sans le mot de passe
-    const { password, otp, otpExpiry, ...organisationData } = organisation;
-
-    return organisationData;
+    // Retourner l'organisation directement (pas de champs sensibles dans ce modèle)
+    return organisation;
   }
 
   /**
@@ -35,21 +32,17 @@ export class OrganisationService {
   async getAllOrganisations() {
     const organisations = await prisma.organisation.findMany({
       include: {
-        typeOrganisation: true,
         _count: {
-          select: { projets: true }
+          select: { demandesSubvention: true }
         }
       },
       orderBy: {
-        createdAt: 'desc'
+        creeLe: 'desc'
       }
     });
 
-    // Retourner sans les mots de passe
-    return organisations.map(org => {
-      const { password, otp, otpExpiry, ...orgData } = org;
-      return orgData;
-    });
+    // Retourner directement les organisations
+    return organisations;
   }
 
   /**
@@ -59,10 +52,9 @@ export class OrganisationService {
     const organisation = await prisma.organisation.findUnique({
       where: { id },
       include: {
-        typeOrganisation: true,
-        projets: {
+        demandesSubvention: {
           orderBy: {
-            createdAt: 'desc'
+            creeLe: 'desc'
           }
         }
       }
@@ -72,9 +64,7 @@ export class OrganisationService {
       throw new AppError('Organisation non trouvée.', 404);
     }
 
-    const { password, otp, otpExpiry, ...organisationData } = organisation;
-
-    return organisationData;
+    return organisation;
   }
 
   /**
@@ -95,21 +85,13 @@ export class OrganisationService {
       throw new AppError('Organisation non trouvée.', 404);
     }
 
-    // Supprimer les champs sensibles des données
-    const { password, otp, otpExpiry, ...updateData } = data;
-
     // Mettre à jour l'organisation
     const updatedOrg = await prisma.organisation.update({
       where: { id },
-      data: updateData,
-      include: {
-        typeOrganisation: true
-      }
+      data: data
     });
 
-    const { password: _, otp: __, otpExpiry: ___, ...orgData } = updatedOrg;
-
-    return orgData;
+    return updatedOrg;
   }
 
   /**
@@ -120,7 +102,7 @@ export class OrganisationService {
       where: { id },
       include: {
         _count: {
-          select: { projets: true }
+          select: { demandesSubvention: true }
         }
       }
     });
@@ -129,8 +111,8 @@ export class OrganisationService {
       throw new AppError('Organisation non trouvée.', 404);
     }
 
-    if (organisation._count.projets > 0) {
-      throw new AppError('Impossible de supprimer une organisation avec des projets existants.', 400);
+    if (organisation._count.demandesSubvention > 0) {
+      throw new AppError('Impossible de supprimer une organisation avec des demandes de subvention existantes.', 400);
     }
 
     await prisma.organisation.delete({

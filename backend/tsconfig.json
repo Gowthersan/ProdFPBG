@@ -5,11 +5,11 @@
     "outDir": "./dist",
 
     // Environment Settings
-    "module": "commonjs",
+    "module": "ES2020",
     "target": "ES2020",
-    "lib": ["ES2020"],
+    "lib": ["ES2020", "ES2021.String"],
     "types": ["node"],
-    "moduleResolution": "node10",
+    "moduleResolution": "node",
 
     // Other Outputs
     "sourceMap": true,
@@ -18,7 +18,6 @@
 
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
 
     // Recommended Options
     "strict": true,
@@ -28,8 +27,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
-    "ignoreDeprecations": "6.0"
+    "skipLibCheck": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

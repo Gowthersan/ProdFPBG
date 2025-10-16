@@ -1,33 +1,41 @@
 // app/user/user.routes.ts
 import { Routes } from '@angular/router';
+import { authGuard } from './core/auth.guard'; // ✅ Import correct depuis user/core (CORRECTIONS_AUTH.md)
 
-// @ts-ignore
 export const userRoutes: Routes = [
-  { path: 'login', loadComponent: () => import('./login/login').then((m) => m.Login) },
+  // Routes publiques (pas de guard)
+  {
+    path: 'login',
+    loadComponent: () => import('./login/login').then((m) => m.Login)
+  },
   {
     path: 'register',
-    loadComponent: () => import('./registration/registration').then((m) => m.Registration),
+    loadComponent: () => import('./registration/registration').then((m) => m.Registration)
   },
-  // OTP doit être accessible pubiquement
-  { path: 'otp', loadComponent: () => import('./otp/otp').then((m) => m.Otp) },
+  {
+    path: 'otp',
+    loadComponent: () => import('./otp/otp').then((m) => m.Otp)
+  },
 
-  // tes composants existants côté user :
+  // Routes protégées par authentification (token requis)
   {
     path: 'dashboard',
     loadComponent: () => import('./dashboard/dashboard').then((m) => m.Dashboard),
-  },
-  {
-    path: 'form/recap/:id',
-    loadComponent: () => import('./form/recap/recap').then((m) => m.SubmissionRecap),
-  },
-
-  {
-    path: 'form/recap', // fallback si pas d'id -> "current"
-    redirectTo: 'form/recap/current',
-    pathMatch: 'full',
+    canActivate: [authGuard] // ✅ Vérifie uniquement le token
   },
   {
     path: 'soumission',
     loadComponent: () => import('./form/soumission/soumission').then((m) => m.SubmissionWizard),
+    canActivate: [authGuard] // ✅ Maintenant accessible après inscription (CORRECTIONS_AUTH.md)
   },
+  {
+    path: 'form/recap/:id',
+    loadComponent: () => import('./form/recap/recap').then((m) => m.SubmissionRecap),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'form/recap',
+    redirectTo: 'form/recap/current',
+    pathMatch: 'full'
+  }
 ];

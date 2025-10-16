@@ -1,5 +1,8 @@
-import { Injectable } from '@angular/core';
-import instance from './axios-instance';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { environDev } from '../../../environments/environment.development';
 
 export interface Organisation {
   id?: string;
@@ -24,45 +27,44 @@ export interface Organisation {
   providedIn: 'root'
 })
 export class OrganisationService {
-  private readonly baseUrl = '/api/organisations';
+  private http = inject(HttpClient);
+  private readonly baseUrl = `${environDev.urlServer}/api/organisations`;
 
   /**
    * Récupérer l'organisation connectée
    */
-  async getOrganismeConnected(): Promise<Organisation> {
-    const response = await instance.get(`${this.baseUrl}/organismeconnected`);
-    return response.data;
+  getOrganismeConnected(): Observable<Organisation> {
+    return this.http.get<Organisation>(`${this.baseUrl}/organismeconnected`);
   }
 
   /**
    * Récupérer toutes les organisations (admin only)
    */
-  async getAllOrganisations(): Promise<Organisation[]> {
-    const response = await instance.get(this.baseUrl);
-    return response.data;
+  getAllOrganisations(): Observable<Organisation[]> {
+    return this.http.get<Organisation[]>(this.baseUrl);
   }
 
   /**
    * Récupérer une organisation par ID (admin only)
    */
-  async getOrganisationById(id: string): Promise<Organisation> {
-    const response = await instance.get(`${this.baseUrl}/${id}`);
-    return response.data;
+  getOrganisationById(id: string): Observable<Organisation> {
+    return this.http.get<Organisation>(`${this.baseUrl}/${id}`);
   }
 
   /**
    * Mettre à jour une organisation
    */
-  async updateOrganisation(id: string, organisationData: Partial<Organisation>): Promise<Organisation> {
-    const response = await instance.put(`${this.baseUrl}/${id}`, organisationData);
-    return response.data.organisation;
+  updateOrganisation(id: string, organisationData: Partial<Organisation>): Observable<Organisation> {
+    return this.http.put<{ organisation: Organisation }>(`${this.baseUrl}/${id}`, organisationData)
+      .pipe(
+        map(response => response.organisation)
+      );
   }
 
   /**
    * Supprimer une organisation (admin only)
    */
-  async deleteOrganisation(id: string): Promise<{ message: string }> {
-    const response = await instance.delete(`${this.baseUrl}/${id}`);
-    return response.data;
+  deleteOrganisation(id: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/${id}`);
   }
 }

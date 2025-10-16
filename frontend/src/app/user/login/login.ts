@@ -4,6 +4,15 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 
+interface LoginResponse {
+  message: string;
+  token: string;
+  user: any;
+  type: 'user' | 'organisation';
+  role?: 'UTILISATEUR' | 'ADMINISTRATEUR'; // ✅ Ajout du rôle
+  redirectTo?: string;
+}
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -40,7 +49,7 @@ export class Login {
           if (p?.data?.email) this.form.controls.email.setValue(p.data.email);
           if (p?.data?.password) this.form.controls.password.setValue(p.data.password);
         }
-      } catch {}
+      } catch { }
     }
   }
 
@@ -52,20 +61,57 @@ export class Login {
     }
 
     this.loading.set(true);
-    const { email, motDePasse } = this.form.value as { email: string; motDePasse: string };
+    const { email, password } = this.form.value as { email: string; password: string };
 
-    this.auth.login({ email: email, motDePasse }).subscribe({
-      next: () => {
+    this.auth.login({ email, motDePasse: password }).subscribe({
+      next: (response: any) => {
         this.loading.set(false);
-        // Aller au dashboard
-        this.router.navigate(['/dashboard']);
+        console.log('✅ Connexion réussie:', response);
+        console.log('🔍 Rôle:', response?.role, '- Type:', response?.type);
+
+        // ✅ Redirection basée sur le rôle (prioritaire) puis le type
+        let targetUrl = '/dashboard'; // Par défaut
+
+        if (response?.redirectTo) {
+          // Si le backend spécifie une redirection, l'utiliser
+          targetUrl = response.redirectTo;
+        } else if (response?.role === 'ADMINISTRATEUR') {
+          // Admin → dashboard admin
+          targetUrl = '/admin/dashboard';
+        } else if (response?.type === 'organisation') {
+          // Organisation → dashboard utilisateur
+          targetUrl = '/dashboard';
+        } else {
+          // Utilisateur simple → dashboard utilisateur
+          targetUrl = '/dashboard';
+        }
+
+        console.log('🎯 Redirection vers:', targetUrl);
+
+        this.router.navigate([targetUrl]).then((success) => {
+          if (success) {
+            console.log('✅ Redirection réussie vers', targetUrl);
+          } else {
+            console.error('❌ Échec de la redirection vers', targetUrl);
+          }
+        });
+
         // Nettoyage
         localStorage.removeItem('fpbg.autofillLogin');
         localStorage.removeItem('fpbg.pendingReg');
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.error.set('Email ou mot de passe incorrect.');
+        console.error('❌ Erreur de connexion:', err);
+
+        // Gestion des erreurs spécifiques
+        if (err.status === 401) {
+          this.error.set('Email ou mot de passe incorrect.');
+        } else if (err.status === 409) {
+          this.error.set('Compte non vérifié. Vérifiez votre email.');
+        } else {
+          this.error.set('Erreur de connexion. Veuillez réessayer.');
+        }
       },
     });
   }

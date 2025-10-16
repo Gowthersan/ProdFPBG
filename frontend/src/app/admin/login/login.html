@@ -41,7 +41,7 @@
         </div>
         <input
           type="password"
-          formControlName="password"
+          formControlName="motDePasse"
           placeholder="votre mot de passe"
           class="w-full rounded-lg bg-[#1f4a63] border border-white/10 text-white placeholder-white/60 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
         />
@@ -60,14 +60,6 @@
       >
         {{ loading ? 'Connexion...' : 'Se connecter' }}
       </button>
-
-      <!-- Lien bas -->
-      <p class="text-center text-sm text-slate-300">
-        Pas de compte ?
-        <a routerLink="/register" class="underline underline-offset-2 text-white"
-          >Créer un compte</a
-        >
-      </p>
     </form>
   </div>
 </div>
