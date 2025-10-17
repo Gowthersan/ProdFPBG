@@ -1,6 +1,6 @@
 {
   "/api": {
-    "target": "http://localhost:4000",
+    "target": "https://api.fpbg.singcloud.ga/",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug",
