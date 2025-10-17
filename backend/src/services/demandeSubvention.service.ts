@@ -105,7 +105,7 @@ export class DemandeSubventionService {
       // 1️⃣ Vérifier que l'utilisateur existe et récupérer son organisation
       const utilisateur = await prisma.utilisateur.findUnique({
         where: { id: idUtilisateur },
-        include: { organisation: true },
+        include: { organisation: true }
       });
 
       if (!utilisateur) {
@@ -176,8 +176,8 @@ export class DemandeSubventionService {
             // Étape 7 - Durabilité
             // ========================================
             texteDurabilite: data.sustainability,
-            texteReplication: data.replicability || data.sustainability,
-          },
+            texteReplication: data.replicability || data.sustainability
+          }
         });
 
         console.log('✅ Demande créée avec ID:', nouveleDemande.id);
@@ -203,8 +203,8 @@ export class DemandeSubventionService {
                 titre: act.title,
                 debut: new Date(act.start),
                 fin: new Date(act.end),
-                resume: act.summary,
-              },
+                resume: act.summary
+              }
             });
 
             console.log(`  ✅ Activité ${i + 1} créée:`, act.title);
@@ -225,8 +225,8 @@ export class DemandeSubventionService {
                     idActivite: activiteCreee.id,
                     ordre: j,
                     libelle: sub.label,
-                    resume: sub.summary || null,
-                  },
+                    resume: sub.summary || null
+                  }
                 });
               }
               console.log(`    ✅ ${act.subs.length} sous-activité(s) créée(s)`);
@@ -251,8 +251,8 @@ export class DemandeSubventionService {
                     type: 'DIRECT',
                     cfa: new Prisma.Decimal(line.cfa),
                     pctFpbg: line.fpbgPct,
-                    pctCofin: line.cofinPct,
-                  },
+                    pctCofin: line.cofinPct
+                  }
                 });
               }
               console.log(`    ✅ ${act.budget.lines.length} ligne(s) de budget créée(s)`);
@@ -278,8 +278,8 @@ export class DemandeSubventionService {
                 idDemande: nouveleDemande.id,
                 ordre: i,
                 description: risk.description,
-                mitigation: risk.mitigation,
-              },
+                mitigation: risk.mitigation
+              }
             });
           }
           console.log(`✅ ${data.risks.length} risque(s) créé(s)`);
@@ -320,7 +320,7 @@ export class DemandeSubventionService {
                 'CARTOGRAPHIE',
                 'FICHE_CIRCUIT',
                 'BUDGET_DETAILLE',
-                'CHRONOGRAMME',
+                'CHRONOGRAMME'
               ];
 
               if (!validKeys.includes(documentKey)) {
@@ -340,8 +340,8 @@ export class DemandeSubventionService {
                   tailleOctets: file.size,
                   cleStockage: file.path, // Chemin complet sur le serveur
                   url: `/uploads/projets/${file.filename}`, // URL publique
-                  requis: metadata?.required || false,
-                },
+                  requis: metadata?.required || false
+                }
               });
             }
           }
@@ -358,8 +358,8 @@ export class DemandeSubventionService {
                 idDemande: nouveleDemande.id,
                 source: `${collab.prenom} ${collab.nom} (${collab.email})`,
                 montant: new Prisma.Decimal(0), // Montant à définir plus tard
-                enNature: false,
-              },
+                enNature: false
+              }
             });
           }
           console.log(`✅ ${data.collaborateurs.length} collaborateur(s) enregistré(s)`);
@@ -375,24 +375,24 @@ export class DemandeSubventionService {
                 id: true,
                 email: true,
                 prenom: true,
-                nom: true,
-              },
+                nom: true
+              }
             },
             activites: {
               include: {
                 sousActivites: true,
-                lignesBudget: true,
+                lignesBudget: true
               },
-              orderBy: { ordre: 'asc' },
+              orderBy: { ordre: 'asc' }
             },
             risques: {
-              orderBy: { ordre: 'asc' },
+              orderBy: { ordre: 'asc' }
             },
             piecesJointes: true,
-            cofinanceurs: true,
-          },
+            cofinanceurs: true
+          }
         });
-      });
+      }, { timeout: 25000 });
 
       console.log('🎉 Projet soumis avec succès !');
       return demande;
@@ -430,7 +430,7 @@ export class DemandeSubventionService {
           // Vérifier que l'utilisateur existe
           const utilisateur = await tx.utilisateur.findUnique({
             where: { id: idUtilisateur },
-            include: { organisation: true },
+            include: { organisation: true }
           });
 
           if (!utilisateur) {
@@ -476,7 +476,7 @@ export class DemandeSubventionService {
               detailsFinancement: data.detailsFinancement ?? null,
               honneurAccepte: data.honneurAccepte ?? false,
               texteDurabilite: data.texteDurabilite!,
-              texteReplication: data.texteReplication ?? null,
+              texteReplication: data.texteReplication ?? null
             },
             include: {
               organisation: true,
@@ -485,15 +485,15 @@ export class DemandeSubventionService {
                   id: true,
                   email: true,
                   prenom: true,
-                  nom: true,
-                },
+                  nom: true
+                }
               },
               appelProjets: {
                 include: {
-                  typeSubvention: true,
-                },
-              },
-            },
+                  typeSubvention: true
+                }
+              }
+            }
           });
 
           return demandeCree;
@@ -533,28 +533,33 @@ export class DemandeSubventionService {
         where.idAppelProjets = filtres.idAppelProjets;
       }
 
-      const demandes = await prisma.demandeSubvention.findMany({
-        where,
-        include: {
-          organisation: true,
-          soumisPar: {
-            select: {
-              id: true,
-              email: true,
-              prenom: true,
-              nom: true,
-            },
-          },
-          appelProjets: {
+      const demandes = await prisma.$transaction(
+        async (tx) => {
+          return tx.demandeSubvention.findMany({
+            where,
             include: {
-              typeSubvention: true,
+              organisation: true,
+              soumisPar: {
+                select: {
+                  id: true,
+                  email: true,
+                  prenom: true,
+                  nom: true
+                }
+              },
+              appelProjets: {
+                include: {
+                  typeSubvention: true
+                }
+              }
             },
-          },
+            orderBy: {
+              creeLe: 'desc'
+            }
+          });
         },
-        orderBy: {
-          creeLe: 'desc',
-        },
-      });
+        { timeout: 25000 }
+      );
 
       return demandes;
     } catch (error: any) {
@@ -564,60 +569,90 @@ export class DemandeSubventionService {
   }
 
   /**
-   * Récupérer les demandes d'un utilisateur
+   * ✅ NOUVELLE MÉTHODE - Récupérer les demandes d'un utilisateur PAR EMAIL
+   * Cette méthode est spécifique pour le dashboard utilisateur
+   * Elle vérifie l'email de l'utilisateur connecté et retourne SES demandes
    */
   async obtenirParUtilisateur(idUtilisateur: string) {
     try {
-      console.log('🔍 [SERVICE] Recherche des demandes pour utilisateur:', idUtilisateur);
+      console.log('🔍 [USER SERVICE] Recherche des demandes pour utilisateur ID:', idUtilisateur);
 
-      // Vérifier que l'utilisateur existe
-      const utilisateur = await prisma.utilisateur.findUnique({
+      // 1️⃣ Trouver l'utilisateur connecté
+      const utilisateurConnecte = await prisma.utilisateur.findUnique({
         where: { id: idUtilisateur },
         select: { id: true, email: true, nom: true, prenom: true }
       });
 
-      console.log('   Utilisateur trouvé:', utilisateur);
+      if (!utilisateurConnecte) {
+        console.error('❌ Utilisateur non trouvé avec ID:', idUtilisateur);
+        throw new AppError('Utilisateur non trouvé.', 404);
+      }
 
-      // Vérifier combien de demandes existent au total
-      const totalDemandes = await prisma.demandeSubvention.count();
-      console.log('   Total demandes en base:', totalDemandes);
+      console.log('✅ Utilisateur connecté:', {
+        id: utilisateurConnecte.id,
+        email: utilisateurConnecte.email,
+        nom: utilisateurConnecte.prenom + ' ' + (utilisateurConnecte.nom || '')
+      });
 
-      // Chercher les demandes de cet utilisateur
-      const demandes = await prisma.demandeSubvention.findMany({
-        where: { idSoumisPar: idUtilisateur },
-        include: {
-          organisation: true,
-          appelProjets: {
+      // 2️⃣ Chercher TOUTES les demandes qui ont cet email dans soumisPar
+      // On va chercher toutes les demandes et filtrer par email
+      const demandes = await prisma.$transaction(
+        async (tx) => {
+          return tx.demandeSubvention.findMany({
             include: {
-              typeSubvention: true,
+              organisation: true,
+              soumisPar: {
+                select: {
+                  id: true,
+                  email: true,
+                  prenom: true,
+                  nom: true
+                }
+              },
+              appelProjets: {
+                include: {
+                  typeSubvention: true
+                }
+              },
+              activites: {
+                include: {
+                  sousActivites: true,
+                  lignesBudget: true
+                }
+              },
+              risques: true,
+              piecesJointes: true
             },
-          },
-          activites: {
-            include: {
-              sousActivites: true,
-              lignesBudget: true,
-            },
-          },
-          risques: true,
-          piecesJointes: true,
+            orderBy: {
+              creeLe: 'desc'
+            }
+          });
         },
-        orderBy: {
-          creeLe: 'desc',
-        },
-      });
+        { timeout: 25000 }
+      );
 
-      console.log('   Demandes trouvées pour cet utilisateur:', demandes.length);
+      // 3️⃣ Filtrer par EMAIL (la vérité source)
+      const demandesUtilisateur = demandes.filter((d) => d.soumisPar?.email === utilisateurConnecte.email);
 
-      // DEBUG: Afficher les IDs de toutes les demandes
-      const toutesLesDemandes = await prisma.demandeSubvention.findMany({
-        select: { id: true, titre: true, idSoumisPar: true }
-      });
-      console.log('   DEBUG - Toutes les demandes avec leurs idSoumisPar:');
-      toutesLesDemandes.forEach(d => {
-        console.log(`     - ${d.titre}: idSoumisPar="${d.idSoumisPar}" (match: ${d.idSoumisPar === idUtilisateur})`);
-      });
+      console.log(`✅ Total demandes en base: ${demandes.length}`);
+      console.log(`✅ Demandes pour ${utilisateurConnecte.email}: ${demandesUtilisateur.length}`);
 
-      return demandes;
+      // DEBUG: Afficher les correspondances
+      if (demandesUtilisateur.length > 0) {
+        console.log('📋 Demandes trouvées:');
+        demandesUtilisateur.forEach((d) => {
+          console.log(`   ✓ "${d.titre}" - soumis par: ${d.soumisPar?.email}`);
+        });
+      } else {
+        console.log('⚠️  Aucune demande trouvée pour cet email');
+        console.log('   DEBUG - Emails dans la base:');
+        const emailsUniques = [...new Set(demandes.map((d) => d.soumisPar?.email).filter(Boolean))];
+        emailsUniques.forEach((email) => {
+          console.log(`     - ${email}`);
+        });
+      }
+
+      return demandesUtilisateur;
     } catch (error: any) {
       console.error('❌ Erreur récupération demandes utilisateur:', error);
       throw new AppError('Erreur lors de la récupération des demandes: ' + error.message, 500);
@@ -638,24 +673,24 @@ export class DemandeSubventionService {
               id: true,
               email: true,
               prenom: true,
-              nom: true,
-            },
+              nom: true
+            }
           },
           appelProjets: {
             include: {
               typeSubvention: true,
-              thematiques: true,
-            },
+              thematiques: true
+            }
           },
           activites: {
             include: {
               sousActivites: true,
-              lignesBudget: true,
+              lignesBudget: true
             },
-            orderBy: { ordre: 'asc' },
+            orderBy: { ordre: 'asc' }
           },
           risques: {
-            orderBy: { ordre: 'asc' },
+            orderBy: { ordre: 'asc' }
           },
           piecesJointes: true,
           evaluations: {
@@ -665,17 +700,17 @@ export class DemandeSubventionService {
                   id: true,
                   email: true,
                   prenom: true,
-                  nom: true,
-                },
-              },
-            },
+                  nom: true
+                }
+              }
+            }
           },
           contrat: true,
           rapports: {
-            orderBy: { dateEcheance: 'asc' },
+            orderBy: { dateEcheance: 'asc' }
           },
-          cofinanceurs: true,
-        },
+          cofinanceurs: true
+        }
       });
 
       if (!demande) {
@@ -686,7 +721,7 @@ export class DemandeSubventionService {
       if (idUtilisateur && demande.idSoumisPar !== idUtilisateur) {
         // Vérifier si l'utilisateur est admin
         const utilisateur = await prisma.utilisateur.findUnique({
-          where: { id: idUtilisateur },
+          where: { id: idUtilisateur }
         });
 
         if (!utilisateur || utilisateur.role !== 'ADMINISTRATEUR') {
@@ -709,7 +744,7 @@ export class DemandeSubventionService {
     try {
       // Vérifier que la demande existe et appartient à l'utilisateur
       const demandeExistante = await prisma.demandeSubvention.findUnique({
-        where: { id },
+        where: { id }
       });
 
       if (!demandeExistante) {
@@ -751,15 +786,15 @@ export class DemandeSubventionService {
               id: true,
               email: true,
               prenom: true,
-              nom: true,
-            },
+              nom: true
+            }
           },
           appelProjets: {
             include: {
-              typeSubvention: true,
-            },
-          },
-        },
+              typeSubvention: true
+            }
+          }
+        }
       });
 
       return demande;
@@ -777,7 +812,7 @@ export class DemandeSubventionService {
     try {
       // Vérifier que la demande existe et appartient à l'utilisateur
       const demande = await prisma.demandeSubvention.findUnique({
-        where: { id },
+        where: { id }
       });
 
       if (!demande) {
@@ -790,7 +825,7 @@ export class DemandeSubventionService {
 
       // Supprimer la demande (cascade delete sur les relations)
       await prisma.demandeSubvention.delete({
-        where: { id },
+        where: { id }
       });
 
       return { message: 'Demande supprimée avec succès.' };
@@ -810,18 +845,18 @@ export class DemandeSubventionService {
 
       const parStatut = await prisma.demandeSubvention.groupBy({
         by: ['statut'],
-        _count: true,
+        _count: true
       });
 
       const parTypeSoumission = await prisma.demandeSubvention.groupBy({
         by: ['typeSoumission'],
-        _count: true,
+        _count: true
       });
 
       const demandesRecentes = await prisma.demandeSubvention.findMany({
         take: 5,
         orderBy: {
-          creeLe: 'desc',
+          creeLe: 'desc'
         },
         include: {
           organisation: true,
@@ -830,23 +865,23 @@ export class DemandeSubventionService {
               id: true,
               email: true,
               prenom: true,
-              nom: true,
-            },
-          },
-        },
+              nom: true
+            }
+          }
+        }
       });
 
       return {
         total,
         parStatut: parStatut.map((s) => ({
           statut: s.statut,
-          nombre: s._count,
+          nombre: s._count
         })),
         parTypeSoumission: parTypeSoumission.map((t) => ({
           type: t.typeSoumission,
-          nombre: t._count,
+          nombre: t._count
         })),
-        demandesRecentes,
+        demandesRecentes
       };
     } catch (error: any) {
       console.error('Erreur statistiques:', error);
@@ -861,7 +896,7 @@ export class DemandeSubventionService {
     try {
       // Vérifier que l'utilisateur est admin
       const admin = await prisma.utilisateur.findUnique({
-        where: { id: idAdmin },
+        where: { id: idAdmin }
       });
 
       if (!admin || admin.role !== 'ADMINISTRATEUR') {
@@ -879,10 +914,10 @@ export class DemandeSubventionService {
               id: true,
               email: true,
               prenom: true,
-              nom: true,
-            },
-          },
-        },
+              nom: true
+            }
+          }
+        }
       });
 
       // Logger l'action dans le journal d'audit
@@ -893,9 +928,9 @@ export class DemandeSubventionService {
           action: 'changement_statut',
           idUtilisateur: idAdmin,
           details: {
-            nouveauStatut: nouveauStatut,
-          },
-        },
+            nouveauStatut: nouveauStatut
+          }
+        }
       });
 
       return demande;
