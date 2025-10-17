@@ -1,6 +1,6 @@
 {
   "/api": {
-    "target": "https://api.fpbg.singcloud.ga/",
+    "target": "https://api.fpbg.singcloud.ga",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug",

@@ -7,7 +7,7 @@ import packageInfo from '../../package.json';
 export const environment = {
   appVersion: packageInfo.version,
   production: true,
-  urlServer: 'https://api.fpbg.singcloud.ga/',
+  urlServer: 'https://api.fpbg.singcloud.ga',
 };
 
 /*
