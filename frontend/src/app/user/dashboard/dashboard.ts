@@ -605,4 +605,42 @@ export class Dashboard implements OnInit, OnDestroy {
     return this.mesDemandes().filter((d) => d.statut === 'SOUMIS' || d.statut === 'EN_REVUE')
       .length;
   }
+
+  /**
+   * Calculer le budget total du projet
+   * Utilise montantTotal s'il existe, sinon calcule depuis les lignes de budget
+   */
+  getBudgetTotal(demande: DemandeSubvention): number {
+    // Si montantTotal existe, l'utiliser
+    if (demande.montantTotal && demande.montantTotal > 0) {
+      return demande.montantTotal;
+    }
+
+    // Sinon, calculer depuis les activités et lignes de budget
+    let total = 0;
+
+    if (demande.activites && demande.activites.length > 0) {
+      demande.activites.forEach((activite) => {
+        if (activite.lignesBudget && activite.lignesBudget.length > 0) {
+          activite.lignesBudget.forEach((ligne) => {
+            total += ligne.cfa || 0;
+          });
+        }
+      });
+    }
+
+    // Si on a trouvé un total via les lignes de budget, le retourner
+    if (total > 0) {
+      return total;
+    }
+
+    // Sinon, utiliser les champs de budget directs
+    const terrainCfa = demande.terrainCfa || 0;
+    const investCfa = demande.investCfa || 0;
+    const overheadCfa = demande.overheadCfa || 0;
+    const cofinCfa = demande.cofinCfa || 0;
+    const fraisIndirectsCfa = demande.fraisIndirectsCfa || 0;
+
+    return terrainCfa + investCfa + overheadCfa + cofinCfa + fraisIndirectsCfa;
+  }
 }

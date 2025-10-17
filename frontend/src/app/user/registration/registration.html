@@ -48,9 +48,23 @@
     <!-- Alerte erreur globale -->
     <div
       *ngIf="error()"
-      class="px-4 py-3 mt-4 text-red-200 border rounded-md border-red-500/30 bg-red-500/10"
+      class="px-4 py-3 mt-4 border rounded-md transition-all duration-300"
+      [ngClass]="{
+        'text-red-200 border-red-500/30 bg-red-500/10': !emailAlreadyUsed(),
+        'text-yellow-200 border-yellow-500/50 bg-yellow-500/20 animate-pulse': emailAlreadyUsed()
+      }"
     >
-      {{ error() }}
+      <div class="flex items-start gap-2">
+        <svg *ngIf="emailAlreadyUsed()" class="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <div class="flex-1">
+          {{ error() }}
+          <a *ngIf="emailAlreadyUsed()" routerLink="/login" class="block mt-2 underline hover:text-white">
+            → Se connecter avec cet email
+          </a>
+        </div>
+      </div>
     </div>
 
     <!-- ===== Étape 1 : Organisme ===== -->
@@ -152,14 +166,24 @@
           <input
             type="email"
             formControlName="email"
-            class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
+            class="w-full rounded-md bg-[#1F3B52] px-4 py-2.5 transition-all duration-300"
+            [ngClass]="{
+              'border border-white/10': !form.get('email')?.hasError('emailUsed'),
+              'border-2 border-yellow-500 bg-yellow-500/10': form.get('email')?.hasError('emailUsed')
+            }"
             placeholder="fpbg@gmail.com"
           />
           <p
             class="mt-1 text-xs text-red-300"
-            *ngIf="form.get('email')?.touched && form.get('email')?.invalid"
+            *ngIf="form.get('email')?.touched && form.get('email')?.hasError('email')"
           >
             Email valide requis.
+          </p>
+          <p
+            class="mt-1 text-xs text-yellow-300 font-medium"
+            *ngIf="form.get('email')?.hasError('emailUsed')"
+          >
+            ⚠️ Cet email est déjà enregistré. Utilisez un autre email ou connectez-vous.
           </p>
         </div>
         <div>
@@ -285,14 +309,24 @@
           <input
             type="email"
             formControlName="email"
-            class="w-full rounded-md bg-[#1F3B52] border border-white/10 px-4 py-2.5"
+            class="w-full rounded-md bg-[#1F3B52] px-4 py-2.5 transition-all duration-300"
+            [ngClass]="{
+              'border border-white/10': !form.get('email')?.hasError('emailUsed'),
+              'border-2 border-yellow-500 bg-yellow-500/10': form.get('email')?.hasError('emailUsed')
+            }"
             placeholder="fpbg@gmail.com"
           />
           <p
             class="mt-1 text-xs text-red-300"
-            *ngIf="form.get('email')?.touched && form.get('email')?.invalid"
+            *ngIf="form.get('email')?.touched && form.get('email')?.hasError('email')"
           >
             Email valide requis.
+          </p>
+          <p
+            class="mt-1 text-xs text-yellow-300 font-medium"
+            *ngIf="form.get('email')?.hasError('emailUsed')"
+          >
+            ⚠️ Cet email est déjà enregistré. Utilisez un autre email ou connectez-vous.
           </p>
         </div>
       </div>

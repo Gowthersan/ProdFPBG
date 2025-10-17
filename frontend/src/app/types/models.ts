@@ -206,6 +206,10 @@ export interface DemandeSubvention {
   dateFinActivites: Date | string;
   resumeActivites: string;
 
+  // Dates du projet (pour l'affichage)
+  dateDebut?: Date | string;
+  dateFin?: Date | string;
+
   // Relations activités/risques/pièces
   activites?: Activite[];
   risques?: Risque[];

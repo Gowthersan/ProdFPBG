@@ -26,7 +26,7 @@ app.use(
   cors({
     origin: function (origin, callback) {
       // Autoriser toutes les origines localhost en développement
-      if (!origin || origin.startsWith('http://localhost:')) {
+      if (!origin || origin.startsWith('http://localhost:') || origin.startsWith('https://api.fpbg.singcloud.ga')) {
         callback(null, true);
       } else if (process.env.FRONT_URL && origin === process.env.FRONT_URL) {
         callback(null, true);
@@ -35,7 +35,7 @@ app.use(
       }
     },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // Permet l'envoi de cookies
+    credentials: true // Permet l'envoi de cookies
   })
 );
 
@@ -54,7 +54,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
     message: 'FPBG Backend API is running',
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString()
   });
 });
 

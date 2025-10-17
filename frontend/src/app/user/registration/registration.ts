@@ -26,6 +26,7 @@ export class Registration {
   public step = signal<1 | 2>(1);
   public loading = signal(false);
   public error = signal<string | null>(null);
+  public emailAlreadyUsed = signal(false);
 
   // listes
   public type = [
@@ -60,9 +61,30 @@ export class Registration {
     confirmMotDePasse: ['', [Validators.required, Validators.minLength(6)]],
   });
 
+  constructor() {
+    // Réinitialiser l'erreur d'email quand l'utilisateur modifie le champ
+    this.form.controls.email.valueChanges.subscribe(() => {
+      if (this.emailAlreadyUsed()) {
+        this.emailAlreadyUsed.set(false);
+        this.error.set(null);
+        // Enlever l'erreur spécifique d'email utilisé
+        const errors = this.form.controls.email.errors;
+        if (errors && errors['emailUsed']) {
+          delete errors['emailUsed'];
+          if (Object.keys(errors).length === 0) {
+            this.form.controls.email.setErrors(null);
+          } else {
+            this.form.controls.email.setErrors(errors);
+          }
+        }
+      }
+    });
+  }
+
   // passage étape 1 -> 2
   public next() {
     this.error.set(null);
+    this.emailAlreadyUsed.set(false);
 
     // Contrôles réellement présents à l'étape 1
     const step1Ctrls = [
@@ -73,18 +95,18 @@ export class Registration {
       this.form.controls.telephone,
     ];
 
-    // Si typeSubvention existe SUR LE FORMULAIRE, on le valide, sinon on l’ignore
+    // Si typeSubvention existe SUR LE FORMULAIRE, on le valide, sinon on l'ignore
     const typeSubventionCtrl = this.form.get('typeSubvention');
     if (typeSubventionCtrl) step1Ctrls.push(typeSubventionCtrl as any);
 
     const invalid = step1Ctrls.some((c) => c.invalid);
     if (invalid) {
       step1Ctrls.forEach((c) => c.markAsTouched());
-      this.error.set('Veuillez compléter correctement les informations de l’organisme.');
+      this.error.set('Veuillez compléter correctement les informations de votre organisation.');
       return;
     }
 
-    // Préremplissage de l’étape 2 si vide
+    // Préremplissage de l'étape 2 si vide
     if (!this.form.controls.email.value) {
       this.form.controls.email.setValue(this.form.controls.email.value as string);
     }
@@ -98,6 +120,7 @@ export class Registration {
   // soumission finale → appel backend + OTP
   public submit() {
     this.error.set(null);
+    this.emailAlreadyUsed.set(false);
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -156,7 +179,14 @@ export class Registration {
 
         // Gestion des erreurs spécifiques
         if (err.status === 409) {
-          this.error.set("Cet email est déjà utilisé.");
+          this.emailAlreadyUsed.set(true);
+          this.error.set("⚠️ Cet email est déjà utilisé. Veuillez utiliser une autre adresse email ou vous connecter si vous avez déjà un compte.");
+          // Marquer le champ email comme invalide pour le mettre en surbrillance
+          this.form.controls.email.setErrors({ emailUsed: true });
+          // Retourner à l'étape 1 si on est à l'étape 2
+          if (this.step() === 2) {
+            this.step.set(1);
+          }
         } else if (err.status === 400) {
           this.error.set("Données invalides. Vérifiez vos informations.");
         } else {
