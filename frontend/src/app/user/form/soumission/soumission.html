@@ -14,7 +14,9 @@
           <div
             class="rounded-md bg-[#eaf6ef] text-[#16a34a] text-xs font-semibold px-3 py-1 border border-[#16a34a]/20"
           >
-            Type de subvention choisie&nbsp;&nbsp;<span class="font-bold">Petite subvention</span>
+            Type de subvention choisie&nbsp;&nbsp;<span class="font-bold">{{
+              typeSubvention()
+            }}</span>
           </div>
         </div>
       </div>
@@ -28,8 +30,8 @@
 
         <div class="px-4 py-2 text-right border rounded-md border-slate-200">
           <div class="text-xs tracking-wide uppercase text-slate-500">Montant</div>
-          <div class="text-sm font-semibold text-slate-800">5.000.000 – 50.000.000 FCFA</div>
-          <div class="text-xs text-slate-500">Durée max: 12 mois</div>
+          <div class="text-sm font-semibold text-slate-800">{{ montantRange() }}</div>
+          <div class="text-xs text-slate-500">Durée max: {{ dureeMax() }}</div>
         </div>
       </div>
     </div>
@@ -57,10 +59,10 @@
           >
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
-          <span class="ml-2 text-sm font-medium">accéder à mon dashboard</span>
+          <span class="ml-2 text-sm font-medium">Accéder à mon dashboard</span>
         </button>
 
-        <h3 class="mt-4 text-xs font-semibold tracking-wide text-slate-500">progression</h3>
+        <h3 class="mt-4 text-xs font-semibold tracking-wide text-slate-500">Progression</h3>
         <div class="flex items-center justify-between mt-2 text-xs text-slate-600">
           <span class="sr-only">Progression</span>
           <span></span>

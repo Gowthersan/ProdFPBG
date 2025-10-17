@@ -129,6 +129,27 @@ export class SubmissionWizard {
   usertype: string = '';
   userAccount: any = null;
 
+  // 🎯 Configuration des types de subvention
+  subventionConfig: Record<string, { libelle: string; montantMin: string; montantMax: string; dureeMax: string }> = {
+    'PETITE': {
+      libelle: 'Petite subvention',
+      montantMin: '5.000.000',
+      montantMax: '50.000.000',
+      dureeMax: '12 mois'
+    },
+    'MOYENNE': {
+      libelle: 'Moyenne subvention',
+      montantMin: '51.000.000',
+      montantMax: '200.000.000',
+      dureeMax: '24 mois'
+    }
+  };
+
+  // Signals pour les informations de type de subvention
+  typeSubvention = signal<string>('Petite subvention');
+  montantRange = signal<string>('5.000.000 – 50.000.000 FCFA');
+  dureeMax = signal<string>('12 mois');
+
   // État des documents (pour l'interface de sélection/upload)
   documentsState: Map<
     string,
@@ -179,9 +200,12 @@ export class SubmissionWizard {
   };
   next = () => this.goTo(this.current() + 1);
   prev = () => this.goTo(this.current() - 1);
+
+  // Calcul de la progression basé sur l'étape actuelle (simple et visuel)
   progress = computed(() => {
-    const { done, total } = this.computeProgressParts();
-    return total > 0 ? Math.round((done / total) * 100) : 0;
+    const currentStep = this.current() + 1; // Étape actuelle (1-9)
+    const totalSteps = this.steps.length; // Total d'étapes (9)
+    return Math.round((currentStep / totalSteps) * 100);
   });
 
   debugStep3(): any {
@@ -890,13 +914,46 @@ export class SubmissionWizard {
    */
   private loadUserInfo(): void {
     try {
+      // 🎯 Charger depuis la clé 'user' qui contient les données complètes du backend
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        console.log('📋 Données utilisateur complètes:', user);
+
+        // Déterminer le type d'utilisateur
+        const org = user?.organisation;
+        this.usertype = org ? 'organisation' : 'user';
+
+        // Charger le type de subvention depuis l'organisation
+        if (org?.typeSubvention) {
+          const typeSubv = org.typeSubvention;
+          const code = typeSubv.code || 'PETITE';
+          const config = this.subventionConfig[code];
+
+          if (config) {
+            this.typeSubvention.set(config.libelle);
+            this.montantRange.set(`${config.montantMin} – ${config.montantMax} FCFA`);
+            this.dureeMax.set(config.dureeMax);
+            console.log('✅ Type de subvention chargé:', config.libelle, '(code:', code, ')');
+          } else {
+            console.warn('⚠️ Aucune configuration trouvée pour le code:', code);
+          }
+        } else {
+          console.warn('⚠️ Aucun typeSubvention trouvé dans l\'organisation');
+        }
+      }
+
+      // Fallback sur fpbg.account pour compatibilité
       const accountData = localStorage.getItem('fpbg.account');
       if (accountData) {
         this.userAccount = JSON.parse(accountData);
-        this.usertype = this.userAccount?.type || '';
-        console.log("📋 Type d'organisation détecté:", this.usertype);
-        this.updateAttachmentsValidators();
+        if (!this.usertype) {
+          this.usertype = this.userAccount?.type || '';
+        }
+        console.log("📋 Type d'organisation (fallback):", this.usertype);
       }
+
+      this.updateAttachmentsValidators();
     } catch (error) {
       console.error('❌ Erreur lecture compte utilisateur:', error);
     }

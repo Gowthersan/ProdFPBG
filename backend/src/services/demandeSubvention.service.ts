@@ -631,11 +631,35 @@ export class DemandeSubventionService {
         { timeout: 25000 }
       );
 
-      // 3️⃣ Filtrer par EMAIL (la vérité source)
-      const demandesUtilisateur = demandes.filter((d) => d.soumisPar?.email === utilisateurConnecte.email);
+      // 3️⃣ DOUBLE VÉRIFICATION : EMAIL + ID pour garantir que c'est le bon utilisateur
+      const emailRecherche = utilisateurConnecte.email.trim().toLowerCase();
+      const idRecherche = utilisateurConnecte.id;
 
-      console.log(`✅ Total demandes en base: ${demandes.length}`);
-      console.log(`✅ Demandes pour ${utilisateurConnecte.email}: ${demandesUtilisateur.length}`);
+      console.log(`🎯 Utilisateur recherché:`);
+      console.log(`   - ID: "${idRecherche}"`);
+      console.log(`   - Email: "${emailRecherche}"`);
+      console.log(`\n🔍 Vérification des demandes...`);
+
+      const demandesUtilisateur = demandes.filter((d) => {
+        const emailDemande = d.soumisPar?.email?.trim().toLowerCase();
+        const idDemande = d.idSoumisPar;
+
+        // Double condition : EMAIL ET ID doivent correspondre
+        const emailMatch = emailDemande === emailRecherche;
+        const idMatch = idDemande === idRecherche;
+        const doubleMatch = emailMatch && idMatch;
+
+        console.log(`   📄 Demande: "${d.titre}"`);
+        console.log(`      - idSoumisPar: "${idDemande}" (match: ${idMatch})`);
+        console.log(`      - emailSoumisPar: "${emailDemande}" (match: ${emailMatch})`);
+        console.log(`      ➜ Résultat: ${doubleMatch ? '✅ ACCEPTÉ' : '❌ REJETÉ'}\n`);
+
+        return doubleMatch;
+      });
+
+      console.log(`\n📊 Résumé:`);
+      console.log(`   Total demandes en base: ${demandes.length}`);
+      console.log(`   Demandes pour ${utilisateurConnecte.email}: ${demandesUtilisateur.length}`);
 
       // DEBUG: Afficher les correspondances
       if (demandesUtilisateur.length > 0) {

@@ -24,6 +24,31 @@ const getJwtSecret = (): string => {
   return secret;
 };
 
+/**
+ * Convertir les BigInt en string pour la sérialisation JSON
+ */
+function serializeBigInt(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+
+  if (typeof obj === 'bigint') {
+    return obj.toString();
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(serializeBigInt);
+  }
+
+  if (typeof obj === 'object') {
+    const serialized: any = {};
+    for (const key in obj) {
+      serialized[key] = serializeBigInt(obj[key]);
+    }
+    return serialized;
+  }
+
+  return obj;
+}
+
 export class AuthService {
   /**
    * INSCRIPTION - Étape 1 : Enregistrer un agent FPBG et envoyer l'OTP
@@ -248,6 +273,21 @@ export class AuthService {
             return mapping[type] || 'AUTRE';
           };
 
+          // ÉTAPE 2.5: Trouver le TypeSubvention correspondant
+          let idTypeSubvention: number | undefined;
+          if (registrationData.typeSubvention) {
+            const typeSubventionStr = registrationData.typeSubvention.toLowerCase();
+            const code = typeSubventionStr.includes('petite') ? 'PETITE' :
+                         typeSubventionStr.includes('moyenne') ? 'MOYENNE' : null;
+
+            if (code) {
+              const typeSubvention = await tx.typeSubvention.findUnique({
+                where: { code }
+              });
+              idTypeSubvention = typeSubvention?.id;
+            }
+          }
+
           // ÉTAPE 3: Créer l'Organisation liée
           const type = registrationData.type;
           const organisation = await tx.organisation.create({
@@ -256,9 +296,13 @@ export class AuthService {
               type: mapTypeOrganisation(type),
               email: registrationData.email,
               telephone: registrationData.telephone ?? registrationData.telephoneContact ?? null,
+              idTypeSubvention, // 🎯 Sauvegarder le type de subvention choisi
               utilisateurs: {
                 connect: { id: user.id } // 🔗 Lier l'utilisateur à l'organisation
               }
+            },
+            include: {
+              typeSubvention: true // 🎯 Inclure le typeSubvention dans la réponse
             }
           });
 
@@ -287,7 +331,7 @@ export class AuthService {
           token,
           user: {
             ...userWithoutPassword,
-            organisation: result.organisation
+            organisation: serializeBigInt(result.organisation) // 🎯 Sérialiser les BigInt
           },
           type: 'organisation',
           redirectTo: '/soumission' // 🎯 Redirection vers soumission
@@ -310,7 +354,11 @@ export class AuthService {
     const user = await prisma.utilisateur.findUnique({
       where: { email: email },
       include: {
-        organisation: true
+        organisation: {
+          include: {
+            typeSubvention: true // 🎯 Inclure le type de subvention
+          }
+        }
       }
     });
 
@@ -347,7 +395,7 @@ export class AuthService {
       return {
         message: 'Connexion réussie.',
         token,
-        user: userWithoutSensitiveData,
+        user: serializeBigInt(userWithoutSensitiveData), // 🎯 Sérialiser les BigInt
         type: user.organisation ? 'organisation' : 'user',
         role: user.role, // ✅ Ajouter le rôle dans la réponse
         redirectTo // ✅ Ajouter la redirection basée sur le rôle
@@ -365,14 +413,18 @@ export class AuthService {
     const user = await prisma.utilisateur.findUnique({
       where: { id: userId },
       include: {
-        organisation: true
+        organisation: {
+          include: {
+            typeSubvention: true // 🎯 Inclure le type de subvention
+          }
+        }
       }
     });
 
     if (user) {
       const { hashMotPasse: _, ...userWithoutPassword } = user;
       return {
-        user: userWithoutPassword,
+        user: serializeBigInt(userWithoutPassword), // 🎯 Sérialiser les BigInt
         type: user.organisation ? 'organisation' : 'user'
       };
     }

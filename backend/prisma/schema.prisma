@@ -145,8 +145,9 @@ model TypeSubvention {
   montantMaxCfa BigInt
   dureeMaxMois  Int
 
-  appels      AppelProjets[]
-  thematiques Thematique[]
+  appels        AppelProjets[]
+  thematiques   Thematique[]
+  organisations Organisation[] // Organisations qui ont choisi ce type de subvention
 }
 
 model AppelProjets {
@@ -199,6 +200,10 @@ model Organisation {
   email     String?
   telephone String? // Renommé de phone
 
+  // Type de subvention choisi lors de l'inscription
+  typeSubvention   TypeSubvention? @relation(fields: [idTypeSubvention], references: [id], onDelete: SetNull)
+  idTypeSubvention Int?
+
   liensAppel   LienAppelOrganisation[]
   projets      DemandeSubvention[]
   utilisateurs Utilisateur[] // Renommé de users
@@ -208,6 +213,7 @@ model Organisation {
 
   @@index([type])
   @@index([nom])
+  @@index([idTypeSubvention])
 }
 
 model LienAppelOrganisation {
