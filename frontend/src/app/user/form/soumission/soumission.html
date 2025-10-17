@@ -1,18 +1,20 @@
 <!-- soumission.html (organisé) -->
-<div class="min-h-screen p-4 bg-slate-50 md:p-6">
+<div class="min-h-screen p-2 sm:p-3 md:p-4 lg:p-6 bg-slate-50">
   <!-- HEADER -->
   <header class="bg-white border-b border-slate-200">
-    <div class="flex items-center justify-between w-full gap-4 px-4 py-3 md:px-6">
+    <div class="flex flex-col min-[600px]:flex-row items-start min-[600px]:items-center justify-between w-full gap-2 min-[600px]:gap-3 lg:gap-4 px-2 sm:px-3 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4">
       <!-- À gauche -->
-      <div class="min-w-0">
-        <div class="text-sm text-slate-500">
-          APPEL À PROJET FPBG <span class="text-slate-400">obligations bleues –</span>
-          <span class="text-slate-700">Conservation Marine</span>
+      <div class="min-w-0 flex-1 min-[600px]:flex-initial">
+        <div class="text-[0.75rem] min-[400px]:text-[0.8125rem] sm:text-sm text-slate-500">
+          <span class="hidden min-[500px]:inline">APPEL À PROJET</span>
+          <span class="min-[500px]:hidden">PROJET</span> FPBG
+          <span class="text-slate-400 hidden min-[800px]:inline">obligations bleues –</span>
+          <span class="text-slate-700 hidden min-[600px]:inline">Conservation Marine</span>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 mt-2">
+        <div class="flex flex-wrap items-center gap-1 min-[400px]:gap-2 sm:gap-3 mt-1 sm:mt-2">
           <div
-            class="rounded-md bg-[#eaf6ef] text-[#16a34a] text-xs font-semibold px-3 py-1 border border-[#16a34a]/20"
+            class="rounded-md bg-[#eaf6ef] text-[#16a34a] text-[0.625rem] min-[400px]:text-[0.6875rem] sm:text-xs font-semibold px-2 min-[400px]:px-2.5 sm:px-3 py-0.5 sm:py-1 border border-[#16a34a]/20"
           >
             Type de subvention choisie&nbsp;&nbsp;<span class="font-bold">{{
               typeSubvention()
@@ -22,16 +24,21 @@
       </div>
 
       <!-- À droite -->
-      <div class="flex items-center gap-6 shrink-0">
-        <div class="flex items-center gap-2 text-xs text-slate-500">
-          <span class="i-lucide-save -mt-0.5"></span>
-          Sauvegardé <span class="font-semibold text-slate-700">{{ lastSaved() }}</span>
+      <div class="flex flex-col min-[500px]:flex-row items-start min-[500px]:items-center gap-1 min-[500px]:gap-2 sm:gap-3 md:gap-4 lg:gap-6 shrink-0 w-full min-[600px]:w-auto">
+        <div class="flex items-center gap-1 sm:gap-2 text-[0.625rem] min-[400px]:text-[0.6875rem] sm:text-xs text-slate-500">
+          <span class="i-lucide-save -mt-0.5 text-[0.75rem] sm:text-sm"></span>
+          <span class="hidden min-[400px]:inline">Sauvegardé</span>
+          <span class="min-[400px]:hidden">Save</span>
+          <span class="font-semibold text-slate-700">{{ lastSaved() }}</span>
         </div>
 
-        <div class="px-4 py-2 text-right border rounded-md border-slate-200">
-          <div class="text-xs tracking-wide uppercase text-slate-500">Montant</div>
-          <div class="text-sm font-semibold text-slate-800">{{ montantRange() }}</div>
-          <div class="text-xs text-slate-500">Durée max: {{ dureeMax() }}</div>
+        <div class="px-2 min-[400px]:px-2.5 sm:px-3 md:px-4 py-1 min-[400px]:py-1.5 sm:py-2 text-right border rounded-md border-slate-200 flex-1 min-[500px]:flex-initial min-w-0">
+          <div class="text-[0.625rem] min-[400px]:text-[0.6875rem] sm:text-xs tracking-wide uppercase text-slate-500">Montant</div>
+          <div class="text-[0.75rem] min-[400px]:text-[0.8125rem] sm:text-sm font-semibold text-slate-800">{{ montantRange() }}</div>
+          <div class="text-[0.625rem] min-[400px]:text-[0.6875rem] sm:text-xs text-slate-500">
+            <span class="hidden min-[400px]:inline">Durée max:</span>
+            <span class="min-[400px]:hidden">Max:</span> {{ dureeMax() }}
+          </div>
         </div>
       </div>
     </div>
@@ -39,19 +46,19 @@
 
   <!-- LAYOUT -->
   <div class="mx-auto bg-white border border-slate-200">
-    <div class="grid lg:grid-cols-[280px_1fr_320px] divide-x divide-slate-200">
+    <div class="grid grid-cols-1 min-[768px]:grid-cols-[200px_1fr] min-[900px]:grid-cols-[220px_1fr] min-[1024px]:grid-cols-[240px_1fr] min-[1280px]:grid-cols-[260px_1fr_300px] min-[1536px]:grid-cols-[280px_1fr_320px] divide-x divide-slate-200">
       <!-- COLONNE GAUCHE : Étapes & navigation -->
-      <aside class="p-4 md:p-5">
+      <aside class="p-2 min-[400px]:p-2.5 sm:p-3 md:p-4 lg:p-5">
         <!-- Retour dashboard -->
         <button
           type="button"
           (click)="backToDashboard()"
           aria-label="Retour au tableau de bord"
-          class="mr-3 inline-flex items-center rounded-lg text-[#16a34a] hover:text-[#15803d] focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:ring-offset-2 focus:ring-offset-white"
+          class="mr-1 min-[400px]:mr-2 sm:mr-3 inline-flex items-center rounded-lg text-[#16a34a] hover:text-[#15803d] focus:outline-none focus:ring-2 focus:ring-[#16a34a] focus:ring-offset-2 focus:ring-offset-white"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="w-5 h-5"
+            class="w-3.5 min-[400px]:w-4 sm:w-5 h-3.5 min-[400px]:h-4 sm:h-5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -59,39 +66,42 @@
           >
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
-          <span class="ml-2 text-sm font-medium">Accéder à mon dashboard</span>
+          <span class="ml-1 min-[400px]:ml-1.5 sm:ml-2 text-[0.625rem] min-[400px]:text-[0.6875rem] sm:text-xs md:text-sm font-medium">
+            <span class="hidden min-[480px]:inline">Accéder à mon</span>
+            <span class="min-[480px]:hidden">Mon</span> dashboard
+          </span>
         </button>
 
-        <h3 class="mt-4 text-xs font-semibold tracking-wide text-slate-500">Progression</h3>
-        <div class="flex items-center justify-between mt-2 text-xs text-slate-600">
+        <h3 class="mt-2 min-[400px]:mt-3 sm:mt-4 text-[0.625rem] min-[400px]:text-[0.6875rem] sm:text-xs font-semibold tracking-wide text-slate-500">Progression</h3>
+        <div class="flex items-center justify-between mt-1 sm:mt-2 text-[0.625rem] min-[400px]:text-[0.6875rem] sm:text-xs text-slate-600">
           <span class="sr-only">Progression</span>
           <span></span>
           <span class="font-semibold">{{ progress() }}%</span>
         </div>
-        <div class="h-2 mt-1 overflow-hidden rounded-full bg-slate-200">
+        <div class="h-1.5 min-[400px]:h-1.5 sm:h-2 mt-0.5 sm:mt-1 overflow-hidden rounded-full bg-slate-200">
           <div class="h-full bg-[#16a34a] transition-all" [style.width.%]="progress()"></div>
         </div>
 
         <!-- Étapes -->
         <!-- Étapes (non cliquables) -->
         <!-- Étapes (non cliquables) -->
-        <nav class="mt-4 space-y-2">
+        <nav class="mt-2 min-[400px]:mt-3 sm:mt-4 space-y-1 min-[400px]:space-y-1.5 sm:space-y-2">
           <div
             *ngFor="let s of steps; let i = index; trackBy: trackByIndex"
-            class="flex items-center w-full gap-2 px-3 py-2 transition border rounded-lg cursor-default select-none"
+            class="flex items-center w-full gap-1 min-[400px]:gap-1.5 sm:gap-2 px-2 min-[400px]:px-2.5 sm:px-3 py-1 min-[400px]:py-1.5 sm:py-2 transition border rounded-md sm:rounded-lg cursor-default select-none"
             [ngClass]="
               current() === i
                 ? 'bg-[#16a34a] text-white border-[#16a34a] font-semibold shadow-sm'
                 : 'bg-white text-slate-800 border-slate-200'
             "
           >
-            <span class="text-sm">{{ i + 1 }}. {{ s }}</span>
+            <span class="text-[0.625rem] min-[400px]:text-[0.6875rem] sm:text-xs md:text-sm">{{ i + 1 }}. {{ s }}</span>
           </div>
         </nav>
 
-        <div class="flex gap-3 mt-6">
+        <div class="flex flex-col min-[480px]:flex-row gap-1 min-[400px]:gap-2 sm:gap-3 mt-3 min-[400px]:mt-4 sm:mt-5 md:mt-6">
           <button
-            class="px-4 py-2 bg-white border rounded-lg border-slate-300 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300"
+            class="px-2 min-[400px]:px-3 sm:px-4 py-1 min-[400px]:py-1.5 sm:py-2 bg-white border rounded-md sm:rounded-lg border-slate-300 text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 text-[0.625rem] min-[400px]:text-[0.6875rem] sm:text-xs md:text-sm"
             (click)="prev()"
             [disabled]="current() === 0"
           >
@@ -99,7 +109,7 @@
           </button>
 
           <button
-            class="px-4 py-2 rounded-lg bg-[#16a34a] text-white hover:bg-[#15803d] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+            class="px-2 min-[400px]:px-3 sm:px-4 py-1 min-[400px]:py-1.5 sm:py-2 rounded-md sm:rounded-lg bg-[#16a34a] text-white hover:bg-[#15803d] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-300 text-[0.625rem] min-[400px]:text-[0.6875rem] sm:text-xs md:text-sm"
             (click)="next()"
             [disabled]="current() === steps.length - 1 || !canGoNext()"
           >
@@ -109,19 +119,19 @@
       </aside>
 
       <!-- COLONNE CENTRALE : Formulaires -->
-      <section class="p-5 md:p-6">
+      <section class="p-2 min-[400px]:p-3 sm:p-4 md:p-5 lg:p-6">
         <!-- =========================
              ÉTAPE 1 : PROPOSITION
              ========================= -->
-        <div *ngIf="current() === 0" [formGroup]="stepProp" class="space-y-5">
-          <h2 class="text-[20px] leading-6 font-semibold text-slate-900 mb-4">
+        <div *ngIf="current() === 0" [formGroup]="stepProp" class="space-y-3 min-[400px]:space-y-4 sm:space-y-5">
+          <h2 class="text-[0.875rem] min-[400px]:text-[0.9375rem] sm:text-base md:text-lg lg:text-xl xl:text-[20px] leading-5 sm:leading-6 font-semibold text-slate-900 mb-2 min-[400px]:mb-3 sm:mb-4">
             Proposition de Projet
           </h2>
 
           <!-- Titre -->
           <div>
-            <label class="block mb-1 text-sm font-medium">Titre du projet</label>
-            <input type="text" class="w-full px-3 py-2 border rounded-md" formControlName="title" />
+            <label class="block mb-0.5 sm:mb-1 text-[0.625rem] min-[400px]:text-[0.6875rem] sm:text-xs md:text-sm font-medium">Titre du projet</label>
+            <input type="text" class="w-full px-2 min-[400px]:px-2.5 sm:px-3 py-1 min-[400px]:py-1.5 sm:py-2 border rounded-md text-[0.75rem] min-[400px]:text-[0.8125rem] sm:text-sm" formControlName="title" />
           </div>
 
           <!-- Domaines -->
@@ -196,7 +206,7 @@
              ÉTAPE 2 : OBJECTIFS
              ========================= -->
         <div *ngIf="current() === 1" [formGroup]="obj" class="space-y-5">
-          <h2 class="text-[20px] leading-6 font-semibold text-slate-900 mb-4">
+          <h2 class="text-lg sm:text-xl md:text-[20px] leading-6 font-semibold text-slate-900 mb-4">
             Objectifs du projet & Résultats
           </h2>
 
@@ -240,7 +250,7 @@
             </p>
           </div>
 
-          <div class="w-48">
+          <div class="w-full sm:w-48">
             <label class="block mb-1 text-sm font-medium">Durée (mois)</label>
             <input
               type="number"
@@ -270,12 +280,12 @@
                ÉTAPE 3 : ACTIVITÉS & CALENDRIER
                ====================================== -->
         <div *ngIf="current() === 2" class="space-y-6">
-          <h2 class="text-[20px] leading-6 font-semibold text-slate-900 mb-4">
-            Activités principales & calendrier d’exécution
+          <h2 class="text-lg sm:text-xl md:text-[20px] leading-6 font-semibold text-slate-900 mb-4">
+            Activités principales & calendrier d'exécution
           </h2>
 
           <!-- En-tête : dates + résumé -->
-          <div class="grid gap-4 sm:grid-cols-2" [formGroup]="activitiesHeader">
+          <div class="grid gap-2 sm:gap-4 sm:grid-cols-2" [formGroup]="activitiesHeader">
             <div>
               <label class="block mb-1 text-sm font-medium">Date de début du projet *</label>
               <input
@@ -374,7 +384,7 @@
               />
 
               <!-- Dates -->
-              <div class="grid gap-4 sm:grid-cols-2">
+              <div class="grid gap-2 sm:gap-4 sm:grid-cols-2">
                 <div>
                   <label
                     class="block text-sm font-medium text-slate-700"
@@ -448,7 +458,7 @@
                       class="p-3 bg-white border rounded-md shadow-sm border-slate-200"
                     >
                       <!-- Grille responsive -->
-                      <div class="grid items-start gap-2 md:grid-cols-[1fr,1.2fr,auto]">
+                      <div class="grid items-start gap-2 sm:gap-3 md:grid-cols-[1fr_1.2fr_auto]">
                         <!-- Libellé -->
                         <div>
                           <label class="block mb-1 text-xs font-medium text-slate-600"
@@ -534,8 +544,8 @@
              ÉTAPE 4 : RISQUES
              ========================= -->
         <div *ngIf="current() === 3" class="space-y-5">
-          <h2 class="text-[20px] leading-6 font-semibold text-slate-900 mb-4">
-            Risques & mesures d’atténuation
+          <h2 class="text-lg sm:text-xl md:text-[20px] leading-6 font-semibold text-slate-900 mb-4">
+            Risques & mesures d'atténuation
           </h2>
 
           <div class="flex justify-end">
@@ -552,7 +562,7 @@
             <div
               *ngFor="let r of riskGroups; let i = index; trackBy: trackByIndex"
               [formGroup]="r"
-              class="rounded-lg border p-3 grid md:grid-cols-[1fr_1fr_44px] gap-3 items-end"
+              class="rounded-lg border p-3 grid gap-2 sm:gap-3 md:grid-cols-[1fr_1fr_44px] items-end"
             >
               <div>
                 <label class="block mb-1 text-xs font-medium">Description</label>
@@ -605,8 +615,8 @@
         <!-- =================================
              ÉTAPE 5 : ESTIMATION DU BUDGET
              ================================= -->
-        <div *ngIf="current() === 4" class="space-y-5">
-          <h2 class="text-[20px] leading-6 font-semibold text-slate-900 mb-4">
+        <div *ngIf="current() === 4" class="space-y-5 w-full max-w-full" style="overflow-x: hidden;">
+          <h2 class="text-lg sm:text-xl md:text-[20px] leading-6 font-semibold text-slate-900 mb-4">
             Estimation du budget (par activité)
           </h2>
 
@@ -638,7 +648,7 @@
                 >
                   {{ (a?.index ?? idx) + 1 }}
                 </span>
-                <span class="max-w-[16rem] truncate">{{
+                <span class="max-w-[10rem] sm:max-w-[16rem] truncate">{{
                   a.title || 'Activité ' + (a.index + 1)
                 }}</span>
                 <span
@@ -659,7 +669,7 @@
           </div>
 
           <!-- Taux de change -->
-          <div class="grid gap-3 sm:grid-cols-2">
+          <div class="grid gap-2 sm:gap-3 sm:grid-cols-2">
             <div>
               <div class="block text-sm font-medium text-slate-700">
                 Taux de change (FCFA → USD)
@@ -675,7 +685,7 @@
 
           <!-- Tableau Budget de l'activité sélectionnée -->
           <ng-container *ngIf="selectedBudgetActivity !== null">
-            <div class="p-4 mt-4 bg-white border rounded-md shadow-sm border-slate-200">
+            <div class="p-2 sm:p-3 md:p-4 mt-4 bg-white border rounded-md shadow-sm border-slate-200 w-full">
               <div class="flex items-center justify-between mb-3">
                 <h4 class="text-sm font-semibold text-slate-800">
                   Budget —
@@ -695,20 +705,20 @@
                 </button>
               </div>
 
-              <div [formGroup]="activities.at(selectedBudgetActivity!)">
-                <div formGroupName="budget">
-                  <div formArrayName="lines" class="overflow-x-auto">
-                    <table class="w-full text-sm">
+              <div [formGroup]="activities.at(selectedBudgetActivity!)" class="w-full">
+                <div formGroupName="budget" class="w-full">
+                  <div formArrayName="lines" class="w-full overflow-x-auto overflow-y-hidden border rounded-lg max-w-full budget-scroll" style="max-width: 100%;">
+                    <table class="w-full text-sm" style="min-width: 700px;">
                       <thead>
-                        <tr class="text-left border-b text-slate-600">
-                          <th class="py-2 pr-2">Désignation</th>
-                          <th class="py-2 pr-2">Coût (FCFA)</th>
-                          <th class="py-2 pr-2">USD</th>
-                          <th class="py-2 pr-2">FPBG (%)</th>
-                          <th class="py-2 pr-2">FPBG (FCFA)</th>
-                          <th class="py-2 pr-2">Cofin. (%)</th>
-                          <th class="py-2 pr-2">Cofin. (FCFA)</th>
-                          <th class="py-2 text-right">Action</th>
+                        <tr class="text-left border-b text-slate-600 bg-slate-50">
+                          <th class="py-1.5 sm:py-2 pr-1 sm:pr-2 text-[10px] sm:text-xs font-semibold sticky left-0 bg-slate-50 z-10">Désignation</th>
+                          <th class="py-1.5 sm:py-2 pr-1 sm:pr-2 text-[10px] sm:text-xs font-semibold">Coût (FCFA)</th>
+                          <th class="py-1.5 sm:py-2 pr-1 sm:pr-2 text-[10px] sm:text-xs font-semibold">USD</th>
+                          <th class="py-1.5 sm:py-2 pr-1 sm:pr-2 text-[10px] sm:text-xs font-semibold">FPBG (%)</th>
+                          <th class="py-1.5 sm:py-2 pr-1 sm:pr-2 text-[10px] sm:text-xs font-semibold">FPBG (FCFA)</th>
+                          <th class="py-1.5 sm:py-2 pr-1 sm:pr-2 text-[10px] sm:text-xs font-semibold">Cofin. (%)</th>
+                          <th class="py-1.5 sm:py-2 pr-1 sm:pr-2 text-[10px] sm:text-xs font-semibold">Cofin. (FCFA)</th>
+                          <th class="py-1.5 sm:py-2 text-right text-[10px] sm:text-xs font-semibold">Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -721,49 +731,50 @@
                           "
                           [formGroupName]="j"
                         >
-                          <td class="py-2 pr-2 min-w-48">
+                          <td class="py-2 pr-2" style="min-width: 150px;">
                             <input
                               formControlName="label"
                               type="text"
                               placeholder="Ex. Consultant terrain"
-                              class="w-full px-3 py-2 border rounded-md border-slate-300"
+                              class="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-md border-slate-300"
                             />
                           </td>
 
-                          <td class="py-2 pr-2 min-w-40">
+                          <td class="py-2 pr-2" style="min-width: 120px;">
                             <input
                               formControlName="cfa"
                               type="number"
                               min="0"
                               placeholder="0"
-                              class="w-full px-3 py-2 border rounded-md border-slate-300"
+                              class="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-md border-slate-300"
                             />
                           </td>
 
-                          <td class="py-2 pr-2 min-w-28">
+                          <td class="py-2 pr-2 text-xs sm:text-sm" style="min-width: 80px;">
                             {{
                               asNumber(l.get('cfa')?.value) /
                                 Math.max(1, asNumber(form.get('usdRate')?.value)) | number : '1.0-0'
                             }}
                           </td>
 
-                          <td class="py-2 pr-2 min-w-24">
+                          <td class="py-2 pr-2" style="min-width: 80px;">
                             <input
                               formControlName="fpbgPct"
                               type="number"
                               min="0"
                               max="100"
-                              class="w-full px-3 py-2 border rounded-md border-slate-300"
+                              class="w-full px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-md border-slate-300"
                             />
                             <div
                               *ngIf="linePctError(selectedBudgetActivity!, j)"
-                              class="mt-1 text-[11px] text-rose-600"
+                              class="mt-1 text-[10px] sm:text-[11px] text-rose-600"
                             >
-                              FPBG% + Cofin% doit = 100
+                              <span class="hidden sm:inline">FPBG% + Cofin% doit = 100</span>
+                              <span class="sm:hidden">= 100%</span>
                             </div>
                           </td>
 
-                          <td class="py-2 pr-2 min-w-36">
+                          <td class="py-2 pr-2 text-xs sm:text-sm" style="min-width: 110px;">
                             {{
                               Math.round(
                                 asNumber(l.get('cfa')?.value) *
@@ -772,17 +783,17 @@
                             }}
                           </td>
 
-                          <td class="py-2 pr-2 min-w-24">
+                          <td class="py-2 pr-2" style="min-width: 80px;">
                             <input
                               formControlName="cofinPct"
                               type="number"
                               min="0"
                               max="100"
-                              class="w-full px-3 py-2 border rounded-md border-slate-300"
+                              class="w-full px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-md border-slate-300"
                             />
                           </td>
 
-                          <td class="py-2 pr-2 min-w-36">
+                          <td class="py-2 pr-2 text-xs sm:text-sm" style="min-width: 110px;">
                             {{
                               Math.round(
                                 asNumber(l.get('cfa')?.value) *
@@ -791,11 +802,11 @@
                             }}
                           </td>
 
-                          <td class="py-2 text-right">
+                          <td class="py-2 text-right min-w-[50px]">
                             <button
                               type="button"
                               (click)="removeBudgetLine(selectedBudgetActivity!, j)"
-                              class="inline-flex items-center gap-2 px-2 py-2 border rounded-md border-rose-200 text-rose-600 hover:bg-rose-50"
+                              class="inline-flex items-center gap-1 sm:gap-2 px-1.5 sm:px-2 py-1.5 sm:py-2 border rounded-md border-rose-200 text-rose-600 hover:bg-rose-50"
                               aria-label="Supprimer la ligne"
                               title="Supprimer"
                             >
@@ -886,7 +897,7 @@
               </div>
             </div>
 
-            <div class="grid gap-3 mt-3 sm:grid-cols-2">
+            <div class="grid gap-2 sm:gap-3 mt-3 grid-cols-1 sm:grid-cols-2">
               <div>
                 <label class="block mb-1 text-sm font-medium text-slate-700"
                   >Montant des frais indirects (FCFA)</label
@@ -929,8 +940,8 @@
              ÉTAPE 6 : ÉTAT & FINANCEMENT
              ================================= -->
         <div *ngIf="current() === 5" [formGroup]="projectState" class="space-y-5">
-          <h2 class="text-[20px] leading-6 font-semibold text-slate-900 mb-4">
-            État d’avancement du projet
+          <h2 class="text-lg sm:text-xl md:text-[20px] leading-6 font-semibold text-slate-900 mb-4">
+            État d'avancement du projet
           </h2>
 
           <!-- Avancement -->
@@ -954,7 +965,7 @@
             <p class="mb-2 font-medium">
               Avez-vous déjà demandé / obtenu un financement pour ce projet ?
             </p>
-            <div class="flex flex-wrap items-center gap-6">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-6">
               <label class="flex items-center gap-2">
                 <input type="radio" formControlName="hasFunding" [value]="false" /> Non
               </label>
@@ -983,14 +994,14 @@
 
               <!-- Dialog -->
               <div
-                class="relative w-full overflow-hidden bg-white shadow-2xl sm:max-w-3xl rounded-2xl ring-1 ring-black/5"
+                class="relative w-full overflow-hidden bg-white shadow-2xl max-w-sm sm:max-w-2xl md:max-w-3xl rounded-2xl ring-1 ring-black/5"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="honor-title"
               >
                 <!-- Header (sticky) -->
                 <div
-                  class="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b bg-white/95 backdrop-blur"
+                  class="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 py-4 border-b bg-white/95 backdrop-blur"
                 >
                   <h3 id="honor-title" class="text-lg font-semibold text-slate-900">
                     Engagement sur l’honneur
@@ -1117,7 +1128,7 @@
 
                 <!-- Footer (sticky) -->
                 <div
-                  class="sticky bottom-0 z-10 flex items-center justify-end gap-3 px-6 py-4 border-t bg-slate-50/95 backdrop-blur"
+                  class="sticky bottom-0 z-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 px-4 sm:px-6 py-4 border-t bg-slate-50/95 backdrop-blur"
                 >
                   <button
                     type="button"
@@ -1146,7 +1157,7 @@
              ÉTAPE 7 : DURABILITÉ
              ================================= -->
         <div *ngIf="current() === 6" [formGroup]="sustainability" class="space-y-5">
-          <h2 class="text-[20px] leading-6 font-semibold text-slate-900 mb-4">
+          <h2 class="text-lg sm:text-xl md:text-[20px] leading-6 font-semibold text-slate-900 mb-4">
             Durabilité et potentiel de réplication
           </h2>
 
@@ -1172,7 +1183,7 @@
 
           <div class="p-3 border rounded-lg bg-emerald-50">
             <h4 class="mb-1 font-semibold">Points à considérer :</h4>
-            <ul class="list-disc ml-5 space-y-0.5">
+            <ul class="list-disc ml-3 sm:ml-5 space-y-0.5">
               <li>Impacts environnementaux durables</li>
               <li>Renforcement des capacités locales</li>
               <li>Modèle économique viable</li>
@@ -1186,7 +1197,7 @@
              ÉTAPE 8 : ANNEXES (Conditionnelles selon type d'organisation)
              ================================= -->
         <div *ngIf="current() === 7" class="space-y-6">
-          <h2 class="text-[20px] leading-6 font-semibold text-slate-900 mb-4">Annexes</h2>
+          <h2 class="text-lg sm:text-xl md:text-[20px] leading-6 font-semibold text-slate-900 mb-4">Annexes</h2>
 
           <!-- Affichage du type d'organisation -->
           <div *ngIf="usertype" class="p-3 border rounded-lg bg-emerald-50 border-emerald-200">
@@ -1415,12 +1426,12 @@
      ÉTAPE 9 : RÉCAPITULATIF (mis à jour)
      ================================= -->
         <div *ngIf="current() === 8" class="space-y-6">
-          <h2 class="text-[20px] leading-6 font-semibold text-slate-900 mb-2">Récapitulatif</h2>
+          <h2 class="text-lg sm:text-xl md:text-[20px] leading-6 font-semibold text-slate-900 mb-2">Récapitulatif</h2>
 
           <!-- Étape 1 : Proposition -->
           <div class="p-4 border rounded-lg">
             <h3 class="mb-3 font-semibold text-slate-900">1) Proposition de projet</h3>
-            <div class="grid gap-3 text-sm md:grid-cols-2">
+            <div class="grid gap-2 sm:gap-3 md:grid-cols-2">
               <div>
                 <div class="text-slate-500">Titre</div>
                 <div class="font-medium">{{ stepProp.get('title')?.value || '—' }}</div>
@@ -1458,7 +1469,7 @@
           <!-- Étape 2 : Objectifs -->
           <div class="p-4 border rounded-lg">
             <h3 class="mb-3 font-semibold text-slate-900">2) Objectifs & résultats</h3>
-            <div class="grid gap-3 text-sm md:grid-cols-2">
+            <div class="grid gap-2 sm:gap-3 text-sm md:grid-cols-2">
               <div class="md:col-span-2">
                 <div class="text-slate-500">Objectifs</div>
                 <div class="font-medium whitespace-pre-wrap">
@@ -1482,7 +1493,7 @@
           <div class="p-4 border rounded-lg">
             <h3 class="mb-3 font-semibold text-slate-900">3) Activités & calendrier</h3>
 
-            <div class="grid gap-3 mb-3 text-sm md:grid-cols-2">
+            <div class="grid gap-2 sm:gap-3 mb-3 text-sm md:grid-cols-2">
               <div>
                 <div class="text-slate-500">Date de début du projet</div>
                 <div class="font-medium">{{ activitiesHeader.get('startDate')?.value || '—' }}</div>
@@ -1607,7 +1618,7 @@
           <!-- Étape 5 : Budget global -->
           <div class="p-4 border rounded-lg">
             <h3 class="mb-3 font-semibold text-slate-900">5) Budget global</h3>
-            <div class="grid gap-3 text-sm md:grid-cols-3">
+            <div class="grid gap-2 sm:gap-3 text-sm sm:grid-cols-2 md:grid-cols-3">
               <div class="p-3 border rounded-md">
                 <div class="text-slate-500">Total direct (activités)</div>
                 <div class="text-lg font-semibold">{{ sumDirect() | number : '1.0-0' }} FCFA</div>
@@ -1636,7 +1647,7 @@
           <!-- Étape 6 : État & financement -->
           <div class="p-4 border rounded-lg">
             <h3 class="mb-3 font-semibold text-slate-900">6) État & financement</h3>
-            <div class="grid gap-3 text-sm md:grid-cols-2">
+            <div class="grid gap-2 sm:gap-3 text-sm md:grid-cols-2">
               <div>
                 <div class="text-slate-500">Stade</div>
                 <div class="font-medium">
@@ -1808,7 +1819,7 @@
           </div>
 
           <!-- Actions -->
-          <div class="flex gap-3 pt-2">
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
             <button class="px-4 py-2 border rounded-lg" (click)="prev()">Retour</button>
             <button
               class="px-4 py-2 text-white rounded-lg bg-emerald-600 disabled:bg-slate-300 disabled:cursor-not-allowed"

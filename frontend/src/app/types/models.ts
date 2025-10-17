@@ -192,6 +192,10 @@ export interface DemandeSubvention {
   groupeCible: string;
   justificationContexte: string;
 
+  // Champs optionnels pour l'affichage
+  description?: string;
+  montantTotal?: number;
+
   // Étape 2 — Objectifs & résultats
   objectifs: string;
   resultatsAttendus: string;

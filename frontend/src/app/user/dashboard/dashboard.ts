@@ -18,9 +18,10 @@ import {
   COULEURS_STATUT_SOUMISSION,
   DemandeSubvention,
   LABELS_STATUT_SOUMISSION,
+  StatutSoumission,
 } from '../../types/models';
 import { AuthService } from '../core/auth.service';
-import { ToastHost } from '../ui/toast-host/toast-host';
+// import { ToastHost } from '../ui/toast-host/toast-host';
 
 type Submission = {
   id?: string;
@@ -47,7 +48,11 @@ const LS = {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ToastHost],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    //  ToastHost
+  ],
   templateUrl: './dashboard.html',
 })
 export class Dashboard implements OnInit, OnDestroy {
@@ -187,7 +192,7 @@ export class Dashboard implements OnInit, OnDestroy {
         const sub = JSON.parse(subRaw) as Submission;
         if (typeof sub?.updatedAt === 'number') return sub.updatedAt;
       }
-    } catch { }
+    } catch {}
     try {
       const d = JSON.parse(localStorage.getItem(LS.draft) || 'null');
       if (typeof d?.updatedAt === 'number') return d.updatedAt;
@@ -199,7 +204,7 @@ export class Dashboard implements OnInit, OnDestroy {
         const t = Date.parse(d._updatedAt);
         if (!Number.isNaN(t)) return t;
       }
-    } catch { }
+    } catch {}
     return null;
   }
   private refreshLastUpdated() {
@@ -270,7 +275,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private savePhotoToLS(dataUrl: string) {
     try {
       localStorage.setItem(LS.photo, dataUrl);
-    } catch { }
+    } catch {}
   }
 
   // ---------- Divers UI ----------
@@ -561,8 +566,7 @@ export class Dashboard implements OnInit, OnDestroy {
     const d = demande || this.derniereDemande();
     if (d) {
       return (
-        LABELS_STATUT_SOUMISSION[d.statut as keyof typeof LABELS_STATUT_SOUMISSION] ||
-        d.statut
+        LABELS_STATUT_SOUMISSION[d.statut as keyof typeof LABELS_STATUT_SOUMISSION] || d.statut
       );
     }
     return this.status();
@@ -586,4 +590,19 @@ export class Dashboard implements OnInit, OnDestroy {
    * TrackBy function pour optimiser le rendu de la liste
    */
   trackById = (index: number, item: DemandeSubvention) => item.id;
+
+  /**
+   * Compter les demandes approuvées
+   */
+  getApprovedCount(): number {
+    return this.mesDemandes().filter((d) => d.statut === 'APPROUVE').length;
+  }
+
+  /**
+   * Compter les demandes en attente (soumises ou en revue)
+   */
+  getPendingCount(): number {
+    return this.mesDemandes().filter((d) => d.statut === 'SOUMIS' || d.statut === 'EN_REVUE')
+      .length;
+  }
 }

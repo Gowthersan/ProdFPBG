@@ -6,17 +6,17 @@
   >
     <!-- Logo -->
     <div class="flex justify-center">
-      <img src="assets/logo.png" alt="FPBG" class="h-14 w-auto" />
+      <img src="assets/logo.png" alt="FPBG" class="w-auto h-14" />
     </div>
 
     <!-- Titre -->
-    <h1 class="mt-4 text-center text-4xl font-bold">Connexion administrateur</h1>
+    <h1 class="mt-4 text-4xl font-bold text-center">Connexion administrateur</h1>
 
     <!-- Formulaire -->
     <form (ngSubmit)="submit()" [formGroup]="form" class="mt-6 space-y-4">
       <!-- Nom d'utilisateur -->
       <div>
-        <label class="block text-sm mb-1">Nom d'utilisateur</label>
+        <label class="block mb-1 text-sm">Email</label>
         <input
           type="text"
           formControlName="email"
@@ -34,7 +34,7 @@
       <!-- Mot de passe + lien oublié -->
       <div>
         <div class="flex items-center justify-between">
-          <label class="block text-sm mb-1">Mot de passe</label>
+          <label class="block mb-1 text-sm">Mot de passe</label>
           <a routerLink="/forgot-password" class="text-xs text-green-400 hover:text-green-300">
             Mot de passe oublié ?
           </a>
@@ -55,7 +55,7 @@
 
       <!-- Bouton -->
       <button
-        class="w-full rounded-lg bg-green-600 py-3 font-semibold hover:bg-green-700 disabled:opacity-60"
+        class="w-full py-3 font-semibold bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-60"
         [disabled]="loading || form.invalid"
       >
         {{ loading ? 'Connexion...' : 'Se connecter' }}
