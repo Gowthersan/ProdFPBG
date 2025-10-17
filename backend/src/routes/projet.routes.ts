@@ -129,7 +129,8 @@ router.post(
     }
   }
 );
-router.get('/my-project', authMiddleware, ProjetController.getMyProject); // Récupérer le projet de l'utilisateur
+// ❌ ROUTE DÉSACTIVÉE - Version obsolète qui cause des erreurs 500
+// router.get('/my-project', authMiddleware, ProjetController.getMyProject); // Récupérer le projet de l'utilisateur
 router.get('/my-collaborateurs', authMiddleware, ProjetController.getMyCollaborateurs); // Liste des collaborateurs de l'utilisateur
 router.post('/:projetId/collaborateurs', authMiddleware, ProjetController.addCollaborateur); // Ajouter un collaborateur
 router.delete('/collaborateurs/:collaborateurId', authMiddleware, ProjetController.deleteCollaborateur); // Supprimer un collaborateur

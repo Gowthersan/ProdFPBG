@@ -380,6 +380,18 @@ export class Dashboard implements OnInit, OnDestroy {
 
   /** Charger le projet et les collaborateurs depuis le backend */
   loadProjectAndCollaborators() {
+    // ❌ DÉSACTIVÉ - Route obsolète /my-project qui causait des erreurs 500
+    // On se base maintenant uniquement sur le système de demandes de subvention
+    this.loadingCollabs.set(false);
+
+    // Fallback sur localStorage pour les collaborateurs
+    try {
+      this.collaborators.set(JSON.parse(localStorage.getItem(LS.collaborators) || '[]'));
+    } catch {
+      this.collaborators.set([]);
+    }
+
+    /* CODE DÉSACTIVÉ - Ancienne version avec getMyProject()
     this.loadingCollabs.set(true);
 
     // Charger le projet de l'utilisateur
@@ -411,7 +423,7 @@ export class Dashboard implements OnInit, OnDestroy {
               try {
                 this.collaborators.set(JSON.parse(localStorage.getItem(LS.collaborators) || '[]'));
               } catch {
-                /* noop */
+                // noop
               }
             }
           });
@@ -424,6 +436,7 @@ export class Dashboard implements OnInit, OnDestroy {
         this.loadingCollabs.set(false);
       }
     });
+    */
   }
 
   async addCollaborator() {
@@ -488,14 +501,18 @@ export class Dashboard implements OnInit, OnDestroy {
    * Charger les demandes de subvention depuis le nouveau backend
    */
   chargerDemandes() {
+    console.log('🔄 [USER DASHBOARD] Chargement des demandes de subvention...');
     this.loadingDemandes.set(true);
     this.demandeService.obtenirMesDemandes().subscribe({
       next: (response) => {
+        console.log('✅ [USER DASHBOARD] Demandes récupérées:', response);
+        console.log('   Nombre de demandes:', response.data.length);
         this.mesDemandes.set(response.data);
 
         // Prendre la dernière demande
         if (response.data.length > 0) {
           const derniere = response.data[0];
+          console.log('   Dernière demande:', derniere.titre);
           this.derniereDemande.set(derniere);
 
           // Mettre à jour les données du dashboard
@@ -507,12 +524,17 @@ export class Dashboard implements OnInit, OnDestroy {
           this.submission.set(submission);
           localStorage.setItem(LS.submission, JSON.stringify(submission));
           this.refreshLastUpdated();
+        } else {
+          console.log('   Aucune demande trouvée pour cet utilisateur');
         }
 
         this.loadingDemandes.set(false);
       },
       error: (err) => {
-        console.error('❌ Erreur chargement demandes:', err);
+        console.error('❌ [USER DASHBOARD] Erreur chargement demandes:', err);
+        console.error('   Status:', err.status);
+        console.error('   Message:', err.message);
+        console.error('   Details:', err.error);
         this.loadingDemandes.set(false);
       },
     });
@@ -559,4 +581,9 @@ export class Dashboard implements OnInit, OnDestroy {
     }
     return this.statusClass();
   }
+
+  /**
+   * TrackBy function pour optimiser le rendu de la liste
+   */
+  trackById = (index: number, item: DemandeSubvention) => item.id;
 }

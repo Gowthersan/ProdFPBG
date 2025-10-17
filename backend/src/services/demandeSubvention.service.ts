@@ -568,6 +568,21 @@ export class DemandeSubventionService {
    */
   async obtenirParUtilisateur(idUtilisateur: string) {
     try {
+      console.log('🔍 [SERVICE] Recherche des demandes pour utilisateur:', idUtilisateur);
+
+      // Vérifier que l'utilisateur existe
+      const utilisateur = await prisma.utilisateur.findUnique({
+        where: { id: idUtilisateur },
+        select: { id: true, email: true, nom: true, prenom: true }
+      });
+
+      console.log('   Utilisateur trouvé:', utilisateur);
+
+      // Vérifier combien de demandes existent au total
+      const totalDemandes = await prisma.demandeSubvention.count();
+      console.log('   Total demandes en base:', totalDemandes);
+
+      // Chercher les demandes de cet utilisateur
       const demandes = await prisma.demandeSubvention.findMany({
         where: { idSoumisPar: idUtilisateur },
         include: {
@@ -591,9 +606,20 @@ export class DemandeSubventionService {
         },
       });
 
+      console.log('   Demandes trouvées pour cet utilisateur:', demandes.length);
+
+      // DEBUG: Afficher les IDs de toutes les demandes
+      const toutesLesDemandes = await prisma.demandeSubvention.findMany({
+        select: { id: true, titre: true, idSoumisPar: true }
+      });
+      console.log('   DEBUG - Toutes les demandes avec leurs idSoumisPar:');
+      toutesLesDemandes.forEach(d => {
+        console.log(`     - ${d.titre}: idSoumisPar="${d.idSoumisPar}" (match: ${d.idSoumisPar === idUtilisateur})`);
+      });
+
       return demandes;
     } catch (error: any) {
-      console.error('Erreur récupération demandes utilisateur:', error);
+      console.error('❌ Erreur récupération demandes utilisateur:', error);
       throw new AppError('Erreur lors de la récupération des demandes: ' + error.message, 500);
     }
   }
